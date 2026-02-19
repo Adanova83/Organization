@@ -363,5 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Personnal files
-*.cache
-*FileListAbsolute.txt
+**/*.cache
+**/*FileListAbsolute.txt
