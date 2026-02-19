@@ -175,6 +175,100 @@ namespace Library.Migrations
                     b.ToTable("ActivitySessionSlotSubscription", "Organization");
                 });
 
+            modelBuilder.Entity("Library.Entity.Chat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsGroup")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Chat", "Chat");
+                });
+
+            modelBuilder.Entity("Library.Entity.ChatMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChatId");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("ChatMember", "Chat");
+                });
+
+            modelBuilder.Entity("Library.Entity.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SendDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("ChatMessage", "Chat");
+                });
+
+            modelBuilder.Entity("Library.Entity.ChatMessageRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChatMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReadDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReceiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecipentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChatMessageId");
+
+                    b.HasIndex("RecipentId");
+
+                    b.ToTable("ChatMessageRecipient", "Chat");
+                });
+
             modelBuilder.Entity("Library.Entity.Contribution", b =>
                 {
                     b.Property<Guid>("Id")
@@ -229,6 +323,26 @@ namespace Library.Migrations
                         .IsUnique();
 
                     b.ToTable("Country", "Authentication");
+                });
+
+            modelBuilder.Entity("Library.Entity.Document", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("Document", "Organization");
                 });
 
             modelBuilder.Entity("Library.Entity.Event", b =>
@@ -357,6 +471,9 @@ namespace Library.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AskedNewPassword")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("Birthdate")
                         .HasColumnType("timestamp with time zone");
 
@@ -364,6 +481,11 @@ namespace Library.Migrations
                         .IsRequired()
                         .HasMaxLength(320)
                         .HasColumnType("character varying(320)");
+
+                    b.Property<string>("HashedPassword")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -996,6 +1118,246 @@ namespace Library.Migrations
                     b.Navigation("SessionSlot");
                 });
 
+            modelBuilder.Entity("Library.Entity.Chat", b =>
+                {
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("ChatId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatId");
+
+                            b1.ToTable("Chat", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Cht", b1 =>
+                        {
+                            b1.Property<Guid>("ChatId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatId");
+
+                            b1.ToTable("Chat", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Cht")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Library.Entity.ChatMember", b =>
+                {
+                    b.HasOne("Library.Entity.Chat", "Chat")
+                        .WithMany()
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("ChatMemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatMemberId");
+
+                            b1.ToTable("ChatMember", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatMemberId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Cmm", b1 =>
+                        {
+                            b1.Property<Guid>("ChatMemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatMemberId");
+
+                            b1.ToTable("ChatMember", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatMemberId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("Cmm")
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("Library.Entity.ChatMessage", b =>
+                {
+                    b.HasOne("Library.Entity.Member", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("ChatMessageId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatMessageId");
+
+                            b1.ToTable("ChatMessage", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatMessageId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Chm", b1 =>
+                        {
+                            b1.Property<Guid>("ChatMessageId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatMessageId");
+
+                            b1.ToTable("ChatMessage", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatMessageId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Chm")
+                        .IsRequired();
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Library.Entity.ChatMessageRecipient", b =>
+                {
+                    b.HasOne("Library.Entity.ChatMessage", "ChatMessage")
+                        .WithMany()
+                        .HasForeignKey("ChatMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.Member", "Recipent")
+                        .WithMany()
+                        .HasForeignKey("RecipentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("ChatMessageRecipientId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatMessageRecipientId");
+
+                            b1.ToTable("ChatMessageRecipient", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatMessageRecipientId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Cmr", b1 =>
+                        {
+                            b1.Property<Guid>("ChatMessageRecipientId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ChatMessageRecipientId");
+
+                            b1.ToTable("ChatMessageRecipient", "Chat");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChatMessageRecipientId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("ChatMessage");
+
+                    b.Navigation("Cmr")
+                        .IsRequired();
+
+                    b.Navigation("Recipent");
+                });
+
             modelBuilder.Entity("Library.Entity.Contribution", b =>
                 {
                     b.HasOne("Library.Entity.Member", "Member")
@@ -1110,6 +1472,64 @@ namespace Library.Migrations
 
                     b.Navigation("Cnt")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Library.Entity.Document", b =>
+                {
+                    b.HasOne("Library.Entity.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("DocumentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("DocumentId");
+
+                            b1.ToTable("Document", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DocumentId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Doc", b1 =>
+                        {
+                            b1.Property<Guid>("DocumentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("DocumentId");
+
+                            b1.ToTable("Document", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DocumentId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Doc")
+                        .IsRequired();
+
+                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("Library.Entity.Event", b =>

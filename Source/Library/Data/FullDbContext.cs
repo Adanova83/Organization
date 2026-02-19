@@ -15,6 +15,9 @@ public class FullDbContext : DbContext
     internal DbSet<Badge> Badges => Set<Badge>();
     internal DbSet<BadgeAssignation> BadgeAssignations => Set<BadgeAssignation>();
     internal DbSet<Chat> Chats => Set<Chat>();
+    internal DbSet<ChatMember> ChatMembers => Set<ChatMember>();
+    internal DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    internal DbSet<ChatMessageRecipient> ChatMessageRecipients => Set<ChatMessageRecipient>();
     internal DbSet<Contribution> Contributions=> Set<Contribution>();
     internal DbSet<Country> Countries => Set<Country>();
     internal DbSet<Document> Documents => Set<Document>();
@@ -50,6 +53,10 @@ public class FullDbContext : DbContext
         modelBuilder.Entity<ActivitySessionSlot>().HasQueryFilter(e => !e.Asl.DeletedAt.HasValue);
         modelBuilder.Entity<ActivitySessionSlotAnimation>().HasQueryFilter(e => !e.Asa.DeletedAt.HasValue);
         modelBuilder.Entity<ActivitySessionSlotSubscription>().HasQueryFilter(e => !e.Ass.DeletedAt.HasValue);
+        modelBuilder.Entity<Chat>().HasQueryFilter(e => !e.Cht.DeletedAt.HasValue);
+        modelBuilder.Entity<ChatMember>().HasQueryFilter(e => !e.Cmm.DeletedAt.HasValue);
+        modelBuilder.Entity<ChatMessage>().HasQueryFilter(e => !e.Chm.DeletedAt.HasValue);
+        modelBuilder.Entity<ChatMessageRecipient>().HasQueryFilter(e => !e.Cmr.DeletedAt.HasValue);
         modelBuilder.Entity<Contribution>().HasQueryFilter(e => !e.Ctb.DeletedAt.HasValue);
         modelBuilder.Entity<Country>().HasQueryFilter(e => !e.Cnt.DeletedAt.HasValue);
         modelBuilder.Entity<Document>().HasQueryFilter(e => !e.Doc.DeletedAt.HasValue);
