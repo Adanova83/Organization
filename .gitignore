@@ -55,3 +55,7 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Assets Cache & FileListAbsolute.txt
+*.assets.cache
+*.FileListAbsolute.txt
