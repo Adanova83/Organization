@@ -1,0 +1,53 @@
+using Ct = Library.Contract;
+using Do = Library.Domain;
+using En = Library.Entity;
+
+namespace Library.Mapper;
+
+public static class Member
+{
+    public static Ct.Member DomainToContract(this Do.Member source)
+    {
+        return new Ct.Member
+        {
+            Id = source.Id,
+            Name = source.Name,
+            Picture = source.Picture,
+            RGBColor = source.RGBColor,
+            Birthdate = source.Birthdate,
+            Addr = source.Addr.DomainToContract(),
+            Email = source.Email,
+            Active = source.Active.DomainToContract()
+        };
+    }
+
+    internal static En.Member DomainToEntity(this Do.Member source)
+    {
+        return new En.Member
+        {
+            Id = source.Id,
+            Name = source.Name,
+            Picture = source.Picture,
+            RGBColor = source.RGBColor,
+            Birthdate = source.Birthdate,
+            Addr = source.Addr.DomainToEntity(),
+            Email = source.Email,
+            Active = source.Active.DomainToEntity()
+        };
+    }
+
+    internal static Do.Member EntityToDomain(this En.Member source)
+    {
+        return new Do.Member
+        {
+            Id = source.Id,
+            Name = source.Name,
+            Picture = source.Picture,
+            RGBColor = source.RGBColor,
+            Birthdate = source.Birthdate,
+            Addr = source.Addr.EntityToDomain(),
+            Email = source.Email,
+            Active = source.Active.EntityToDomain()
+        };
+    }
+}
