@@ -14,6 +14,8 @@ public class FullDbContextFactory
             "Host=127.0.0.1;Port=5432;Database=adanova;Username=adanova;Password=adanova"
         );
 
+        
+
         return new FullDbContext(optionsBuilder.Options);
     }
 }

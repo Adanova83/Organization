@@ -13,6 +13,6 @@ internal class ProjectSlot : PrimaryKey
     [ForeignKey(nameof(ProjectId))] public Project Project { get; set; } = default!;
     public Guid? SpaceId { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
-    public Audit Prs { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

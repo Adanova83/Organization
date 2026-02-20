@@ -13,5 +13,5 @@ internal class AccessEvent : PrimaryKey
     public DateTime AccessedAt { get; set; }
     public DateTime? ExitedAt { get; set; }
     public bool IsAuthorized { get; set; }
-    public Audit Aev { get; set; } = null!;
+    public Audit Audit { get; set; } = null!;
 }

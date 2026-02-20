@@ -1,4 +1,5 @@
 using Application.Server.Components;
+using Application.Server.Initializer;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using D = Library.Data;
@@ -9,7 +10,7 @@ namespace Application.Server;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -148,6 +149,9 @@ public class Program
                 }
             }
         }
+
+        // Initialize data
+        await InitialSeeder.SeedAsync(app.Services);
 
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())

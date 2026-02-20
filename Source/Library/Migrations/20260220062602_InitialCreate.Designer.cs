@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Library.Migrations
 {
     [DbContext(typeof(FullDbContext))]
-    [Migration("20260219210837_InitialCreate")]
+    [Migration("20260220062602_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -807,7 +807,26 @@ namespace Library.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Library.Entity.Audit", "Act", b1 =>
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("ActivityId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ActivityId");
+
+                            b1.ToTable("Activity", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ActivityId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ActivityId")
                                 .HasColumnType("uuid");
@@ -829,29 +848,10 @@ namespace Library.Migrations
                                 .HasForeignKey("ActivityId");
                         });
 
-                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
-                        {
-                            b1.Property<Guid>("ActivityId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime>("From")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime?>("Until")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.HasKey("ActivityId");
-
-                            b1.ToTable("Activity", "Organization");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ActivityId");
-                        });
-
-                    b.Navigation("Act")
+                    b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Active")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Organization");
@@ -890,7 +890,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ActivitySessionId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Asi", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ActivitySessionId")
                                 .HasColumnType("uuid");
@@ -917,7 +917,7 @@ namespace Library.Migrations
 
                     b.Navigation("Activity");
 
-                    b.Navigation("Asi")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("OrganizationSession");
@@ -956,7 +956,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ActivitySessionSlotId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Asl", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ActivitySessionSlotId")
                                 .HasColumnType("uuid");
@@ -981,7 +981,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Asl")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Session");
@@ -1022,7 +1022,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ActivitySessionSlotAnimationId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Asa", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ActivitySessionSlotAnimationId")
                                 .HasColumnType("uuid");
@@ -1047,7 +1047,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Asa")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Member");
@@ -1088,7 +1088,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ActivitySessionSlotSubscriptionId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Ass", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ActivitySessionSlotSubscriptionId")
                                 .HasColumnType("uuid");
@@ -1113,7 +1113,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Ass")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Member");
@@ -1142,7 +1142,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ChatId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Cht", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ChatId")
                                 .HasColumnType("uuid");
@@ -1167,7 +1167,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Cht")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 
@@ -1204,7 +1204,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ChatMemberId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Cmm", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ChatMemberId")
                                 .HasColumnType("uuid");
@@ -1229,10 +1229,10 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Chat");
-
-                    b.Navigation("Cmm")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Chat");
 
                     b.Navigation("Member");
                 });
@@ -1264,7 +1264,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ChatMessageId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Chm", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ChatMessageId")
                                 .HasColumnType("uuid");
@@ -1289,7 +1289,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Chm")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Sender");
@@ -1328,7 +1328,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ChatMessageRecipientId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Cmr", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ChatMessageRecipientId")
                                 .HasColumnType("uuid");
@@ -1353,10 +1353,10 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("ChatMessage");
-
-                    b.Navigation("Cmr")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("ChatMessage");
 
                     b.Navigation("Recipent");
                 });
@@ -1394,7 +1394,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ContributionId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Ctb", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ContributionId")
                                 .HasColumnType("uuid");
@@ -1419,7 +1419,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Ctb")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Member");
@@ -1448,7 +1448,7 @@ namespace Library.Migrations
                                 .HasForeignKey("CountryId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Cnt", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("CountryId")
                                 .HasColumnType("uuid");
@@ -1473,7 +1473,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Cnt")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 
@@ -1504,7 +1504,7 @@ namespace Library.Migrations
                                 .HasForeignKey("DocumentId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Doc", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("DocumentId")
                                 .HasColumnType("uuid");
@@ -1529,7 +1529,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Doc")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Member");
@@ -1566,7 +1566,7 @@ namespace Library.Migrations
                                 .HasForeignKey("EventId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Evt", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("EventId")
                                 .HasColumnType("uuid");
@@ -1591,7 +1591,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Evt")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("OrganizationSession");
@@ -1632,7 +1632,7 @@ namespace Library.Migrations
                                 .HasForeignKey("EventAnimationId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Eva", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("EventAnimationId")
                                 .HasColumnType("uuid");
@@ -1657,7 +1657,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Eva")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Event");
@@ -1698,7 +1698,7 @@ namespace Library.Migrations
                                 .HasForeignKey("EventSubscriptionId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Evs", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("EventSubscriptionId")
                                 .HasColumnType("uuid");
@@ -1723,10 +1723,10 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Event");
-
-                    b.Navigation("Evs")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Event");
 
                     b.Navigation("Member");
                 });
@@ -1752,7 +1752,7 @@ namespace Library.Migrations
                                 .HasForeignKey("HolidayId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Hld", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("HolidayId")
                                 .HasColumnType("uuid");
@@ -1777,7 +1777,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Hld")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 
@@ -1851,7 +1851,7 @@ namespace Library.Migrations
                             b1.Navigation("Country");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Mmb", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("MemberId")
                                 .HasColumnType("uuid");
@@ -1879,7 +1879,7 @@ namespace Library.Migrations
                     b.Navigation("Addr")
                         .IsRequired();
 
-                    b.Navigation("Mmb")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 
@@ -1891,7 +1891,7 @@ namespace Library.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Library.Entity.Audit", "Nte", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("NoteId")
                                 .HasColumnType("uuid");
@@ -1913,10 +1913,10 @@ namespace Library.Migrations
                                 .HasForeignKey("NoteId");
                         });
 
-                    b.Navigation("Member");
-
-                    b.Navigation("Nte")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("Library.Entity.NoteLink", b =>
@@ -1927,7 +1927,7 @@ namespace Library.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Library.Entity.Audit", "Ntl", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("NoteLinkId")
                                 .HasColumnType("uuid");
@@ -1949,10 +1949,10 @@ namespace Library.Migrations
                                 .HasForeignKey("NoteLinkId");
                         });
 
-                    b.Navigation("Note");
-
-                    b.Navigation("Ntl")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Note");
                 });
 
             modelBuilder.Entity("Library.Entity.Organization", b =>
@@ -1976,7 +1976,7 @@ namespace Library.Migrations
                                 .HasForeignKey("OrganizationId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Org", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("OrganizationId")
                                 .HasColumnType("uuid");
@@ -2001,7 +2001,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Org")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 
@@ -2032,7 +2032,7 @@ namespace Library.Migrations
                                 .HasForeignKey("OrganizationSessionId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Ogs", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("OrganizationSessionId")
                                 .HasColumnType("uuid");
@@ -2057,7 +2057,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Ogs")
+                    b.Navigation("Audit")
                         .IsRequired();
 
                     b.Navigation("Organization");
@@ -2090,7 +2090,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ProjectId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Prj", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ProjectId")
                                 .HasColumnType("uuid");
@@ -2115,10 +2115,10 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Organization");
-
-                    b.Navigation("Prj")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Library.Entity.ProjectSlot", b =>
@@ -2152,7 +2152,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ProjectSlotId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Prs", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ProjectSlotId")
                                 .HasColumnType("uuid");
@@ -2177,10 +2177,10 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Project");
-
-                    b.Navigation("Prs")
+                    b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Project");
 
                     b.Navigation("Space");
                 });
@@ -2218,7 +2218,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ProjectSlotAnimationId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Psa", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ProjectSlotAnimationId")
                                 .HasColumnType("uuid");
@@ -2243,12 +2243,12 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
+                    b.Navigation("Audit")
+                        .IsRequired();
+
                     b.Navigation("Member");
 
                     b.Navigation("ProjectSlot");
-
-                    b.Navigation("Psa")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Library.Entity.ProjectSlotSubscription", b =>
@@ -2284,7 +2284,7 @@ namespace Library.Migrations
                                 .HasForeignKey("ProjectSlotSubscriptionId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Pss", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("ProjectSlotSubscriptionId")
                                 .HasColumnType("uuid");
@@ -2309,12 +2309,12 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
+                    b.Navigation("Audit")
+                        .IsRequired();
+
                     b.Navigation("Member");
 
                     b.Navigation("ProjectSlot");
-
-                    b.Navigation("Pss")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Library.Entity.Role", b =>
@@ -2387,7 +2387,7 @@ namespace Library.Migrations
                             b1.Navigation("Country");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Rol", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("RoleId")
                                 .HasColumnType("uuid");
@@ -2415,7 +2415,7 @@ namespace Library.Migrations
                     b.Navigation("Addr")
                         .IsRequired();
 
-                    b.Navigation("Rol")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 
@@ -2440,7 +2440,7 @@ namespace Library.Migrations
                                 .HasForeignKey("SpaceId");
                         });
 
-                    b.OwnsOne("Library.Entity.Audit", "Spc", b1 =>
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("SpaceId")
                                 .HasColumnType("uuid");
@@ -2465,7 +2465,7 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Spc")
+                    b.Navigation("Audit")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

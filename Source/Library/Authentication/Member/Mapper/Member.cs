@@ -15,8 +15,12 @@ public static class Member
             Picture = source.Picture,
             RGBColor = source.RGBColor,
             Birthdate = source.Birthdate,
-            Addr = source.Addr.DomainToContract(),
             Email = source.Email,
+            AskedNewPassword = source.AskedNewPassword,
+            HashedPassword = source.HashedPassword,
+            PhoneNumber = source.PhoneNumber,
+            Addr = source.Addr.DomainToContract(),
+            Audit = source.Audit.DomainToContract(),
             Active = source.Active.DomainToContract()
         };
     }
@@ -30,8 +34,12 @@ public static class Member
             Picture = source.Picture,
             RGBColor = source.RGBColor,
             Birthdate = source.Birthdate,
-            Addr = source.Addr.DomainToEntity(),
             Email = source.Email,
+            AskedNewPassword = source.AskedNewPassword,
+            HashedPassword = source.HashedPassword,
+            PhoneNumber = source.PhoneNumber,
+            Addr = source.Addr.DomainToEntity(),
+            Audit = source.Audit.DomainToEntity(),
             Active = source.Active.DomainToEntity()
         };
     }
@@ -45,8 +53,12 @@ public static class Member
             Picture = source.Picture,
             RGBColor = source.RGBColor,
             Birthdate = source.Birthdate,
-            Addr = source.Addr.EntityToDomain(),
             Email = source.Email,
+            AskedNewPassword = source.AskedNewPassword,
+            HashedPassword = source.HashedPassword,
+            PhoneNumber = source.PhoneNumber,
+            Addr = source.Addr.EntityToDomain(),
+            Audit = source.Audit.EntityToDomain(),
             Active = source.Active.EntityToDomain()
         };
     }

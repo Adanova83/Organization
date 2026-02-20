@@ -13,6 +13,6 @@ internal class ActivitySession : PrimaryKey
     [ForeignKey(nameof(ActivityId))] public Activity Activity { get; set; } = default!;
     [Required] public Guid OrganizationSessionId { get; set; }
     [ForeignKey(nameof(OrganizationSessionId))] public OrganizationSession OrganizationSession { get; set; } = default!;
-    public Audit Asi { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

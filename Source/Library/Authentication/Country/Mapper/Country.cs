@@ -14,6 +14,7 @@ public static class Country
             CodeAlpha2 = source.CodeAlpha2,
             CodeAlpha3 = source.CodeAlpha3,
             Name = source.Name,
+            Audit = source.Audit.DomainToContract(),
             Active = source.Active.DomainToContract()
         };
     }
@@ -26,6 +27,7 @@ public static class Country
             CodeAlpha2 = source.CodeAlpha2,
             CodeAlpha3 = source.CodeAlpha3,
             Name = source.Name,
+            Audit = source.Audit.DomainToEntity(),
             Active = source.Active.DomainToEntity()
         };
     }
@@ -38,6 +40,7 @@ public static class Country
             CodeAlpha2 = source.CodeAlpha2,
             CodeAlpha3 = source.CodeAlpha3,
             Name = source.Name,
+            Audit = source.Audit.EntityToDomain(),
             Active = source.Active.EntityToDomain()
         };
     }

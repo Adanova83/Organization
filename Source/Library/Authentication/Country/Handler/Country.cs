@@ -82,7 +82,7 @@ public sealed class Country
             throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater or equal than 0.");
         }
 
-        return _repository.SearchAsync(query, page, pageSize, ct);
+        return _repository.SearchByNameAsync(query, page, pageSize, ct);
     }
 
     private void ValidateDomainRules(Domain.Country domain)

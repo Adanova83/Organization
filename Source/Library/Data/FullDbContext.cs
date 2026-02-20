@@ -48,33 +48,33 @@ public class FullDbContext : DbContext
 
         modelBuilder.HasDefaultSchema("Organization");
 
-        modelBuilder.Entity<Activity>().HasQueryFilter(e => !e.Act.DeletedAt.HasValue);
-        modelBuilder.Entity<ActivitySession>().HasQueryFilter(e => !e.Asi.DeletedAt.HasValue);
-        modelBuilder.Entity<ActivitySessionSlot>().HasQueryFilter(e => !e.Asl.DeletedAt.HasValue);
-        modelBuilder.Entity<ActivitySessionSlotAnimation>().HasQueryFilter(e => !e.Asa.DeletedAt.HasValue);
-        modelBuilder.Entity<ActivitySessionSlotSubscription>().HasQueryFilter(e => !e.Ass.DeletedAt.HasValue);
-        modelBuilder.Entity<Chat>().HasQueryFilter(e => !e.Cht.DeletedAt.HasValue);
-        modelBuilder.Entity<ChatMember>().HasQueryFilter(e => !e.Cmm.DeletedAt.HasValue);
-        modelBuilder.Entity<ChatMessage>().HasQueryFilter(e => !e.Chm.DeletedAt.HasValue);
-        modelBuilder.Entity<ChatMessageRecipient>().HasQueryFilter(e => !e.Cmr.DeletedAt.HasValue);
-        modelBuilder.Entity<Contribution>().HasQueryFilter(e => !e.Ctb.DeletedAt.HasValue);
-        modelBuilder.Entity<Country>().HasQueryFilter(e => !e.Cnt.DeletedAt.HasValue);
-        modelBuilder.Entity<Document>().HasQueryFilter(e => !e.Doc.DeletedAt.HasValue);
-        modelBuilder.Entity<Event>().HasQueryFilter(e => !e.Evt.DeletedAt.HasValue);
-        modelBuilder.Entity<EventAnimation>().HasQueryFilter(e => !e.Eva.DeletedAt.HasValue);
-        modelBuilder.Entity<EventSubscription>().HasQueryFilter(e => !e.Evs.DeletedAt.HasValue);
-        modelBuilder.Entity<Holiday>().HasQueryFilter(e => !e.Hld.DeletedAt.HasValue);
-        modelBuilder.Entity<Member>().HasQueryFilter(e => !e.Mmb.DeletedAt.HasValue);
-        modelBuilder.Entity<Note>().HasQueryFilter(e => !e.Nte.DeletedAt.HasValue);
-        modelBuilder.Entity<NoteLink>().HasQueryFilter(e => !e.Ntl.DeletedAt.HasValue);
-        modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.Org.DeletedAt.HasValue);
-        modelBuilder.Entity<OrganizationSession>().HasQueryFilter(e => !e.Ogs.DeletedAt.HasValue);
-        modelBuilder.Entity<Project>().HasQueryFilter(e => !e.Prj.DeletedAt.HasValue);
-        modelBuilder.Entity<ProjectSlot>().HasQueryFilter(e => !e.Prs.DeletedAt.HasValue);
-        modelBuilder.Entity<ProjectSlotAnimation>().HasQueryFilter(e => !e.Psa.DeletedAt.HasValue);
-        modelBuilder.Entity<ProjectSlotSubscription>().HasQueryFilter(e => !e.Pss.DeletedAt.HasValue);
-        modelBuilder.Entity<Role>().HasQueryFilter(e => !e.Rol.DeletedAt.HasValue);
-        modelBuilder.Entity<Space>().HasQueryFilter(e => !e.Spc.DeletedAt.HasValue);
+        modelBuilder.Entity<Activity>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ActivitySession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ActivitySessionSlot>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ActivitySessionSlotAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ActivitySessionSlotSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Chat>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ChatMember>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ChatMessage>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ChatMessageRecipient>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Contribution>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Country>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Document>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Event>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<EventAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<EventSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Holiday>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Member>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Note>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<NoteLink>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<OrganizationSession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Project>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ProjectSlot>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ProjectSlotAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<ProjectSlotSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Role>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Space>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
     }
 
     public override int SaveChanges()
@@ -115,10 +115,5 @@ public class FullDbContext : DbContext
                     break;
             }
         }
-    }
-
-    internal async Task SaveChangesAsync(object ct)
-    {
-        throw new NotImplementedException();
     }
 }

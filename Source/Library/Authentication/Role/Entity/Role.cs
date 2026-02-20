@@ -12,7 +12,7 @@ public class Role : PrimaryKey
     public DateTime? Birthdate { get; set; } = null;
     [Required, MaxLength(200)] public string Email { get; set; } = default!;
     public string? PhoneNumber { get; set; }
-    [Required] public Address Addr { get; set; } = new();
-    public Audit Rol { get; set; } = default!;
+    [Required] public Address Addr { get; set; }  = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

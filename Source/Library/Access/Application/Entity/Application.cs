@@ -10,6 +10,6 @@ internal class Application : PrimaryKey
     [Required, MaxLength(200)] public string Location { get; set; } = null!;
     [Required] public string ApiKey { get; set; } = null!;
     public ICollection<AccessEvent> AccessEvents { get; set; } = new List<AccessEvent>();
-    public Audit App { get; set; } = null!;
+    public Audit Audit { get; set; } = null!;
     public Active Active { get; set; } = null!;
 }

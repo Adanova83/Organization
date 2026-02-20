@@ -20,6 +20,6 @@ internal class Event : PrimaryKey
     [ForeignKey(nameof(OrganizationSessionId))] public OrganizationSession OrganizationSession { get; set; } = default!;
     public Guid? SpaceId { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
-    public Audit Evt { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

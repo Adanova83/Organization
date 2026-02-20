@@ -11,5 +11,5 @@ internal class Note : PrimaryKey
     [Required, MaxLength(8)] public string RGBBackgroundColor { get; set; } = "FFFFFFFF";
     [Required] public Guid MemberId { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
-    public Audit Nte { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
 }

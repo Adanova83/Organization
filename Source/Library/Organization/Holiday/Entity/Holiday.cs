@@ -9,6 +9,6 @@ internal class Holiday : PrimaryKey
     [Required] public string Name { get; set; } = default!;
     [Required] public DateTime StartDate { get; set; }
     [Required] public DateTime EndDate { get; set; }
-    public Audit Hld { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

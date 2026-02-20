@@ -148,11 +148,27 @@ public sealed class Member : IMember
         };
     }
 
+
+    public async Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct)
+    {
+        var entity = await _dbContext.Members
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Email.ToUpper() == email.ToUpper(), ct);
+        return new RepositoryResponse<Domain.Member>()
+        {
+            Data = entity?.EntityToDomain()
+        };
+    }
+
+
     public async Task<bool> ValidateUserAsync(string email, string password, CancellationToken ct)
     {
         bool result = true;
 
-        Entity.Member? member = await _dbContext.Members.FirstOrDefaultAsync(m => m.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase), ct);
+        var member = await _dbContext.Members
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Email.ToUpper() == email.ToUpper(), ct);
+
         if (member != null)
         {
             if (member.AskedNewPassword.HasValue)

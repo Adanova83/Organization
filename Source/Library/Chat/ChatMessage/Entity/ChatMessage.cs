@@ -11,6 +11,6 @@ internal class ChatMessage : PrimaryKey
     [Required] public DateTime SendDate { get; set; }
     [Required] public Guid SenderId { get; set; }
     [ForeignKey(nameof(SenderId))] public Member Sender { get; set; } = default!;
-    public Audit Chm { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

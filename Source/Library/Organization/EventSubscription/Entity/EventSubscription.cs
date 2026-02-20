@@ -10,6 +10,6 @@ internal class EventSubscription : PrimaryKey
     [ForeignKey(nameof(EventId))] public Event Event { get; set; } = default!;
     [Required] public Guid MemberId{ get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
-    public Audit Evs { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

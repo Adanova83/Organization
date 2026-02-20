@@ -12,6 +12,6 @@ public class Country : PrimaryKey
     [Required, MaxLength(2)] public string CodeAlpha2 { get; set; } = default!;
     [Required, MaxLength(3)] public string CodeAlpha3 { get; set; } = default!;
     [MaxLength(100)] public string Name { get; set; } = default!;
-    public Audit Cnt { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
     public Active Active { get; set; } = default!;
 }

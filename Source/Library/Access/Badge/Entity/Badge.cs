@@ -9,6 +9,6 @@ namespace Library.Entity;
 internal class Badge : PrimaryKey
 {
     [Required] public string Identifier { get; set; } = null!;
-    public Audit Bdg { get; set; } = null!;
+    public Audit Audit { get; set; } = null!;
     public Active Active { get; set; } = null!;
 }

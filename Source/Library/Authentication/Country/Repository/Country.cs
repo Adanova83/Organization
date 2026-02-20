@@ -50,15 +50,35 @@ public sealed class Country : ICountry
         };
     }
 
-    public async Task<RepositoryResponseRange<Domain.Country>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Country>> SearchByCodeAlpaha2Async(string codeAlpha2, CancellationToken ct)
+    {
+        var entity = await _dbContext.Countries
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.CodeAlpha2.ToUpper() == codeAlpha2.ToUpper(), ct);
+        return new RepositoryResponse<Domain.Country>()
+        {
+            Data = entity?.EntityToDomain()
+        };
+    }
+
+    public async Task<RepositoryResponse<Domain.Country>> SearchByCodeAlpaha3Async(string codeAlpha3, CancellationToken ct)
+    {
+        var entity = await _dbContext.Countries
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.CodeAlpha3.ToUpper() == codeAlpha3.ToUpper(), ct);
+        return new RepositoryResponse<Domain.Country>()
+        {
+            Data = entity?.EntityToDomain()
+        };
+    }
+
+    public async Task<RepositoryResponseRange<Domain.Country>> SearchByNameAsync(string? namePattern, int page, int pageSize, CancellationToken ct)
     {
         IQueryable<Entity.Country> q = _dbContext.Countries.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(query))
+        if (!string.IsNullOrWhiteSpace(namePattern))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{namePattern}";
             q = q.Where(item =>
-                EF.Functions.ILike(item.CodeAlpha2, pattern) ||
-                EF.Functions.ILike(item.CodeAlpha3, pattern) ||
                 EF.Functions.ILike(item.Name, pattern)
             );
         }
