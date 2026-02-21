@@ -11,7 +11,7 @@ public sealed class Country
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Country domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Country>> CreateAsync(Domain.Country domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -70,7 +70,27 @@ public sealed class Country
         return _repository.SearchAsync(id, ct);
     }
 
-    public Task<RepositoryResponseRange<Domain.Country>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Country>> SearchByCodeAlpaha2Async(string codeAlpha2, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(codeAlpha2))
+        {
+            throw new ArgumentException("Code must not be empty for search.", nameof(codeAlpha2));
+        }
+
+        return _repository.SearchByCodeAlpaha2Async(codeAlpha2, ct);
+    }
+
+    public Task<RepositoryResponse<Domain.Country>> SearchByCodeAlpaha3Async(string codeAlpha3, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(codeAlpha3))
+        {
+            throw new ArgumentException("Code must not be empty for search.", nameof(codeAlpha3));
+        }
+
+        return _repository.SearchByCodeAlpaha3Async(codeAlpha3, ct);
+    }
+
+    public Task<RepositoryResponseRange<Domain.Country>> SearchByNameAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
         if (page < 0)
         {

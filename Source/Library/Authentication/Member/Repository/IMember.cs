@@ -7,5 +7,6 @@ public  interface IMember : IRepository<Domain.Member>
     Task<bool> ChangePasswordAsync(string email, string oldPassword, string newPassword, CancellationToken ct);
     Task<bool> CreateNewPasswordAsync(Guid askedNewPassword, CancellationToken ct);
     Task<RepositoryResponseRange<Domain.Member>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct);
+    Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct);
     Task<bool> ValidateUserAsync(string email, string password, CancellationToken ct);
 }

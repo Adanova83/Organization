@@ -11,7 +11,7 @@ public sealed class Role
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Role domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Role>> CreateAsync(Domain.Role domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -70,30 +70,35 @@ public sealed class Role
         return _repository.SearchAsync(id, ct);
     }
 
-    public Task<RepositoryResponseRange<Domain.Role>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
     {
-        if (page < 0)
+        if (string.IsNullOrWhiteSpace(code))
         {
-            throw new ArgumentOutOfRangeException(nameof(page), "Page must be greater or equal than 0.");
+            throw new ArgumentException("Code must not be empty for search.", nameof(code));
         }
 
-        if (pageSize < 0)
+        return _repository.SearchByCodeAsync(code, ct);
+    }
+
+    public Task<RepositoryResponse<Domain.Role>> SearchByNameAsync(string name, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater or equal than 0.");
+            throw new ArgumentException("Name must not be empty for search.", nameof(name));
         }
 
-        return _repository.SearchAsync(query, page, pageSize, ct);
+        return _repository.SearchByNameAsync(name, ct);
     }
 
     private void ValidateDomainRules(Domain.Role domain)
     {
+        if (string.IsNullOrWhiteSpace(domain.Code))
+        {
+            throw new ArgumentException("Code is required.", nameof(domain.Code));
+        }
         if (string.IsNullOrWhiteSpace(domain.Name))
         {
             throw new ArgumentException("Name is required.", nameof(domain.Name));
-        }
-        if (domain.Email != null && !domain.Email.Contains('@'))
-        {
-            throw new ArgumentException("Email is not valid.", nameof(domain.Email));
         }
     }
 }

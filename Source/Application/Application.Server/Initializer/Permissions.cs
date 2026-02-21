@@ -5,7 +5,10 @@ public static class Permissions
     private static readonly string[] _modules =
     [
         "activity",
+        "application",
         "badge",
+        "contribution",
+        "document",
         "event",
         "member",
         "note",

@@ -24,6 +24,9 @@ public class FullDbContext : DbContext
     internal DbSet<Event> Events => Set<Event>();
     internal DbSet<EventAnimation> EventAnimations => Set<EventAnimation>();
     internal DbSet<EventSubscription> EventSubscriptions => Set<EventSubscription>();
+    internal DbSet<Group> Groups => Set<Group>();
+    internal DbSet<GroupMember> GroupMembers => Set<GroupMember>();
+    internal DbSet<GroupRole> GroupRoles => Set<GroupRole>();
     internal DbSet<Holiday> Holidays => Set<Holiday>();
     internal DbSet<Member> Members => Set<Member>();
     internal DbSet<Note> Notes => Set<Note>();
@@ -35,6 +38,7 @@ public class FullDbContext : DbContext
     internal DbSet<ProjectSlotAnimation> ProjectSlotAnimations => Set<ProjectSlotAnimation>();
     internal DbSet<ProjectSlotSubscription> ProjectSlotSubscriptions => Set<ProjectSlotSubscription>();
     internal DbSet<Role> Roles => Set<Role>();
+    internal DbSet<RoleMember> RoleMembers => Set<RoleMember>();
     internal DbSet<Space> Spaces => Set<Space>();
 
     public FullDbContext(DbContextOptions<FullDbContext> options)
@@ -63,6 +67,9 @@ public class FullDbContext : DbContext
         modelBuilder.Entity<Event>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<EventAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<EventSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Group>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<GroupMember>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<GroupRole>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Holiday>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Member>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Note>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
@@ -74,6 +81,7 @@ public class FullDbContext : DbContext
         modelBuilder.Entity<ProjectSlotAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ProjectSlotSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Role>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<RoleMember>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Space>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
     }
 

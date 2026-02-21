@@ -444,6 +444,80 @@ namespace Library.Migrations
                     b.ToTable("EventSubscription", "Organization");
                 });
 
+            modelBuilder.Entity("Library.Entity.Group", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Picture")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RGBColor")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Group", "Authentication");
+                });
+
+            modelBuilder.Entity("Library.Entity.GroupMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("GroupMember", "Authentication");
+                });
+
+            modelBuilder.Entity("Library.Entity.GroupRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("GroupRole", "Authentication");
+                });
+
             modelBuilder.Entity("Library.Entity.Holiday", b =>
                 {
                     b.Property<Guid>("Id")
@@ -743,33 +817,43 @@ namespace Library.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("Birthdate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
+                    b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
+                    b.HasKey("Id");
 
-                    b.Property<string>("Picture")
-                        .HasColumnType("text");
+                    b.HasIndex("Code")
+                        .IsUnique();
 
-                    b.Property<string>("RGBColor")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
+                    b.ToTable("Role", "Authentication");
+                });
+
+            modelBuilder.Entity("Library.Entity.RoleMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Role", "Authentication");
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("RoleMember", "Authentication");
                 });
 
             modelBuilder.Entity("Library.Entity.Space", b =>
@@ -1728,6 +1812,188 @@ namespace Library.Migrations
                     b.Navigation("Member");
                 });
 
+            modelBuilder.Entity("Library.Entity.Group", b =>
+                {
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("GroupId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupId");
+
+                            b1.ToTable("Group", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("GroupId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupId");
+
+                            b1.ToTable("Group", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Audit")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Library.Entity.GroupMember", b =>
+                {
+                    b.HasOne("Library.Entity.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("GroupMemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupMemberId");
+
+                            b1.ToTable("GroupMember", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupMemberId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("GroupMemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupMemberId");
+
+                            b1.ToTable("GroupMember", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupMemberId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Audit")
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("Library.Entity.GroupRole", b =>
+                {
+                    b.HasOne("Library.Entity.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("GroupRoleId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupRoleId");
+
+                            b1.ToTable("GroupRole", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupRoleId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("GroupRoleId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupRoleId");
+
+                            b1.ToTable("GroupRole", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupRoleId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Audit")
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("Library.Entity.Holiday", b =>
                 {
                     b.OwnsOne("Library.Entity.Active", "Active", b1 =>
@@ -1780,25 +2046,6 @@ namespace Library.Migrations
 
             modelBuilder.Entity("Library.Entity.Member", b =>
                 {
-                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
-                        {
-                            b1.Property<Guid>("MemberId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime>("From")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime?>("Until")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.HasKey("MemberId");
-
-                            b1.ToTable("Member", "Authentication");
-
-                            b1.WithOwner()
-                                .HasForeignKey("MemberId");
-                        });
-
                     b.OwnsOne("Library.Entity.Address", "Addr", b1 =>
                         {
                             b1.Property<Guid>("MemberId")
@@ -1846,6 +2093,25 @@ namespace Library.Migrations
                                 .HasForeignKey("MemberId");
 
                             b1.Navigation("Country");
+                        });
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("MemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("MemberId");
+
+                            b1.ToTable("Member", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MemberId");
                         });
 
                     b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
@@ -2335,55 +2601,6 @@ namespace Library.Migrations
                                 .HasForeignKey("RoleId");
                         });
 
-                    b.OwnsOne("Library.Entity.Address", "Addr", b1 =>
-                        {
-                            b1.Property<Guid>("RoleId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)");
-
-                            b1.Property<Guid>("CountryId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Line1")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)");
-
-                            b1.Property<string>("Line2")
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)");
-
-                            b1.Property<string>("Line3")
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)");
-
-                            b1.Property<string>("PostalCode")
-                                .IsRequired()
-                                .HasMaxLength(20)
-                                .HasColumnType("character varying(20)");
-
-                            b1.HasKey("RoleId");
-
-                            b1.HasIndex("CountryId");
-
-                            b1.ToTable("Role", "Authentication");
-
-                            b1.HasOne("Library.Entity.Country", "Country")
-                                .WithMany()
-                                .HasForeignKey("CountryId")
-                                .OnDelete(DeleteBehavior.Cascade)
-                                .IsRequired();
-
-                            b1.WithOwner()
-                                .HasForeignKey("RoleId");
-
-                            b1.Navigation("Country");
-                        });
-
                     b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("RoleId")
@@ -2409,11 +2626,74 @@ namespace Library.Migrations
                     b.Navigation("Active")
                         .IsRequired();
 
-                    b.Navigation("Addr")
+                    b.Navigation("Audit")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Library.Entity.RoleMember", b =>
+                {
+                    b.HasOne("Library.Entity.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("RoleMemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("RoleMemberId");
+
+                            b1.ToTable("RoleMember", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RoleMemberId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("RoleMemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("RoleMemberId");
+
+                            b1.ToTable("RoleMember", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RoleMemberId");
+                        });
+
+                    b.Navigation("Active")
                         .IsRequired();
 
                     b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("Library.Entity.Space", b =>

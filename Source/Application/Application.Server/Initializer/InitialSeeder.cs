@@ -1,6 +1,6 @@
 ﻿using Library.Authentication;
 using Library.Data;
-using D = Library.Domain;
+using H = Library.Handler;
 using R = Library.Repository;
 
 namespace Application.Server.Initializer;
@@ -13,7 +13,7 @@ public static class InitialSeeder
 
         var dbContext = scope.ServiceProvider.GetRequiredService<FullDbContext>();
 
-        R.Country country = new R.Country(dbContext);
+        H.Country country = new(scope.ServiceProvider.GetRequiredService<R.ICountry>());
 
         const string countryFrCodeAlpha2 = "FR";
         const string countryFrCodeAlpha3 = "FRA";
@@ -23,27 +23,27 @@ public static class InitialSeeder
 
         if (frCountry == null)
         {
-            var tmp = country.CreateAsync(new D.Country
+            var tmp = country.CreateAsync(new()
             {
                 CodeAlpha2 = countryFrCodeAlpha2,
                 CodeAlpha3 = countryFrCodeAlpha3,
                 Name = countryFrName,
-                Audit = new (),
-                Active = new D.Active
+                Audit = new(),
+                Active = new()
                 {
-                    From = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    From = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             }, ct).Result.Data;
 
             if (tmp == null)
             {
-                throw new Exception($"Error while creating {countryFrName}");
+                throw new($"Error while creating {countryFrName}");
             }
 
             frCountry = tmp;
         }
 
-        R.Member member = new R.Member(dbContext);
+        H.Member member = new(scope.ServiceProvider.GetRequiredService<R.IMember>());
 
         const string adminName = "admin";
         const string adminEmail = "admin@local";
@@ -53,9 +53,9 @@ public static class InitialSeeder
 
         if (adminMember == null)
         {
-            adminMember = member.CreateAsync(new D.Member
+            adminMember = member.CreateAsync(new()
             {
-                Addr = new D.Address
+                Addr = new()
                 {
                     Line1 = adminName,
                     PostalCode = adminName,
@@ -65,13 +65,78 @@ public static class InitialSeeder
                 Name = adminName,
                 Email = adminEmail,
                 HashedPassword = Encryptor.Hash(adminPassword),
-                Audit = new (),
-                Active = new D.Active
+                Audit = new(),
+                Active = new()
                 {
-                    From = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    From = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
-
             }, ct).Result.Data;
+        }
+
+        H.Group group = new(scope.ServiceProvider.GetRequiredService<R.IGroup>());
+        H.GroupMember groupMember = new(scope.ServiceProvider.GetRequiredService<R.IGroupMember>());
+
+        const string groupAdminCode = "Admin";
+        const string groupAdminName = "Administrateur";
+
+        var adminGroup = group.SearchByCodeAsync(groupAdminCode, ct).Result.Data;
+
+        if (adminGroup == null)
+        {
+            adminGroup = group.CreateAsync(new()
+            {
+                Code = groupAdminCode,
+                Name = groupAdminName,
+                Audit = new(),
+                Active = new()
+                {
+                    From = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            }, ct).Result.Data;
+
+            await groupMember.CreateAsync(new ()
+            {
+                GroupId = adminGroup!.Id,
+                MemberId = adminMember!.Id,
+                Audit = new(),
+                Active = new()
+                {
+                    From = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            }, ct);
+        }
+
+        H.Role role = new(scope.ServiceProvider.GetRequiredService<R.IRole>());
+        H.GroupRole groupRole = new(scope.ServiceProvider.GetRequiredService<R.IGroupRole>());
+
+        foreach (var permission in Permissions.All)
+        {
+            var permissionRole = role.SearchByCodeAsync(permission, ct).Result.Data;
+
+            if (permissionRole == null)
+            {
+                permissionRole = role.CreateAsync(new()
+                {
+                    Code = permission,
+                    Name = permission,
+                    Audit = new(),
+                    Active = new()
+                    {
+                        From = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    }
+                }, ct).Result.Data;
+
+                await groupRole.CreateAsync(new ()
+                {
+                    GroupId = adminGroup!.Id,
+                    RoleId = permissionRole!.Id,
+                    Audit = new(),
+                    Active = new()
+                    {
+                        From = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    }                    
+                }, ct);
+            }
         }
     }
 }

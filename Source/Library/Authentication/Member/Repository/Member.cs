@@ -148,7 +148,6 @@ public sealed class Member : IMember
         };
     }
 
-
     public async Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct)
     {
         var entity = await _dbContext.Members
@@ -159,7 +158,6 @@ public sealed class Member : IMember
             Data = entity?.EntityToDomain()
         };
     }
-
 
     public async Task<bool> ValidateUserAsync(string email, string password, CancellationToken ct)
     {

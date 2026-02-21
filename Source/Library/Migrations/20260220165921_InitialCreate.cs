@@ -60,6 +60,27 @@ namespace Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Group",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Picture = table.Column<string>(type: "text", nullable: true),
+                    RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Group", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Holiday",
                 schema: "Organization",
                 columns: table => new
@@ -97,6 +118,25 @@ namespace Library.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Organization", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Role",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Role", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -150,42 +190,6 @@ namespace Library.Migrations
                     table.PrimaryKey("PK_Member", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Member_Country_Addr_CountryId",
-                        column: x => x.Addr_CountryId,
-                        principalSchema: "Authentication",
-                        principalTable: "Country",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Role",
-                schema: "Authentication",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Picture = table.Column<string>(type: "text", nullable: true),
-                    RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
-                    Birthdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
-                    Addr_Line1 = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Addr_Line2 = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Addr_Line3 = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Addr_City = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Addr_PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    Addr_CountryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Role", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Role_Country_Addr_CountryId",
                         column: x => x.Addr_CountryId,
                         principalSchema: "Authentication",
                         principalTable: "Country",
@@ -286,6 +290,39 @@ namespace Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GroupRole",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupRole", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GroupRole_Group_GroupId",
+                        column: x => x.GroupId,
+                        principalSchema: "Authentication",
+                        principalTable: "Group",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupRole_Role_RoleId",
+                        column: x => x.RoleId,
+                        principalSchema: "Authentication",
+                        principalTable: "Role",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ChatMember",
                 schema: "Chat",
                 columns: table => new
@@ -374,6 +411,39 @@ namespace Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GroupMember",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupMember", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GroupMember_Group_GroupId",
+                        column: x => x.GroupId,
+                        principalSchema: "Authentication",
+                        principalTable: "Group",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupMember_Member_MemberId",
+                        column: x => x.MemberId,
+                        principalSchema: "Authentication",
+                        principalTable: "Member",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Note",
                 schema: "Organization",
                 columns: table => new
@@ -395,6 +465,39 @@ namespace Library.Migrations
                         column: x => x.MemberId,
                         principalSchema: "Authentication",
                         principalTable: "Member",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RoleMember",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoleMember", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RoleMember_Member_MemberId",
+                        column: x => x.MemberId,
+                        principalSchema: "Authentication",
+                        principalTable: "Member",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RoleMember_Role_RoleId",
+                        column: x => x.RoleId,
+                        principalSchema: "Authentication",
+                        principalTable: "Role",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1009,6 +1112,37 @@ namespace Library.Migrations
                 column: "MemberId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Group_Code",
+                schema: "Authentication",
+                table: "Group",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupMember_GroupId",
+                schema: "Authentication",
+                table: "GroupMember",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupMember_MemberId",
+                schema: "Authentication",
+                table: "GroupMember",
+                column: "MemberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupRole_GroupId",
+                schema: "Authentication",
+                table: "GroupRole",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupRole_RoleId",
+                schema: "Authentication",
+                table: "GroupRole",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Member_Addr_CountryId",
                 schema: "Authentication",
                 table: "Member",
@@ -1089,10 +1223,23 @@ namespace Library.Migrations
                 column: "ProjectSlotId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Role_Addr_CountryId",
+                name: "IX_Role_Code",
                 schema: "Authentication",
                 table: "Role",
-                column: "Addr_CountryId");
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RoleMember_MemberId",
+                schema: "Authentication",
+                table: "RoleMember",
+                column: "MemberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RoleMember_RoleId",
+                schema: "Authentication",
+                table: "RoleMember",
+                column: "RoleId");
         }
 
         /// <inheritdoc />
@@ -1131,6 +1278,14 @@ namespace Library.Migrations
                 schema: "Organization");
 
             migrationBuilder.DropTable(
+                name: "GroupMember",
+                schema: "Authentication");
+
+            migrationBuilder.DropTable(
+                name: "GroupRole",
+                schema: "Authentication");
+
+            migrationBuilder.DropTable(
                 name: "Holiday",
                 schema: "Organization");
 
@@ -1147,7 +1302,7 @@ namespace Library.Migrations
                 schema: "Organization");
 
             migrationBuilder.DropTable(
-                name: "Role",
+                name: "RoleMember",
                 schema: "Authentication");
 
             migrationBuilder.DropTable(
@@ -1167,12 +1322,20 @@ namespace Library.Migrations
                 schema: "Organization");
 
             migrationBuilder.DropTable(
+                name: "Group",
+                schema: "Authentication");
+
+            migrationBuilder.DropTable(
                 name: "Note",
                 schema: "Organization");
 
             migrationBuilder.DropTable(
                 name: "ProjectSlot",
                 schema: "Organization");
+
+            migrationBuilder.DropTable(
+                name: "Role",
+                schema: "Authentication");
 
             migrationBuilder.DropTable(
                 name: "ActivitySession",

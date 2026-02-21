@@ -80,4 +80,26 @@ public sealed class Role : IRole
             TotalCount = await _dbContext.Members.CountAsync(ct)
         };
     }
+
+    public async Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
+    {
+        var entity = await _dbContext.Roles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Code.ToUpper() == code.ToUpper(), ct);
+        return new RepositoryResponse<Domain.Role>()
+        {
+            Data = entity?.EntityToDomain()
+        };
+    }
+
+    public async Task<RepositoryResponse<Domain.Role>> SearchByNameAsync(string name, CancellationToken ct)
+    {
+        var entity = await _dbContext.Roles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Name.ToUpper() == name.ToUpper(), ct);
+        return new RepositoryResponse<Domain.Role>()
+        {
+            Data = entity?.EntityToDomain()
+        };
+    }
 }

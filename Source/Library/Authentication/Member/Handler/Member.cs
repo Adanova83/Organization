@@ -11,7 +11,7 @@ public sealed class Member
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Member domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Member>> CreateAsync(Domain.Member domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -68,6 +68,16 @@ public sealed class Member
         }
 
         return _repository.SearchAsync(id, ct);
+    }
+
+    public Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct)
+    {
+        if (email == null)
+        {
+            throw new ArgumentException("Email must not be empty for search.", nameof(email));
+        }
+
+        return _repository.SearchByEmailAsync(email, ct);
     }
 
     public Task<RepositoryResponseRange<Domain.Member>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
