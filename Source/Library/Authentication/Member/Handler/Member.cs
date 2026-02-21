@@ -11,7 +11,7 @@ public sealed class Member
         _repository = repository;
     }
 
-    public Task<RepositoryResponse<Domain.Member>> CreateAsync(Domain.Member domain, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Member>> CreateAsync(Domain.Member domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -25,10 +25,10 @@ public sealed class Member
 
         ValidateDomainRules(domain);
 
-        return _repository.CreateAsync(domain, ct);
+        return await _repository.CreateAsync(domain, ct);
     }
 
-    public Task DeleteAsync(Domain.Member domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Member domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -40,10 +40,10 @@ public sealed class Member
             throw new ArgumentException("ID must not be empty for deletion.", nameof(domain.Id));
         }
 
-        return _repository.DeleteAsync(domain, ct);
+        await _repository.DeleteAsync(domain, ct);
     }
 
-    public Task EditAsync(Domain.Member domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Member domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -57,30 +57,40 @@ public sealed class Member
 
         ValidateDomainRules(domain);
 
-        return _repository.EditAsync(domain, ct);
+        await _repository.EditAsync(domain, ct);
     }
 
-    public Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)
+    public async Task<RepositoryResponseRange<Domain.Role>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("ID must not be empty for search.", nameof(id));
         }
 
-        return _repository.SearchAsync(id, ct);
+        return await _repository.FetchRolesOfMemberAsync(id, ct);
     }
 
-    public Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("ID must not be empty for search.", nameof(id));
+        }
+
+        return await _repository.SearchAsync(id, ct);
+    }
+
+    public async Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct)
     {
         if (email == null)
         {
             throw new ArgumentException("Email must not be empty for search.", nameof(email));
         }
 
-        return _repository.SearchByEmailAsync(email, ct);
+        return await _repository.SearchByEmailAsync(email, ct);
     }
 
-    public Task<RepositoryResponseRange<Domain.Member>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
+    public async Task<RepositoryResponseRange<Domain.Member>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
         if (page < 0)
         {
@@ -92,7 +102,20 @@ public sealed class Member
             throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater or equal than 0.");
         }
 
-        return _repository.SearchAsync(query, page, pageSize, ct);
+        return await _repository.SearchAsync(query, page, pageSize, ct);
+    }
+
+    public async Task<RepositoryResponse<Domain.Member>> ValidateUserAsync(string email, string password, CancellationToken ct)
+    {
+        if (email == null)
+        {
+            throw new ArgumentException("Email is required.", nameof(email));
+        }
+        if (password == null)
+        {
+            throw new ArgumentException("Password is required.", nameof(password));
+        }
+        return await _repository.ValidateUserAsync(email, password, ct);
     }
 
     private void ValidateDomainRules(Domain.Member domain)

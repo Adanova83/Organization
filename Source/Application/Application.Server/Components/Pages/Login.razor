@@ -1,5 +1,48 @@
-﻿<h3>Login</h3>
+﻿@page "/Login"
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using ASA = Application.Server.Authentication
+@inject NavigationManager Navigation
+@inject ASA.CustomAuthStateProvider AuthenticationService
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+<EditForm Model="model" OnValidSubmit="HandleLogin" FormName="loginForm">
+    <DataAnnotationsValidator />
+    <InputText @bind-Value="model.Email" placeholder="Email" />
+    <InputText @bind-Value="model.Password" type="password" placeholder="Mot de passe" />
+    <button type="submit">Se connecter</button>
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p class="error">@errorMessage</p>
+    }
+</EditForm>
 
 @code {
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
 
+    private LoginModel model = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            string? token = await AuthenticationService.LoginAsync(model.Email, model.Password);
+            string? returnUrl = Uri.EscapeDataString(ReturnUrl ?? "/");
+            Navigation.NavigateTo(uri: $"/auth/signin?token={token}&returnUrl={returnUrl}", forceLoad: true);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private class LoginModel
+    {
+        [Required] public string Email { get; set; } = "";
+        [Required] public string Password { get; set; } = "";
+    }
 }

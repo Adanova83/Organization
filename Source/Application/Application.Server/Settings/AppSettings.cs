@@ -11,7 +11,9 @@ public static class AppSettings
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    public static string GetAdanovaConnectionString() => GetConnectionString("Adanova");
+    public static string GetAdanovaConnectionString() => GetConnectionString("Adanova")
+        .Replace("${DB_USER}", Environment.GetEnvironmentVariable("DB_USER"))
+        .Replace("${DB_PASSWORD}", Environment.GetEnvironmentVariable("DB_PASSWORD"));
 
     public static S.SmtpSetting GetSetting() => GetSection<S.SmtpSetting>("Settings:Smtp");
 

@@ -81,11 +81,11 @@ public sealed class Role : IRole
         };
     }
 
-    public async Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string type, string value, CancellationToken ct)
     {
         var entity = await _dbContext.Roles
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Type.ToUpper() == code.ToUpper(), ct);
+            .FirstOrDefaultAsync(item => item.Type.ToUpper() == type.ToUpper() && item.Value.ToUpper() == value.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {
             Data = entity?.EntityToDomain()

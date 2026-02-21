@@ -109,15 +109,17 @@ public static class InitialSeeder
         H.Role role = new(scope.ServiceProvider.GetRequiredService<R.IRole>());
         H.GroupRole groupRole = new(scope.ServiceProvider.GetRequiredService<R.IGroupRole>());
 
+        const string permissionCode = "permission";
+
         foreach (var permission in Permissions.All)
         {
-            var permissionRole = role.SearchByCodeAsync(permission, ct).Result.Data;
+            var permissionRole = role.SearchByCodeAsync(permissionCode, permission, ct).Result.Data;
 
             if (permissionRole == null)
             {
                 permissionRole = role.CreateAsync(new()
                 {
-                    Type = "permission",
+                    Type = permissionCode,
                     Value = permission,
                     Audit = new(),
                     Active = new()

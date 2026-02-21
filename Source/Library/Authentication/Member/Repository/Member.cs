@@ -106,6 +106,47 @@ public sealed class Member : IMember
         return result;
     }
 
+    public async Task<RepositoryResponseRange<Domain.Role>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
+    {
+        IQueryable<Entity.Role> q = _dbContext.RoleMembers
+            .AsNoTracking()
+            .Where(item => item.MemberId == id)
+            .Join(_dbContext.Roles,
+                mr => mr.RoleId,
+                r => r.Id,
+                (mr, r) => new {mr, r})
+            .Select(item => item.r);
+
+        var entities = await q
+            .ToListAsync(ct);
+
+        q = _dbContext.GroupMembers
+            .AsNoTracking()
+            .Where(item => item.MemberId == id)
+            .Join(_dbContext.GroupRoles,
+                gm => gm.GroupId,
+                gr => gr.GroupId,
+                (gm, gr) => new {gm, gr})
+            .Select(item => item.gr)
+            .Join(_dbContext.Roles,
+                gr => gr.RoleId,
+                r => r.Id,
+                (gr, r) => new {gr, r})
+            .Select(item => item.r);
+
+        entities.AddRange(await q.ToListAsync(ct));
+
+        return new RepositoryResponseRange<Domain.Role>()
+        {
+            Data = entities.Distinct()
+             .Select(Mapper.Role.EntityToDomain)
+             .ToList(),
+            FilteredCount = entities.Count,
+            TotalCount = await _dbContext.Roles.CountAsync(ct)
+        };
+    }
+
+
     public async Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Members
@@ -159,7 +200,7 @@ public sealed class Member : IMember
         };
     }
 
-    public async Task<bool> ValidateUserAsync(string email, string password, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Member>> ValidateUserAsync(string email, string password, CancellationToken ct)
     {
         bool result = true;
 
@@ -176,6 +217,9 @@ public sealed class Member : IMember
             }
             result = Encryptor.Verify(password, member.HashedPassword);
         }
-        return result;
+        return new RepositoryResponse<Domain.Member>()
+        {
+            Data = result ? member?.EntityToDomain() : null
+        };
     }
 }

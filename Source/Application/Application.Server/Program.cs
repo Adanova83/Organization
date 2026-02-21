@@ -1,7 +1,12 @@
 using Application.Server.Components;
 using Application.Server.Initializer;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using A = Application.Server.Authentication;
 using D = Library.Data;
 using H = Library.Handler;
 using R = Library.Repository;
@@ -16,6 +21,9 @@ public class Program
 
         // Loading application settings
         AppSettings.Initialize(builder.Configuration);
+
+        // Add HttpContext services
+        builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         // Configure OrganizationDbContext with PostgreSQL
         var connectionString = AppSettings.GetAdanovaConnectionString();
@@ -39,7 +47,7 @@ public class Program
                 }
                 )
                 .EnableDetailedErrors()
-                .LogTo(Console.WriteLine, LogLevel.Warning)
+            //                .LogTo(Console.WriteLine, LogLevel.Warning)
             );
 
         // Add authentication to the services
@@ -47,7 +55,18 @@ public class Program
             .AddCookie("Cookies", options =>
             {
                 options.LoginPath = "/Login";
+                options.LogoutPath = "/Logout";
                 options.AccessDeniedPath = "/Forbidden";
+            });
+
+        const string permissionCode = "permission";
+
+        builder.Services.AddAuthorization(options =>
+            {
+                foreach (var permission in Permissions.All)
+                {
+                    options.AddPolicy(permission, policy => policy.RequireClaim(permissionCode, permission));
+                }
             });
 
         // Add Database Respositories
@@ -122,12 +141,29 @@ public class Program
         builder.Services.AddScoped<H.RoleMember>();
         builder.Services.AddScoped<H.Space>();
 
+        // Add authentication services
+        builder.Services.AddAuthenticationCore();
+        builder.Services.AddScoped<A.CustomAuthStateProvider>();
+        builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<A.CustomAuthStateProvider>());
+        builder.Services.AddScoped<A.IAuthenticationService, A.AuthenticationService>();
+
+        // Add pending authentication singleton
+        builder.Services.AddSingleton<A.PendingAuthSession>();
+
+        // Add Http context service
+        builder.Services.AddHttpContextAccessor();
+
         // Add MudBlazor services
         builder.Services.AddMudServices();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
+
+        // Persister les clés de protection des données
+        builder.Services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dataprotection-keys"))
+            .SetApplicationName("Application.Server");
 
         var app = builder.Build();
 
@@ -194,10 +230,28 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseStaticFiles();
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.UseAntiforgery();
 
         app.MapRazorComponents<App>()
-            .AddInteractiveServerRenderMode();
+        .AddInteractiveServerRenderMode();
+
+        // Add api for authentication
+        app.MapGet("/auth/signin", async (HttpContext ctx, string token, string returnUrl, A.PendingAuthSession pending) =>
+        {
+            var principal = pending.Retrieve(token);
+            if (principal == null)
+                return Results.Redirect("/Login");
+
+            await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
+                new AuthenticationProperties { IsPersistent = true });
+
+            return Results.Redirect(returnUrl ?? "/");
+        });
 
         app.Run();
     }

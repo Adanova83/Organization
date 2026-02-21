@@ -1,0 +1,16 @@
+﻿@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        try
+        {
+            Navigation.NavigateTo(uri: "/Login", forceLoad: true);
+        }
+        catch (NavigationException)
+        {
+            // Normal en Blazor Server - NavigationException est levée intentionnellement
+            // lors d'un forceLoad pour interrompre le rendu en cours
+        }
+    }
+}

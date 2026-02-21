@@ -70,14 +70,18 @@ public sealed class Role
         return _repository.SearchAsync(id, ct);
     }
 
-    public Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string type, string value, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(code))
+        if (string.IsNullOrWhiteSpace(type))
         {
-            throw new ArgumentException("Code must not be empty for search.", nameof(code));
+            throw new ArgumentException("Type must not be empty for search.", nameof(type));
+        }
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("Value must not be empty for search.", nameof(value));
         }
 
-        return _repository.SearchByCodeAsync(code, ct);
+        return _repository.SearchByCodeAsync(type, value, ct);
     }
 
     public Task<RepositoryResponse<Domain.Role>> SearchByNameAsync(string name, CancellationToken ct)

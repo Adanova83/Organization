@@ -1,5 +1,7 @@
-﻿@page "/counter"
+﻿@page "/Counter"
 @rendermode InteractiveServer
+
+@attribute [Authorize(Policy = "application.read")]
 
 <PageTitle>Counter</PageTitle>
 
