@@ -28,11 +28,12 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: true),
                     IsGroup = table.Column<bool>(type: "boolean", nullable: false),
+                    IsPublic = table.Column<bool>(type: "boolean", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -48,11 +49,11 @@ namespace Library.Migrations
                     CodeAlpha2 = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     CodeAlpha3 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -69,11 +70,11 @@ namespace Library.Migrations
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Picture = table.Column<string>(type: "text", nullable: true),
                     RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -89,11 +90,11 @@ namespace Library.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -109,11 +110,11 @@ namespace Library.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Picture = table.Column<string>(type: "text", nullable: true),
                     RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -126,13 +127,13 @@ namespace Library.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Value = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -148,11 +149,11 @@ namespace Library.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Picture = table.Column<string>(type: "text", nullable: true),
                     RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -179,11 +180,11 @@ namespace Library.Migrations
                     Addr_City = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Addr_PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Addr_CountryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -210,11 +211,11 @@ namespace Library.Migrations
                     RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     AgeMinimum = table.Column<int>(type: "integer", nullable: false),
                     OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -238,11 +239,11 @@ namespace Library.Migrations
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Price = table.Column<float>(type: "real", nullable: false),
                     OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -271,11 +272,11 @@ namespace Library.Migrations
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -297,11 +298,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -331,11 +332,11 @@ namespace Library.Migrations
                     IsAdmin = table.Column<bool>(type: "boolean", nullable: false),
                     ChatId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -365,16 +366,24 @@ namespace Library.Migrations
                     Title = table.Column<string>(type: "text", nullable: true),
                     Body = table.Column<string>(type: "text", nullable: false),
                     SendDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ChatId = table.Column<Guid>(type: "uuid", nullable: false),
                     SenderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChatMessage", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatMessage_Chat_ChatId",
+                        column: x => x.ChatId,
+                        principalSchema: "Chat",
+                        principalTable: "Chat",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ChatMessage_Member_SenderId",
                         column: x => x.SenderId,
@@ -392,11 +401,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -418,11 +427,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -453,6 +462,8 @@ namespace Library.Migrations
                     Body = table.Column<string>(type: "text", nullable: false),
                     RGBBackgroundColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -477,11 +488,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     RoleId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -513,11 +524,11 @@ namespace Library.Migrations
                     Price = table.Column<float>(type: "real", nullable: false),
                     ActivityId = table.Column<Guid>(type: "uuid", nullable: false),
                     OrganizationSessionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -547,11 +558,11 @@ namespace Library.Migrations
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
                     OrganizationSessionId = table.Column<Guid>(type: "uuid", nullable: false),
                     PayedDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -588,11 +599,11 @@ namespace Library.Migrations
                     AgeMinimum = table.Column<int>(type: "integer", nullable: true),
                     OrganizationSessionId = table.Column<Guid>(type: "uuid", nullable: false),
                     SpaceId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -623,11 +634,11 @@ namespace Library.Migrations
                     EndTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
                     ProjectId = table.Column<Guid>(type: "uuid", nullable: false),
                     SpaceId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -657,11 +668,11 @@ namespace Library.Migrations
                     ReadDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ChatMessageId = table.Column<Guid>(type: "uuid", nullable: false),
                     RecipentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -691,6 +702,8 @@ namespace Library.Migrations
                     NoteId = table.Column<Guid>(type: "uuid", nullable: false),
                     LinkedType = table.Column<string>(type: "text", nullable: false),
                     LinkedId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -719,11 +732,11 @@ namespace Library.Migrations
                     Frequency = table.Column<int>(type: "integer", nullable: false),
                     SessionId = table.Column<Guid>(type: "uuid", nullable: false),
                     SpaceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -753,11 +766,11 @@ namespace Library.Migrations
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
                     Order = table.Column<int>(type: "integer", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -786,11 +799,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -820,11 +833,11 @@ namespace Library.Migrations
                     ProjectSlotId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
                     Order = table.Column<int>(type: "integer", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -853,11 +866,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ProjectSlotId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -887,11 +900,11 @@ namespace Library.Migrations
                     SessionSlotId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
                     Order = table.Column<int>(type: "integer", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -920,11 +933,11 @@ namespace Library.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SessionSlotId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Audit_CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Audit_LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Active_From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Active_Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Audit_DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1017,6 +1030,12 @@ namespace Library.Migrations
                 schema: "Chat",
                 table: "ChatMember",
                 column: "MemberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_ChatId",
+                schema: "Chat",
+                table: "ChatMessage",
+                column: "ChatId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatMessage_SenderId",
@@ -1223,10 +1242,10 @@ namespace Library.Migrations
                 column: "ProjectSlotId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Role_Code",
+                name: "IX_Role_Value",
                 schema: "Authentication",
                 table: "Role",
-                column: "Code",
+                column: "Value",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1310,10 +1329,6 @@ namespace Library.Migrations
                 schema: "Organization");
 
             migrationBuilder.DropTable(
-                name: "Chat",
-                schema: "Chat");
-
-            migrationBuilder.DropTable(
                 name: "ChatMessage",
                 schema: "Chat");
 
@@ -1340,6 +1355,10 @@ namespace Library.Migrations
             migrationBuilder.DropTable(
                 name: "ActivitySession",
                 schema: "Organization");
+
+            migrationBuilder.DropTable(
+                name: "Chat",
+                schema: "Chat");
 
             migrationBuilder.DropTable(
                 name: "Member",

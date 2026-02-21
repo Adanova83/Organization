@@ -9,6 +9,4 @@ internal class Document : PrimaryKey
     [Required] public string Title { get; set; } = default!;
     [Required] public Guid MemberId { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

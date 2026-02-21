@@ -12,5 +12,4 @@ public class Event : PrimaryKey
     public int? AgeMinimum { get; set; } = null;
     public Guid OrganizationSessionId { get; set; }
     public Guid? SpaceId { get; set; }
-    public Active Active { get; set; } = default!;
 }

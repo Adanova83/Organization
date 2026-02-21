@@ -11,8 +11,8 @@ public static class Role
         return new Ct.Role
         {
             Id = source.Id,
-            Code = source.Code,
-            Name = source.Name,
+            Type = source.Type,
+            Value = source.Value,
             Audit = source.Audit.DomainToContract(),
             Active = source.Active.DomainToContract()
         };
@@ -23,8 +23,8 @@ public static class Role
         return new En.Role
         {
             Id = source.Id,
-            Code = source.Code,
-            Name = source.Name,
+            Type = source.Type,
+            Value = source.Value,
             Audit = source.Audit.DomainToEntity(),
             Active = source.Active.DomainToEntity()
         };
@@ -35,8 +35,8 @@ public static class Role
         return new Do.Role
         {
             Id = source.Id,
-            Code = source.Code,
-            Name = source.Name,
+            Type = source.Type,
+            Value = source.Value,
             Audit = source.Audit.EntityToDomain(),
             Active = source.Active.EntityToDomain()
         };

@@ -57,11 +57,11 @@ public sealed class Role : IRole
         {
             var pattern = $"%{query}";
             q = q.Where(item =>
-                EF.Functions.ILike(item.Name, pattern)
+                EF.Functions.ILike(item.Value, pattern)
             );
         }
 
-        q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"));
+        q = q.OrderBy(item => EF.Functions.Collate(item.Value, "C"));
 
         if (page > 0 && pageSize > 0)
         {
@@ -85,7 +85,7 @@ public sealed class Role : IRole
     {
         var entity = await _dbContext.Roles
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Code.ToUpper() == code.ToUpper(), ct);
+            .FirstOrDefaultAsync(item => item.Type.ToUpper() == code.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {
             Data = entity?.EntityToDomain()
@@ -96,7 +96,7 @@ public sealed class Role : IRole
     {
         var entity = await _dbContext.Roles
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Name.ToUpper() == name.ToUpper(), ct);
+            .FirstOrDefaultAsync(item => item.Value.ToUpper() == name.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {
             Data = entity?.EntityToDomain()

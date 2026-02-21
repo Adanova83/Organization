@@ -9,8 +9,8 @@ internal class ChatMessage : PrimaryKey
     public string? Title { get; set; }
     [Required] public string Body { get; set; } = default!;
     [Required] public DateTime SendDate { get; set; }
+    [Required] public Guid ChatId { get; set; }
+    [ForeignKey(nameof(ChatId))] public Chat Chat { get; set; } = default!;
     [Required] public Guid SenderId { get; set; }
     [ForeignKey(nameof(SenderId))] public Member Sender { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

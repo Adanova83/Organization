@@ -14,6 +14,7 @@ public static class ChatMessage
             Title = source.Title,
             Body = source.Body,
             SendDate = source.SendDate,
+            ChatId = source.ChatId,
             SenderId = source.SenderId,
             Active = source.Active.DomainToContract()
         };
@@ -27,6 +28,7 @@ public static class ChatMessage
             Title = source.Title,
             Body = source.Body,
             SendDate = source.SendDate,
+            ChatId = source.ChatId,
             SenderId = source.SenderId,
             Active = source.Active.DomainToEntity()
         };
@@ -40,6 +42,7 @@ public static class ChatMessage
             Title = source.Title,
             Body = source.Body,
             SendDate = source.SendDate,
+            ChatId = source.ChatId,
             SenderId = source.SenderId,
             Active = source.Active.EntityToDomain()
         };

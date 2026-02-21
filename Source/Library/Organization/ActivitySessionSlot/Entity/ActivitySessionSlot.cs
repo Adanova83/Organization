@@ -14,6 +14,4 @@ internal class ActivitySessionSlot : PrimaryKey
     [ForeignKey(nameof(SessionId))] public ActivitySession Session { get; set; } = default!;
     [Required] public Guid? SpaceId { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

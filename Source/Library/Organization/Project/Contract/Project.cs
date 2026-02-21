@@ -9,5 +9,4 @@ public class Project : PrimaryKey
     public string RGBColor { get; set; } = "FFFFFFFF";
     public int AgeMinimum { get; set; } = 0;
     public Guid OrganizationId { get; set; }
-    public Active Active { get; set; } = default!;
 }

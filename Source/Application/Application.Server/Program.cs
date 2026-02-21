@@ -24,6 +24,7 @@ public class Program
             throw new InvalidOperationException("Connection string 'Adanova' not found.");
         }
 
+        // Add Database to the services
         builder.Services.AddDbContext<D.FullDbContext>(options =>
             options.UseNpgsql(
                 connectionString,
@@ -41,20 +42,12 @@ public class Program
                 .LogTo(Console.WriteLine, LogLevel.Warning)
             );
 
+        // Add authentication to the services
         builder.Services.AddAuthentication("Cookies")
             .AddCookie("Cookies", options =>
             {
                 options.LoginPath = "/Login";
                 options.AccessDeniedPath = "/Forbidden";
-            });
-
-        builder.Services.AddAuthorization(options =>
-            {
-                options.AddPolicy("organization.read",
-                    policy => policy.RequireClaim("permission", "users.read"));
-
-                options.AddPolicy("organization.write",
-                    policy => policy.RequireClaim("permission", "users.write"));
             });
 
         // Add Database Respositories

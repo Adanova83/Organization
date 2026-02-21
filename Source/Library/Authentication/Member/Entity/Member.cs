@@ -17,7 +17,5 @@ public class Member : PrimaryKey
     public Guid? AskedNewPassword { get; set; }
     public string? PhoneNumber { get; set; }
     [Required] public Address Addr { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }
 

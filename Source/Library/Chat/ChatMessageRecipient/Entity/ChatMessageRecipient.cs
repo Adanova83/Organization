@@ -12,6 +12,4 @@ internal class ChatMessageRecipient : PrimaryKey
     [ForeignKey(nameof(ChatMessageId))] public ChatMessage ChatMessage { get; set; } = default!;
     [Required] public Guid RecipentId { get; set; }
     [ForeignKey(nameof(RecipentId))] public Member Recipent { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

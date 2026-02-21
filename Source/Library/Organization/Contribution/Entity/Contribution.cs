@@ -11,6 +11,4 @@ internal class Contribution : PrimaryKey
     [Required] public Guid OrganizationSessionId { get; set; }
     [ForeignKey(nameof(OrganizationSessionId))] public OrganizationSession OrganizationSession { get; set; } = default!;
     public DateOnly PayedDate { get; set; }
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

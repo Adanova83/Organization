@@ -92,13 +92,13 @@ public sealed class Role
 
     private void ValidateDomainRules(Domain.Role domain)
     {
-        if (string.IsNullOrWhiteSpace(domain.Code))
+        if (string.IsNullOrWhiteSpace(domain.Type))
         {
-            throw new ArgumentException("Code is required.", nameof(domain.Code));
+            throw new ArgumentException("Code is required.", nameof(domain.Type));
         }
-        if (string.IsNullOrWhiteSpace(domain.Name))
+        if (string.IsNullOrWhiteSpace(domain.Value))
         {
-            throw new ArgumentException("Name is required.", nameof(domain.Name));
+            throw new ArgumentException("Name is required.", nameof(domain.Value));
         }
     }
 }

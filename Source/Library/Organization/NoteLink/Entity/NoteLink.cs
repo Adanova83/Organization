@@ -10,5 +10,4 @@ internal class NoteLink : PrimaryKey
     [ForeignKey(nameof(NoteId))] public Note Note { get; set; } = default!;
     public string LinkedType { get; set; } = default!;
     public Guid LinkedId { get; set; }
-    public Audit Audit { get; set; } = default!;
 }

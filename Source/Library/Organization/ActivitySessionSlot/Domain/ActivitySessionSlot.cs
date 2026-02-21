@@ -7,5 +7,4 @@ public class ActivitySessionSlot : PrimaryKey
     public TimeOnly EndTime { get; set; }
     public Guid SessionId { get; set; }
     public Guid? SpaceId { get; set; }
-    public Active Active { get; set; } = default!;
 }

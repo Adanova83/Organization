@@ -10,6 +10,4 @@ internal class BadgeAssignation : PrimaryKey
     [ForeignKey(nameof(BadgeId))] public Badge Badge { get; set; } = null!;
     [Required] public Guid MemberId { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = null!;
-    public Audit Audit { get; set; } = null!;
-    public Active Active { get; set; } = null!;
 }

@@ -16,6 +16,4 @@ internal class Activity : PrimaryKey
     [Required] public int AgeMinimum { get; set; } = 0;
     [Required] public Guid OrganizationId { get; set; }
     [ForeignKey(nameof(OrganizationId))] public Organization Organization { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

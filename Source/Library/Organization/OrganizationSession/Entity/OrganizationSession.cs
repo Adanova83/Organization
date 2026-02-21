@@ -11,6 +11,4 @@ internal class OrganizationSession : PrimaryKey
     [Required] public float Price { get; set; } = 0.0f;
     [Required] public Guid OrganizationId { get; set; }
     [ForeignKey(nameof(OrganizationId))] public Organization Organization { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

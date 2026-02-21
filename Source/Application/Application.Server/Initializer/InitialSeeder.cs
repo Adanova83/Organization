@@ -117,8 +117,8 @@ public static class InitialSeeder
             {
                 permissionRole = role.CreateAsync(new()
                 {
-                    Code = permission,
-                    Name = permission,
+                    Type = "permission",
+                    Value = permission,
                     Audit = new(),
                     Active = new()
                     {

@@ -7,4 +7,6 @@ namespace Library.Entity;
 public abstract class PrimaryKey
 {
     [Key] public Guid Id { get; set; } = Guid.Empty;
+    public Active Active { get; set; } = default!;
+    public Audit Audit { get; set; } = default!;
 }

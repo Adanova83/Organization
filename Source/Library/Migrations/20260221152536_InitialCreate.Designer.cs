@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Library.Migrations
 {
     [DbContext(typeof(FullDbContext))]
-    [Migration("20260220165921_InitialCreate")]
+    [Migration("20260221152536_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -187,6 +187,9 @@ namespace Library.Migrations
                     b.Property<bool>("IsGroup")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
@@ -229,6 +232,9 @@ namespace Library.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("SendDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -239,6 +245,8 @@ namespace Library.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChatId");
 
                     b.HasIndex("SenderId");
 
@@ -820,19 +828,19 @@ namespace Library.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Code")
+                    b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
+                    b.HasIndex("Value")
                         .IsUnique();
 
                     b.ToTable("Role", "Authentication");
@@ -1323,6 +1331,12 @@ namespace Library.Migrations
 
             modelBuilder.Entity("Library.Entity.ChatMessage", b =>
                 {
+                    b.HasOne("Library.Entity.Chat", "Chat")
+                        .WithMany()
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Library.Entity.Member", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
@@ -1375,6 +1389,8 @@ namespace Library.Migrations
 
                     b.Navigation("Audit")
                         .IsRequired();
+
+                    b.Navigation("Chat");
 
                     b.Navigation("Sender");
                 });
@@ -2157,6 +2173,25 @@ namespace Library.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("NoteId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("NoteId");
+
+                            b1.ToTable("Note", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NoteId");
+                        });
+
                     b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("NoteId")
@@ -2179,6 +2214,9 @@ namespace Library.Migrations
                                 .HasForeignKey("NoteId");
                         });
 
+                    b.Navigation("Active")
+                        .IsRequired();
+
                     b.Navigation("Audit")
                         .IsRequired();
 
@@ -2192,6 +2230,25 @@ namespace Library.Migrations
                         .HasForeignKey("NoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("NoteLinkId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("NoteLinkId");
+
+                            b1.ToTable("NoteLink", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NoteLinkId");
+                        });
 
                     b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
                         {
@@ -2214,6 +2271,9 @@ namespace Library.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("NoteLinkId");
                         });
+
+                    b.Navigation("Active")
+                        .IsRequired();
 
                     b.Navigation("Audit")
                         .IsRequired();

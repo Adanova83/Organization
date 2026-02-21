@@ -7,5 +7,4 @@ public class ProjectSlot : PrimaryKey
     public TimeOnly EndTime { get; set; }
     public Guid ProjectId { get; set; }
     public Guid? SpaceId { get; set; }
-    public Active Active { get; set; } = default!;
 }

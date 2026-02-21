@@ -10,6 +10,4 @@ public class GroupMember : PrimaryKey
     [ForeignKey(nameof(GroupId))] public Group Group { get; set; } = default!;
     [Required] public Guid MemberId { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
-    public Audit Audit { get; set; } = default!;
-    public Active Active { get; set; } = default!;
 }

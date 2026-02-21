@@ -6,5 +6,4 @@ public class OrganizationSession : PrimaryKey
     public DateTime EndDate { get; set; }
     public float Price { get; set; } = 0.0f;
     public Guid OrganizationId { get; set; }
-    public Active Active { get; set; } = default!;
 }
