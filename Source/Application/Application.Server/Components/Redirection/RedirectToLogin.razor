@@ -1,16 +1,15 @@
-﻿@inject NavigationManager Navigation
+﻿@using ASA = Application.Server.Authentication
+@inject NavigationManager Navigation
+@inject ASA.PendingReturnUrl PendingReturnUrl
 
 @code {
     protected override void OnInitialized()
     {
-        try
-        {
-            Navigation.NavigateTo(uri: "/Login", forceLoad: true);
-        }
-        catch (NavigationException)
-        {
-            // Normal en Blazor Server - NavigationException est levée intentionnellement
-            // lors d'un forceLoad pour interrompre le rendu en cours
-        }
+        var uri = new Uri(Navigation.Uri);
+        if (uri.AbsolutePath.Equals("/Login", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        PendingReturnUrl.Value = uri.PathAndQuery;
+        Navigation.NavigateTo("/Login");
     }
 }

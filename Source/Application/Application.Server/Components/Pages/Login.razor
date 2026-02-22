@@ -1,48 +1,57 @@
 ﻿@page "/Login"
-@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Authentication
+@using Application.Server.Components.Dialog
+@using Application.Server.Components.Layout
 @using ASA = Application.Server.Authentication
+@inject IDialogService DialogService
 @inject NavigationManager Navigation
-@inject ASA.CustomAuthStateProvider AuthenticationService
+@inject ASA.PendingReturnUrl PendingReturnUrl
+
 @attribute [AllowAnonymous]
+@layout MainLayout
 @rendermode InteractiveServer
 
-<EditForm Model="model" OnValidSubmit="HandleLogin" FormName="loginForm">
-    <DataAnnotationsValidator />
-    <InputText @bind-Value="model.Email" placeholder="Email" />
-    <InputText @bind-Value="model.Password" type="password" placeholder="Mot de passe" />
-    <button type="submit">Se connecter</button>
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <p class="error">@errorMessage</p>
-    }
-</EditForm>
+<LoginPageInit />
+
+<style>
+    .blur-background { backdrop-filter: blur(10px); }
+</style>
 
 @code {
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
+    private bool _dialogOpened = false;
 
-    private LoginModel model = new();
-    private string? errorMessage;
-
-    private async Task HandleLogin()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_dialogOpened) return;
+        _dialogOpened = true;
+
+        var returnUrl = PendingReturnUrl.Value ?? "/";
+        PendingReturnUrl.Value = null; // Vider après lecture
+        Console.WriteLine($"ReturnUrl final = {returnUrl}");
+
+        await Task.Delay(300);
+
+        var parameters = new DialogParameters
+        {
+            { nameof(LoginDialog.ReturnUrl), returnUrl }
+        };
+
+        DialogOptions options = new()
+        {
+            BackgroundClass = "blur-background",
+            CloseOnEscapeKey = false,
+            BackdropClick = false
+        };
+
         try
         {
-            string? token = await AuthenticationService.LoginAsync(model.Email, model.Password);
-            string? returnUrl = Uri.EscapeDataString(ReturnUrl ?? "/");
-            Navigation.NavigateTo(uri: $"/auth/signin?token={token}&returnUrl={returnUrl}", forceLoad: true);
+            var dialog = await DialogService.ShowAsync<LoginDialog>("Connexion", parameters, options);
+            var result = await dialog.Result;
+            if (result is null || result.Canceled)
+                Navigation.NavigateTo("/");
         }
-        catch (UnauthorizedAccessException ex)
+        catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            Console.WriteLine($"ERREUR : {ex.GetType().Name} - {ex.Message}");
         }
-    }
-
-    private class LoginModel
-    {
-        [Required] public string Email { get; set; } = "";
-        [Required] public string Password { get; set; } = "";
     }
 }

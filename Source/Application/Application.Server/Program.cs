@@ -69,6 +69,8 @@ public class Program
                 }
             });
 
+        builder.Services.AddSingleton<A.PendingReturnUrl>();
+
         // Add Database Respositories
         builder.Services.AddScoped<R.IAccessEvent, R.AccessEvent>();
         builder.Services.AddScoped<R.IActivity, R.Activity>();

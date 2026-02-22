@@ -1,0 +1,19 @@
+﻿@using ASA = Application.Server.Authentication
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ASA.PendingReturnUrl PendingReturnUrl
+
+@code {
+    protected override void OnInitialized()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            var returnUrl = httpContext.Request.Query["ReturnUrl"].ToString();
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                PendingReturnUrl.Value = returnUrl;
+                Console.WriteLine($"LoginPageInit - ReturnUrl capturé = {returnUrl}");
+            }
+        }
+    }
+}
