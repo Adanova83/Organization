@@ -17,6 +17,9 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
+        // Loading .env file
+        DotNetEnv.Env.Load();
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Loading application settings

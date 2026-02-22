@@ -12,6 +12,9 @@ public static class AppSettings
     }
 
     public static string GetAdanovaConnectionString() => GetConnectionString("Adanova")
+        .Replace("${DB_HOST}", Environment.GetEnvironmentVariable("DB_HOST"))
+        .Replace("${DB_PORT}", Environment.GetEnvironmentVariable("DB_PORT"))
+        .Replace("${DB_NAME}", Environment.GetEnvironmentVariable("DB_NAME"))
         .Replace("${DB_USER}", Environment.GetEnvironmentVariable("DB_USER"))
         .Replace("${DB_PASSWORD}", Environment.GetEnvironmentVariable("DB_PASSWORD"));
 
