@@ -70,25 +70,21 @@ public sealed class Role
         return _repository.SearchAsync(id, ct);
     }
 
-    public Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string type, string value, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(type))
+        if (string.IsNullOrWhiteSpace(code))
         {
-            throw new ArgumentException("Type must not be empty for search.", nameof(type));
-        }
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ArgumentException("Value must not be empty for search.", nameof(value));
+            throw new ArgumentException("Code must not be empty for search.", nameof(code));
         }
 
-        return _repository.SearchByCodeAsync(type, value, ct);
+        return _repository.SearchByCodeAsync(code, ct);
     }
 
     public Task<RepositoryResponse<Domain.Role>> SearchByNameAsync(string name, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("Name must not be empty for search.", nameof(name));
+            throw new ArgumentException("Code must not be empty for search.", nameof(name));
         }
 
         return _repository.SearchByNameAsync(name, ct);
@@ -96,13 +92,13 @@ public sealed class Role
 
     private void ValidateDomainRules(Domain.Role domain)
     {
-        if (string.IsNullOrWhiteSpace(domain.Type))
+        if (string.IsNullOrWhiteSpace(domain.Code))
         {
-            throw new ArgumentException("Code is required.", nameof(domain.Type));
+            throw new ArgumentException("Code is required.", nameof(domain.Code));
         }
-        if (string.IsNullOrWhiteSpace(domain.Value))
+        if (string.IsNullOrWhiteSpace(domain.Name))
         {
-            throw new ArgumentException("Name is required.", nameof(domain.Value));
+            throw new ArgumentException("Name is required.", nameof(domain.Name));
         }
     }
 }

@@ -106,13 +106,35 @@ public sealed class Member : IMember
         return result;
     }
 
-    public async Task<RepositoryResponseRange<Domain.Role>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
+    public async Task<RepositoryResponseRange<Domain.Role>> FetchGroupsOfMemberAsync(Guid id, CancellationToken ct)
     {
-        IQueryable<Entity.Role> q = _dbContext.RoleMembers
-            .AsNoTracking()
+        IQueryable<Entity.Role> q = _dbContext.GroupMembers
             .Where(item => item.MemberId == id)
-            .Join(_dbContext.Roles,
-                mr => mr.RoleId,
+            .Join(_dbContext.Groups,
+                gm => gm.RoleId,
+                r => r.Id,
+                (gm, r) => new {gm, r})
+            .Select(item => item.r);
+
+        var entities = await q
+            .ToListAsync(ct);
+
+        return new RepositoryResponseRange<Domain.Role>()
+        {
+            Data = entities.Distinct()
+             .Select(Mapper.Role.EntityToDomain)
+             .ToList(),
+            FilteredCount = entities.Count,
+            TotalCount = await _dbContext.Groups.CountAsync(ct)
+        };
+    }
+
+    public async Task<RepositoryResponseRange<Domain.Permission>> FetchPermissionsOfMemberAsync(Guid id, CancellationToken ct)
+    {
+        IQueryable<Entity.Permission> q = _dbContext.PermissionMembers
+            .Where(item => item.MemberId == id)
+            .Join(_dbContext.Permissions,
+                mr => mr.PermissionId,
                 r => r.Id,
                 (mr, r) => new {mr, r})
             .Select(item => item.r);
@@ -121,28 +143,27 @@ public sealed class Member : IMember
             .ToListAsync(ct);
 
         q = _dbContext.GroupMembers
-            .AsNoTracking()
             .Where(item => item.MemberId == id)
-            .Join(_dbContext.GroupRoles,
-                gm => gm.GroupId,
-                gr => gr.GroupId,
+            .Join(_dbContext.GroupPermissions,
+                gm => gm.RoleId,
+                gr => gr.RoleId,
                 (gm, gr) => new {gm, gr})
             .Select(item => item.gr)
-            .Join(_dbContext.Roles,
-                gr => gr.RoleId,
+            .Join(_dbContext.Permissions,
+                gr => gr.PermissionId,
                 r => r.Id,
                 (gr, r) => new {gr, r})
             .Select(item => item.r);
 
         entities.AddRange(await q.ToListAsync(ct));
 
-        return new RepositoryResponseRange<Domain.Role>()
+        return new RepositoryResponseRange<Domain.Permission>()
         {
             Data = entities.Distinct()
-             .Select(Mapper.Role.EntityToDomain)
+             .Select(Mapper.Permission.EntityToDomain)
              .ToList(),
             FilteredCount = entities.Count,
-            TotalCount = await _dbContext.Roles.CountAsync(ct)
+            TotalCount = await _dbContext.Permissions.CountAsync(ct)
         };
     }
 
@@ -150,7 +171,6 @@ public sealed class Member : IMember
     public async Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Members
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Member>()
         {
@@ -160,7 +180,7 @@ public sealed class Member : IMember
 
     public async Task<RepositoryResponseRange<Domain.Member>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Member> q = _dbContext.Members.AsNoTracking();
+        IQueryable<Entity.Member> q = _dbContext.Members;
         if (!string.IsNullOrWhiteSpace(query))
         {
             var pattern = $"%{query}";
@@ -192,7 +212,6 @@ public sealed class Member : IMember
     public async Task<RepositoryResponse<Domain.Member>> SearchByEmailAsync(string email, CancellationToken ct)
     {
         var entity = await _dbContext.Members
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Email.ToUpper() == email.ToUpper(), ct);
         return new RepositoryResponse<Domain.Member>()
         {
@@ -205,21 +224,31 @@ public sealed class Member : IMember
         bool result = true;
 
         var member = await _dbContext.Members
-            .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Email.ToUpper() == email.ToUpper(), ct);
+            .FirstOrDefaultAsync(item => EF.Functions.ILike(item.Email, email), ct);
 
-        if (member != null)
+        if (member == null)
         {
-            if (member.AskedNewPassword.HasValue)
-            {
-                member.AskedNewPassword = null;
-                _dbContext.Members.Update(member);
-            }
-            result = Encryptor.Verify(password, member.HashedPassword);
+            return new RepositoryResponse<Domain.Member>() { Data = null };
         }
+            
+        // Vérification du mot de passe dans un thread séparé (BCrypt est CPU-intensif)
+        result = await Encryptor.VerifyAsync(password, member.HashedPassword, ct);
+
+        if (!result)
+        {
+            return new RepositoryResponse<Domain.Member>() { Data = null };
+        }
+
+        if (member.AskedNewPassword.HasValue)
+        {
+            member.AskedNewPassword = null;
+            _dbContext.Members.Update(member);
+            await _dbContext.SaveChangesAsync(ct);
+        }
+
         return new RepositoryResponse<Domain.Member>()
         {
-            Data = result ? member?.EntityToDomain() : null
+            Data = member.EntityToDomain()
         };
     }
 }

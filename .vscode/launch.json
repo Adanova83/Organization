@@ -8,20 +8,20 @@
             "name": ".NET Core Launch (web)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/Source/Application/Application.Server/bin/Debug/net8.0/Application.Server.dll",
+            "program": "${workspaceFolder}/Source/Application/Intranet/bin/Debug/net8.0/Intranet.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Source/Application/Application.Server/",
+            "cwd": "${workspaceFolder}/Source/Application/Intranet/",
             "stopAtEntry": false,
             "justMyCode": false,
             "logging": {
                 "moduleLoad": false
             },
-            "launchSettingsFilePath": "${workspaceFolder}/Source/Application/Application.Server/Properties/launchSettings.json",
+            "launchSettingsFilePath": "${workspaceFolder}/Source/Application/Intranet/Properties/launchSettings.json",
             "launchSettingsProfile": "http",
             "suppressJITOptimizations": true,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_CONTENTROOT": "${workspaceFolder}/Source/Application/Application.Server/"
+                "ASPNETCORE_CONTENTROOT": "${workspaceFolder}/Source/Application/Intranet/"
             }
         }
     ]

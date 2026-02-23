@@ -41,4 +41,9 @@ public static class Encryptor
 
         return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
     }
+
+    public static Task<bool> VerifyAsync(string text, string storedHash, CancellationToken ct = default)
+    {
+        return Task.Run(() => Verify(text, storedHash), ct);
+    }
 }

@@ -42,7 +42,6 @@ public sealed class ActivitySessionSlotSubscription : IActivitySessionSlotSubscr
     public async Task<RepositoryResponse<Domain.ActivitySessionSlotSubscription>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ActivitySessionSlotSubscriptions
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ActivitySessionSlotSubscription>()
         {
@@ -52,7 +51,7 @@ public sealed class ActivitySessionSlotSubscription : IActivitySessionSlotSubscr
 
     public async Task<RepositoryResponseRange<Domain.ActivitySessionSlotSubscription>> SearchAsync(Guid? sessionSlotId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.ActivitySessionSlotSubscription> q = _dbContext.ActivitySessionSlotSubscriptions.AsNoTracking();
+        IQueryable<Entity.ActivitySessionSlotSubscription> q = _dbContext.ActivitySessionSlotSubscriptions;
         if (sessionSlotId.HasValue)
         {
             q = q.Where(item => item.SessionSlotId.Equals(sessionSlotId.Value));

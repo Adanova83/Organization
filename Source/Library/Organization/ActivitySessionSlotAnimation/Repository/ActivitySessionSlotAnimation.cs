@@ -42,7 +42,6 @@ public sealed class ActivitySessionSlotAnimation : IActivitySessionSlotAnimation
     public async Task<RepositoryResponse<Domain.ActivitySessionSlotAnimation>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ActivitySessionSlotAnimations
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ActivitySessionSlotAnimation>()
         {
@@ -52,7 +51,7 @@ public sealed class ActivitySessionSlotAnimation : IActivitySessionSlotAnimation
 
     public async Task<RepositoryResponseRange<Domain.ActivitySessionSlotAnimation>> SearchAsync(Guid? sessionSlotId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.ActivitySessionSlotAnimation> q = _dbContext.ActivitySessionSlotAnimations.AsNoTracking();
+        IQueryable<Entity.ActivitySessionSlotAnimation> q = _dbContext.ActivitySessionSlotAnimations;
         if (sessionSlotId.HasValue)
         {
             q = q.Where(item => item.SessionSlotId.Equals(sessionSlotId.Value));

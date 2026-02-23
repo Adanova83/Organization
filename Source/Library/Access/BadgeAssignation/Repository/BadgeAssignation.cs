@@ -42,7 +42,6 @@ public sealed class BadgeAssignation : IBadgeAssignation
     public async Task<RepositoryResponse<Domain.BadgeAssignation>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.BadgeAssignations
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.BadgeAssignation>()
         {
@@ -52,7 +51,7 @@ public sealed class BadgeAssignation : IBadgeAssignation
 
     public async Task<RepositoryResponseRange<Domain.BadgeAssignation>> SearchAsync(Guid? badgeId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.BadgeAssignation> q = _dbContext.BadgeAssignations.AsNoTracking();
+        IQueryable<Entity.BadgeAssignation> q = _dbContext.BadgeAssignations;
         if (badgeId.HasValue)
         {
             q = q.Where(item => item.BadgeId.Equals(badgeId.Value));

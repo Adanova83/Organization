@@ -96,7 +96,7 @@ public sealed class RoleMember
         }
         if (domain.RoleId == Guid.Empty)
         {
-            throw new ArgumentException("Role id is required.", nameof(domain.RoleId));
+            throw new ArgumentException("Group id is required.", nameof(domain.RoleId));
         }
     }
 }

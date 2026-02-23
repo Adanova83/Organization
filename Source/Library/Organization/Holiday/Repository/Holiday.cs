@@ -42,7 +42,6 @@ public sealed class Holiday : IHoliday
     public async Task<RepositoryResponse<Domain.Holiday>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Holidays
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Holiday>()
         {
@@ -52,7 +51,7 @@ public sealed class Holiday : IHoliday
 
     public async Task<RepositoryResponseRange<Domain.Holiday>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Holiday> q = _dbContext.Holidays.AsNoTracking();
+        IQueryable<Entity.Holiday> q = _dbContext.Holidays;
         if (!string.IsNullOrWhiteSpace(query))
         {
             var pattern = $"%{query}";

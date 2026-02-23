@@ -60,14 +60,14 @@ public sealed class Member
         await _repository.EditAsync(domain, ct);
     }
 
-    public async Task<RepositoryResponseRange<Domain.Role>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
+    public async Task<RepositoryResponseRange<Domain.Permission>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("ID must not be empty for search.", nameof(id));
         }
 
-        return await _repository.FetchRolesOfMemberAsync(id, ct);
+        return await _repository.FetchPermissionsOfMemberAsync(id, ct);
     }
 
     public async Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)

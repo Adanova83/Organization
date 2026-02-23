@@ -42,7 +42,6 @@ public sealed class ProjectSlotSubscription : IProjectSlotSubscription
     public async Task<RepositoryResponse<Domain.ProjectSlotSubscription>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ProjectSlotSubscriptions
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ProjectSlotSubscription>()
         {
@@ -52,7 +51,7 @@ public sealed class ProjectSlotSubscription : IProjectSlotSubscription
 
     public async Task<RepositoryResponseRange<Domain.ProjectSlotSubscription>> SearchAsync(Guid? projectSlotId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.ProjectSlotSubscription> q = _dbContext.ProjectSlotSubscriptions.AsNoTracking();
+        IQueryable<Entity.ProjectSlotSubscription> q = _dbContext.ProjectSlotSubscriptions;
         if (projectSlotId.HasValue)
         {
             q = q.Where(item => item.ProjectSlotId.Equals(projectSlotId.Value));

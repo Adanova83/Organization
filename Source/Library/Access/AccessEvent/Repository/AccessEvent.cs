@@ -42,7 +42,6 @@ public sealed class AccessEvent : IAccessEvent
     public async Task<RepositoryResponse<Domain.AccessEvent>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.AccessEvents
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.AccessEvent>()
         {
@@ -52,7 +51,7 @@ public sealed class AccessEvent : IAccessEvent
 
     public async Task<RepositoryResponseRange<Domain.AccessEvent>> SearchAsync(Guid badgeId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.AccessEvent> q = _dbContext.AccessEvents.AsNoTracking();
+        IQueryable<Entity.AccessEvent> q = _dbContext.AccessEvents;
 
         q = q.Where(item => item.BadgeId == badgeId)
             .OrderBy(item => EF.Functions.Collate(item.AccessedAt, "C"));

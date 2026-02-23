@@ -42,7 +42,6 @@ public sealed class Chat : IChat
     public async Task<RepositoryResponse<Domain.Chat>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Chats
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Chat>()
         {
@@ -52,7 +51,7 @@ public sealed class Chat : IChat
 
     public async Task<RepositoryResponseRange<Domain.Chat>> SearchAsync(Guid id, DateOnly dateFrom, DateOnly dateTo, CancellationToken ct)
     {
-        IQueryable<Entity.Chat> q = _dbContext.Chats.AsNoTracking();
+        IQueryable<Entity.Chat> q = _dbContext.Chats;
 
         q = q.Where(item => item.Id == id);
 

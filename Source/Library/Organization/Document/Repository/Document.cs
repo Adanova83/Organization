@@ -42,7 +42,6 @@ public sealed class Document : IDocument
     public async Task<RepositoryResponse<Domain.Document>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Documents
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Document>()
         {
@@ -52,7 +51,7 @@ public sealed class Document : IDocument
 
     public async Task<RepositoryResponseRange<Domain.Document>> SearchAsync(Guid memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Document> q = _dbContext.Documents.AsNoTracking();
+        IQueryable<Entity.Document> q = _dbContext.Documents;
 
         q = q.Where(item => item.MemberId == memberId)
             .OrderBy(item => EF.Functions.Collate(item.Title, "C"));

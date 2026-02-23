@@ -42,7 +42,6 @@ public sealed class ChatMessage : IChatMessage
     public async Task<RepositoryResponse<Domain.ChatMessage>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ChatMessages
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ChatMessage>()
         {
@@ -52,7 +51,7 @@ public sealed class ChatMessage : IChatMessage
 
     public async Task<RepositoryResponseRange<Domain.ChatMessage>> SearchAsync(Guid senderId, DateOnly dateFrom, DateOnly dateTo, CancellationToken ct)
     {
-        IQueryable<Entity.ChatMessage> q = _dbContext.ChatMessages.AsNoTracking();
+        IQueryable<Entity.ChatMessage> q = _dbContext.ChatMessages;
 
         q = q.Where(item => item.SenderId == senderId)
             .OrderBy(item => EF.Functions.Collate(item.SendDate, "C"));

@@ -42,7 +42,6 @@ public sealed class Space : ISpace
     public async Task<RepositoryResponse<Domain.Space>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Spaces
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Space>()
         {
@@ -52,7 +51,7 @@ public sealed class Space : ISpace
 
     public async Task<RepositoryResponseRange<Domain.Space>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Space> q = _dbContext.Spaces.AsNoTracking();
+        IQueryable<Entity.Space> q = _dbContext.Spaces;
         if (!string.IsNullOrWhiteSpace(query))
         {
             var pattern = $"%{query}";

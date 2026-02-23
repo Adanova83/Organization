@@ -42,7 +42,6 @@ public sealed class Activity : IActivity
     public async Task<RepositoryResponse<Domain.Activity>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Activities
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Activity>()
         {
@@ -52,7 +51,7 @@ public sealed class Activity : IActivity
 
     public async Task<RepositoryResponseRange<Domain.Activity>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Activity> q = _dbContext.Activities.AsNoTracking();
+        IQueryable<Entity.Activity> q = _dbContext.Activities;
         if (!string.IsNullOrWhiteSpace(query))
         {
             var pattern = $"%{query}";

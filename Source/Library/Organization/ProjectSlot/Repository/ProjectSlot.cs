@@ -42,7 +42,6 @@ public sealed class ProjectSlot : IProjectSlot
     public async Task<RepositoryResponse<Domain.ProjectSlot>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ProjectSlots
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ProjectSlot>()
         {
@@ -52,7 +51,7 @@ public sealed class ProjectSlot : IProjectSlot
 
     public async Task<RepositoryResponseRange<Domain.ProjectSlot>> SearchAsync(Guid projectId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.ProjectSlot> q = _dbContext.ProjectSlots.AsNoTracking();
+        IQueryable<Entity.ProjectSlot> q = _dbContext.ProjectSlots;
 
         q = q.Where(item => item.ProjectId.Equals(projectId))
             .OrderBy(item => EF.Functions.Collate(item.DayOfWeek, "C"))

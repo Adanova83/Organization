@@ -42,7 +42,6 @@ public sealed class Project : IProject
     public async Task<RepositoryResponse<Domain.Project>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Projects
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Project>()
         {
@@ -52,7 +51,7 @@ public sealed class Project : IProject
 
     public async Task<RepositoryResponseRange<Domain.Project>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Project> q = _dbContext.Projects.AsNoTracking();
+        IQueryable<Entity.Project> q = _dbContext.Projects;
 
         if (!string.IsNullOrWhiteSpace(query))
         {

@@ -42,7 +42,6 @@ public sealed class Note : INote
     public async Task<RepositoryResponse<Domain.Note>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Notes
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Note>()
         {

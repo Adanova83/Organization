@@ -42,7 +42,6 @@ public sealed class ProjectSlotAnimation : IProjectSlotAnimation
     public async Task<RepositoryResponse<Domain.ProjectSlotAnimation>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ProjectSlotAnimations
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ProjectSlotAnimation>()
         {
@@ -52,7 +51,7 @@ public sealed class ProjectSlotAnimation : IProjectSlotAnimation
 
     public async Task<RepositoryResponseRange<Domain.ProjectSlotAnimation>> SearchAsync(Guid? projectSlotId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.ProjectSlotAnimation> q = _dbContext.ProjectSlotAnimations.AsNoTracking();
+        IQueryable<Entity.ProjectSlotAnimation> q = _dbContext.ProjectSlotAnimations;
         if (projectSlotId.HasValue)
         {
             q = q.Where(item => item.ProjectSlotId.Equals(projectSlotId.Value));

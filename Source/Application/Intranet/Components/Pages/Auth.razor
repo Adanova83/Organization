@@ -1,0 +1,13 @@
+﻿@page "/auth"
+
+<h3>Auth</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p>Authorized User</p>
+    </Authorized>
+
+    <NotAuthorized>
+        <Logout />
+    </NotAuthorized>
+</AuthorizeView>

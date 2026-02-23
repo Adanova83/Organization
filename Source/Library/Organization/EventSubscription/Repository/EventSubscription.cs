@@ -42,7 +42,6 @@ public sealed class EventSubscription : IEventSubscription
     public async Task<RepositoryResponse<Domain.EventSubscription>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.EventSubscriptions
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.EventSubscription>()
         {
@@ -52,7 +51,7 @@ public sealed class EventSubscription : IEventSubscription
 
     public async Task<RepositoryResponseRange<Domain.EventSubscription>> SearchAsync(Guid? eventId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.EventSubscription> q = _dbContext.EventSubscriptions.AsNoTracking();
+        IQueryable<Entity.EventSubscription> q = _dbContext.EventSubscriptions;
         if (eventId.HasValue)
         {
             q = q.Where(item => item.EventId.Equals(eventId.Value));

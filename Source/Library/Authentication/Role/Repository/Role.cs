@@ -17,7 +17,7 @@ public sealed class Role : IRole
     {
         var entity = domain.DomainToEntity();
         entity.Id = Guid.NewGuid();
-        _dbContext.Roles.Add(entity);
+        _dbContext.Groups.Add(entity);
         await _dbContext.SaveChangesAsync(ct);
         return new RepositoryResponse<Domain.Role>()
         {
@@ -28,21 +28,20 @@ public sealed class Role : IRole
     public Task DeleteAsync(Domain.Role domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.Roles.Remove(entity);
+        _dbContext.Groups.Remove(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public Task EditAsync(Domain.Role domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.Roles.Update(entity);
+        _dbContext.Groups.Update(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<RepositoryResponse<Domain.Role>> SearchAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dbContext.Roles
-            .AsNoTracking()
+        var entity = await _dbContext.Groups
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Role>()
         {
@@ -50,42 +49,10 @@ public sealed class Role : IRole
         };
     }
 
-    public async Task<RepositoryResponseRange<Domain.Role>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
     {
-        IQueryable<Entity.Role> q = _dbContext.Roles.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(query))
-        {
-            var pattern = $"%{query}";
-            q = q.Where(item =>
-                EF.Functions.ILike(item.Value, pattern)
-            );
-        }
-
-        q = q.OrderBy(item => EF.Functions.Collate(item.Value, "C"));
-
-        if (page > 0 && pageSize > 0)
-        {
-            q = q.Skip((page - 1) * pageSize).Take(pageSize);
-        }
-
-        var entities = await q
-            .ToListAsync(ct);
-
-        return new RepositoryResponseRange<Domain.Role>()
-        {
-            Data = entities
-             .Select(Mapper.Role.EntityToDomain)
-             .ToList(),
-            FilteredCount = entities.Count,
-            TotalCount = await _dbContext.Members.CountAsync(ct)
-        };
-    }
-
-    public async Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string type, string value, CancellationToken ct)
-    {
-        var entity = await _dbContext.Roles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Type.ToUpper() == type.ToUpper() && item.Value.ToUpper() == value.ToUpper(), ct);
+        var entity = await _dbContext.Groups
+            .FirstOrDefaultAsync(item => item.Code.ToUpper() == code.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {
             Data = entity?.EntityToDomain()
@@ -94,9 +61,8 @@ public sealed class Role : IRole
 
     public async Task<RepositoryResponse<Domain.Role>> SearchByNameAsync(string name, CancellationToken ct)
     {
-        var entity = await _dbContext.Roles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Value.ToUpper() == name.ToUpper(), ct);
+        var entity = await _dbContext.Groups
+            .FirstOrDefaultAsync(item => item.Name.ToUpper() == name.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {
             Data = entity?.EntityToDomain()

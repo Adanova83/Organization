@@ -42,7 +42,6 @@ public sealed class Badge : IBadge
     public async Task<RepositoryResponse<Domain.Badge>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Badges
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Badge>()
         {
@@ -52,7 +51,7 @@ public sealed class Badge : IBadge
 
     public async Task<RepositoryResponseRange<Domain.Badge>> SearchAsync(string? query, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Badge> q = _dbContext.Badges.AsNoTracking();
+        IQueryable<Entity.Badge> q = _dbContext.Badges;
         if (!string.IsNullOrWhiteSpace(query))
         {
             var pattern = $"%{query}";

@@ -42,7 +42,6 @@ public sealed class ChatMember : IChatMember
     public async Task<RepositoryResponse<Domain.ChatMember>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ChatMembers
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ChatMember>()
         {

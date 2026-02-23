@@ -42,7 +42,6 @@ public sealed class Contribution : IContribution
     public async Task<RepositoryResponse<Domain.Contribution>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Contributions
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Contribution>()
         {
@@ -52,7 +51,7 @@ public sealed class Contribution : IContribution
 
     public async Task<RepositoryResponseRange<Domain.Contribution>> SearchAsync(Guid memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Contribution> q = _dbContext.Contributions.AsNoTracking();
+        IQueryable<Entity.Contribution> q = _dbContext.Contributions;
 
         q = q.Where(item => item.MemberId == memberId)
             .OrderBy(item => EF.Functions.Collate(item.OrganizationSessionId, "C"));

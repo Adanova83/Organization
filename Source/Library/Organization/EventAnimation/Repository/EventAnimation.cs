@@ -42,7 +42,6 @@ public sealed class EventAnimation : IEventAnimation
     public async Task<RepositoryResponse<Domain.EventAnimation>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.EventAnimations
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.EventAnimation>()
         {
@@ -52,7 +51,7 @@ public sealed class EventAnimation : IEventAnimation
 
     public async Task<RepositoryResponseRange<Domain.EventAnimation>> SearchAsync(Guid? eventId, Guid? memberId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.EventAnimation> q = _dbContext.EventAnimations.AsNoTracking();
+        IQueryable<Entity.EventAnimation> q = _dbContext.EventAnimations;
         if (eventId.HasValue)
         {
             q = q.Where(item => item.EventId.Equals(eventId.Value));

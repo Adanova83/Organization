@@ -42,7 +42,6 @@ public sealed class Country : ICountry
     public async Task<RepositoryResponse<Domain.Country>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.Countries
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Country>()
         {
@@ -53,7 +52,6 @@ public sealed class Country : ICountry
     public async Task<RepositoryResponse<Domain.Country>> SearchByCodeAlpaha2Async(string codeAlpha2, CancellationToken ct)
     {
         var entity = await _dbContext.Countries
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.CodeAlpha2.ToUpper() == codeAlpha2.ToUpper(), ct);
         return new RepositoryResponse<Domain.Country>()
         {
@@ -64,7 +62,6 @@ public sealed class Country : ICountry
     public async Task<RepositoryResponse<Domain.Country>> SearchByCodeAlpaha3Async(string codeAlpha3, CancellationToken ct)
     {
         var entity = await _dbContext.Countries
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.CodeAlpha3.ToUpper() == codeAlpha3.ToUpper(), ct);
         return new RepositoryResponse<Domain.Country>()
         {
@@ -74,7 +71,7 @@ public sealed class Country : ICountry
 
     public async Task<RepositoryResponseRange<Domain.Country>> SearchByNameAsync(string? namePattern, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.Country> q = _dbContext.Countries.AsNoTracking();
+        IQueryable<Entity.Country> q = _dbContext.Countries;
         if (!string.IsNullOrWhiteSpace(namePattern))
         {
             var pattern = $"%{namePattern}";

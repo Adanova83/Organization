@@ -42,7 +42,6 @@ public sealed class ActivitySessionSlot : IActivitySessionSlot
     public async Task<RepositoryResponse<Domain.ActivitySessionSlot>> SearchAsync(Guid id, CancellationToken ct)
     {
         var entity = await _dbContext.ActivitySessionSlots
-            .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.ActivitySessionSlot>()
         {
@@ -52,7 +51,7 @@ public sealed class ActivitySessionSlot : IActivitySessionSlot
 
     public async Task<RepositoryResponseRange<Domain.ActivitySessionSlot>> SearchAsync(Guid sessionId, int page, int pageSize, CancellationToken ct)
     {
-        IQueryable<Entity.ActivitySessionSlot> q = _dbContext.ActivitySessionSlots.AsNoTracking();
+        IQueryable<Entity.ActivitySessionSlot> q = _dbContext.ActivitySessionSlots;
 
         q = q.Where(item => item.SessionId.Equals(sessionId))
             .OrderBy(item => EF.Functions.Collate(item.DayOfWeek, "C"))

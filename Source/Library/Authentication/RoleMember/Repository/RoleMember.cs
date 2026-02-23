@@ -17,7 +17,7 @@ public sealed class RoleMember : IRoleMember
     {
         var entity = domain.DomainToEntity();
         entity.Id = Guid.NewGuid();
-        _dbContext.RoleMembers.Add(entity);
+        _dbContext.GroupMembers.Add(entity);
         await _dbContext.SaveChangesAsync(ct);
         return new RepositoryResponse<Domain.RoleMember>()
         {
@@ -28,21 +28,20 @@ public sealed class RoleMember : IRoleMember
     public Task DeleteAsync(Domain.RoleMember domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.RoleMembers.Remove(entity);
+        _dbContext.GroupMembers.Remove(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public Task EditAsync(Domain.RoleMember domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.RoleMembers.Update(entity);
+        _dbContext.GroupMembers.Update(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<RepositoryResponse<Domain.RoleMember>> SearchAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dbContext.RoleMembers
-            .AsNoTracking()
+        var entity = await _dbContext.GroupMembers
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.RoleMember>()
         {
@@ -52,7 +51,7 @@ public sealed class RoleMember : IRoleMember
 
     public async Task<RepositoryResponseRange<Domain.RoleMember>> SearchByMemberIdAsync(Guid memberId, CancellationToken ct)
     {
-        IQueryable<Entity.RoleMember> q = _dbContext.RoleMembers.AsNoTracking();
+        IQueryable<Entity.RoleMember> q = _dbContext.GroupMembers;
 
         q = q.Where(item => item.MemberId == memberId);
 
@@ -69,11 +68,11 @@ public sealed class RoleMember : IRoleMember
         };
     }
 
-    public async Task<RepositoryResponseRange<Domain.RoleMember>> SearchByRoleIdAsync(Guid roleId, CancellationToken ct)
+    public async Task<RepositoryResponseRange<Domain.RoleMember>> SearchByRoleIdAsync(Guid GroupId, CancellationToken ct)
     {
-        IQueryable<Entity.RoleMember> q = _dbContext.RoleMembers.AsNoTracking();
+        IQueryable<Entity.RoleMember> q = _dbContext.GroupMembers;
 
-        q = q.Where(item => item.RoleId == roleId);
+        q = q.Where(item => item.RoleId == GroupId);
 
         var entities = await q
             .ToListAsync(ct);
