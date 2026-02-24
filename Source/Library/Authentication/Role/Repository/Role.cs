@@ -17,7 +17,7 @@ public sealed class Role : IRole
     {
         var entity = domain.DomainToEntity();
         entity.Id = Guid.NewGuid();
-        _dbContext.Groups.Add(entity);
+        _dbContext.Roles.Add(entity);
         await _dbContext.SaveChangesAsync(ct);
         return new RepositoryResponse<Domain.Role>()
         {
@@ -28,20 +28,20 @@ public sealed class Role : IRole
     public Task DeleteAsync(Domain.Role domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.Groups.Remove(entity);
+        _dbContext.Roles.Remove(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public Task EditAsync(Domain.Role domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.Groups.Update(entity);
+        _dbContext.Roles.Update(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<RepositoryResponse<Domain.Role>> SearchAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dbContext.Groups
+        var entity = await _dbContext.Roles
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.Role>()
         {
@@ -51,7 +51,7 @@ public sealed class Role : IRole
 
     public async Task<RepositoryResponse<Domain.Role>> SearchByCodeAsync(string code, CancellationToken ct)
     {
-        var entity = await _dbContext.Groups
+        var entity = await _dbContext.Roles
             .FirstOrDefaultAsync(item => item.Code.ToUpper() == code.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {
@@ -61,7 +61,7 @@ public sealed class Role : IRole
 
     public async Task<RepositoryResponse<Domain.Role>> SearchByNameAsync(string name, CancellationToken ct)
     {
-        var entity = await _dbContext.Groups
+        var entity = await _dbContext.Roles
             .FirstOrDefaultAsync(item => item.Name.ToUpper() == name.ToUpper(), ct);
         return new RepositoryResponse<Domain.Role>()
         {

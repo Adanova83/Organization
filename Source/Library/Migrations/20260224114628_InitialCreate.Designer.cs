@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Library.Migrations
 {
     [DbContext(typeof(FullDbContext))]
-    [Migration("20260223120506_InitialCreate")]
+    [Migration("20260224114628_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -493,12 +493,16 @@ namespace Library.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("character varying(320)");
 
+                    b.Property<string>("Firstname")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("HashedPassword")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Lastname")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");

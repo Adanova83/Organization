@@ -106,11 +106,11 @@ public sealed class Member : IMember
         return result;
     }
 
-    public async Task<RepositoryResponseRange<Domain.Role>> FetchGroupsOfMemberAsync(Guid id, CancellationToken ct)
+    public async Task<RepositoryResponseRange<Domain.Role>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
     {
-        IQueryable<Entity.Role> q = _dbContext.GroupMembers
+        IQueryable<Entity.Role> q = _dbContext.RoleMembers
             .Where(item => item.MemberId == id)
-            .Join(_dbContext.Groups,
+            .Join(_dbContext.Roles,
                 gm => gm.RoleId,
                 r => r.Id,
                 (gm, r) => new {gm, r})
@@ -125,7 +125,7 @@ public sealed class Member : IMember
              .Select(Mapper.Role.EntityToDomain)
              .ToList(),
             FilteredCount = entities.Count,
-            TotalCount = await _dbContext.Groups.CountAsync(ct)
+            TotalCount = await _dbContext.Roles.CountAsync(ct)
         };
     }
 
@@ -142,9 +142,9 @@ public sealed class Member : IMember
         var entities = await q
             .ToListAsync(ct);
 
-        q = _dbContext.GroupMembers
+        q = _dbContext.RoleMembers
             .Where(item => item.MemberId == id)
-            .Join(_dbContext.GroupPermissions,
+            .Join(_dbContext.RolePermissions,
                 gm => gm.RoleId,
                 gr => gr.RoleId,
                 (gm, gr) => new {gm, gr})
@@ -185,11 +185,12 @@ public sealed class Member : IMember
         {
             var pattern = $"%{query}";
             q = q.Where(item =>
-                EF.Functions.ILike(item.Name, pattern)
+                EF.Functions.ILike(item.Lastname + " " + item.Firstname + " " + item.Lastname, pattern)
             );
         }
 
-        q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"));
+        q = q.OrderBy(item => EF.Functions.Collate(item.Lastname, "C"))
+            .ThenBy(item => EF.Functions.Collate(item.Firstname, "C"));
 
         if (page > 0 && pageSize > 0)
         {

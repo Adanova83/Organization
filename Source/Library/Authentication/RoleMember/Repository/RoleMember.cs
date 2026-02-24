@@ -17,7 +17,7 @@ public sealed class RoleMember : IRoleMember
     {
         var entity = domain.DomainToEntity();
         entity.Id = Guid.NewGuid();
-        _dbContext.GroupMembers.Add(entity);
+        _dbContext.RoleMembers.Add(entity);
         await _dbContext.SaveChangesAsync(ct);
         return new RepositoryResponse<Domain.RoleMember>()
         {
@@ -28,20 +28,20 @@ public sealed class RoleMember : IRoleMember
     public Task DeleteAsync(Domain.RoleMember domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.GroupMembers.Remove(entity);
+        _dbContext.RoleMembers.Remove(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public Task EditAsync(Domain.RoleMember domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.GroupMembers.Update(entity);
+        _dbContext.RoleMembers.Update(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<RepositoryResponse<Domain.RoleMember>> SearchAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dbContext.GroupMembers
+        var entity = await _dbContext.RoleMembers
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.RoleMember>()
         {
@@ -51,7 +51,7 @@ public sealed class RoleMember : IRoleMember
 
     public async Task<RepositoryResponseRange<Domain.RoleMember>> SearchByMemberIdAsync(Guid memberId, CancellationToken ct)
     {
-        IQueryable<Entity.RoleMember> q = _dbContext.GroupMembers;
+        IQueryable<Entity.RoleMember> q = _dbContext.RoleMembers;
 
         q = q.Where(item => item.MemberId == memberId);
 
@@ -70,7 +70,7 @@ public sealed class RoleMember : IRoleMember
 
     public async Task<RepositoryResponseRange<Domain.RoleMember>> SearchByRoleIdAsync(Guid GroupId, CancellationToken ct)
     {
-        IQueryable<Entity.RoleMember> q = _dbContext.GroupMembers;
+        IQueryable<Entity.RoleMember> q = _dbContext.RoleMembers;
 
         q = q.Where(item => item.RoleId == GroupId);
 

@@ -11,7 +11,8 @@ public static class Member
         return new Ct.Member
         {
             Id = source.Id,
-            Name = source.Name,
+            Firstname = source.Firstname,
+            Lastname = source.Lastname,
             Picture = source.Picture,
             RGBColor = source.RGBColor,
             Birthdate = source.Birthdate,
@@ -30,7 +31,8 @@ public static class Member
         return new En.Member
         {
             Id = source.Id,
-            Name = source.Name,
+            Firstname = source.Firstname,
+            Lastname = source.Lastname,
             Picture = source.Picture,
             RGBColor = source.RGBColor,
             Birthdate = source.Birthdate,
@@ -49,7 +51,8 @@ public static class Member
         return new Do.Member
         {
             Id = source.Id,
-            Name = source.Name,
+            Firstname = source.Firstname,
+            Lastname = source.Lastname,
             Picture = source.Picture,
             RGBColor = source.RGBColor,
             Birthdate = source.Birthdate,

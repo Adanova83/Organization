@@ -45,7 +45,7 @@ public static class InitialSeeder
 
         H.Member member = new(scope.ServiceProvider.GetRequiredService<R.IMember>());
 
-        const string adminName = "admin";
+        const string adminName = "Admin";
         const string adminEmail = "admin@local";
         const string adminPassword = "Admin123!";
 
@@ -62,7 +62,7 @@ public static class InitialSeeder
                     City = adminName,
                     CountryId = frCountry.Id,
                 },
-                Name = adminName,
+                Lastname = adminName,
                 Email = adminEmail,
                 HashedPassword = Encryptor.Hash(adminPassword),
                 Audit = new(),
@@ -73,20 +73,20 @@ public static class InitialSeeder
             }, ct).Result.Data;
         }
 
-        H.Role group = new(scope.ServiceProvider.GetRequiredService<R.IRole>());
-        H.RoleMember groupMember = new(scope.ServiceProvider.GetRequiredService<R.IRoleMember>());
+        H.Role roleHandler = new(scope.ServiceProvider.GetRequiredService<R.IRole>());
+        H.RoleMember roleMemberHandler = new(scope.ServiceProvider.GetRequiredService<R.IRoleMember>());
 
-        const string groupAdminCode = "Admin";
-        const string groupAdminName = "Administrateur";
+        const string roleAdminCode = "Admin";
+        const string roleAdminName = "Administrateur";
 
-        var adminGroup = group.SearchByCodeAsync(groupAdminCode, ct).Result.Data;
+        var adminRole = roleHandler.SearchByCodeAsync(roleAdminCode, ct).Result.Data;
 
-        if (adminGroup == null)
+        if (adminRole == null)
         {
-            adminGroup = group.CreateAsync(new()
+            adminRole = roleHandler.CreateAsync(new()
             {
-                Code = groupAdminCode,
-                Name = groupAdminName,
+                Code = roleAdminCode,
+                Name = roleAdminName,
                 Audit = new(),
                 Active = new()
                 {
@@ -94,9 +94,9 @@ public static class InitialSeeder
                 }
             }, ct).Result.Data;
 
-            await groupMember.CreateAsync(new ()
+            await roleMemberHandler.CreateAsync(new ()
             {
-                RoleId = adminGroup!.Id,
+                RoleId = adminRole!.Id,
                 MemberId = adminMember!.Id,
                 Audit = new(),
                 Active = new()
@@ -130,7 +130,7 @@ public static class InitialSeeder
 
                 await rolePermissionHandler.CreateAsync(new ()
                 {
-                    RoleId = adminGroup!.Id,
+                    RoleId = adminRole!.Id,
                     PermissionId = permission!.Id,
                     Audit = new(),
                     Active = new()

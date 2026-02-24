@@ -36,9 +36,9 @@ public class FullDbContext : DbContext
     internal DbSet<ProjectSlot> ProjectSlots => Set<ProjectSlot>();
     internal DbSet<ProjectSlotAnimation> ProjectSlotAnimations => Set<ProjectSlotAnimation>();
     internal DbSet<ProjectSlotSubscription> ProjectSlotSubscriptions => Set<ProjectSlotSubscription>();
-    internal DbSet<Role> Groups => Set<Role>();
-    internal DbSet<RoleMember> GroupMembers => Set<RoleMember>();
-    internal DbSet<RolePermission> GroupPermissions => Set<RolePermission>();
+    internal DbSet<Role> Roles => Set<Role>();
+    internal DbSet<RoleMember> RoleMembers => Set<RoleMember>();
+    internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     internal DbSet<Space> Spaces => Set<Space>();
 
     public FullDbContext(DbContextOptions<FullDbContext> options)

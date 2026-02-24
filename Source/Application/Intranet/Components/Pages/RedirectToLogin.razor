@@ -1,0 +1,28 @@
+﻿@page "/redirecttologin"
+@inject IHttpContextAccessor HttpContextAccessor
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (AuthenticationState == null)
+        {
+            throw new InvalidOperationException("AuthenticationState cascading parameter is not set. Ensure that the component is wrapped in a CascadingAuthenticationState.");
+        }
+
+        var context = HttpContextAccessor.HttpContext!;
+        var authState = AuthenticationState!.Result;
+
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            context.Response.Redirect("/accessdenied");
+        }
+        else
+        {
+            var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
+            context.Response.Redirect($"/login?returnUrl={returnUrl}");
+        }
+    }
+}

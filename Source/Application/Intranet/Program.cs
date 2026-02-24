@@ -42,14 +42,15 @@ builder.Services.AddDbContext<D.FullDbContext>(options =>
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Identity/Login";
-        options.LogoutPath = "/Identity/Logout";
-        options.AccessDeniedPath = "/Identity/AccessDenied";
+        options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
+        options.AccessDeniedPath = "/accessdenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
-    });
+    }
+);
 
-const string permissionCode = "permission";
+const string permissionCode = "Permission";
 builder.Services.AddAuthorization(options =>
     {
         foreach (var permission in Permissions.All)

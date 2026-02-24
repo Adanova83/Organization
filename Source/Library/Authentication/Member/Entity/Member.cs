@@ -8,7 +8,8 @@ namespace Library.Entity;
 [Index(nameof(Email), IsUnique = true)]
 public class Member : PrimaryKey
 {
-    [Required, MaxLength(200)] public string Name { get; set; } = default!;
+    [MaxLength(200)] public string? Firstname { get; set; } = default;
+    [Required, MaxLength(200)] public string Lastname { get; set; } = default!;
     public string? Picture { get; set; }
     [Required, MaxLength(8)] public string RGBColor { get; set; } = "FFFFFFFF";
     public DateTime? Birthdate { get; set; } = null;

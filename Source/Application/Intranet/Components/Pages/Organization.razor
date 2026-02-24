@@ -1,0 +1,11 @@
+﻿@page "/organization"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Policy = "organization.read")]
+<PageTitle>Organisations</PageTitle>
+
+<h3>Organization</h3>
+
+@code {
+
+}

@@ -17,7 +17,7 @@ public sealed class GroupPermission : IRolePermission
     {
         var entity = domain.DomainToEntity();
         entity.Id = Guid.NewGuid();
-        _dbContext.GroupPermissions.Add(entity);
+        _dbContext.RolePermissions.Add(entity);
         await _dbContext.SaveChangesAsync(ct);
         return new RepositoryResponse<Domain.RolePermission>()
         {
@@ -28,20 +28,20 @@ public sealed class GroupPermission : IRolePermission
     public Task DeleteAsync(Domain.RolePermission domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.GroupPermissions.Remove(entity);
+        _dbContext.RolePermissions.Remove(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public Task EditAsync(Domain.RolePermission domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
-        _dbContext.GroupPermissions.Update(entity);
+        _dbContext.RolePermissions.Update(entity);
         return _dbContext.SaveChangesAsync(ct);
     }
 
     public async Task<RepositoryResponse<Domain.RolePermission>> SearchAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dbContext.GroupPermissions
+        var entity = await _dbContext.RolePermissions
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.RolePermission>()
         {
@@ -51,7 +51,7 @@ public sealed class GroupPermission : IRolePermission
 
     public async Task<RepositoryResponseRange<Domain.RolePermission>> SearchByPermissionIdAsync(Guid permissionId, CancellationToken ct)
     {
-        IQueryable<Entity.RolePermission> q = _dbContext.GroupPermissions;
+        IQueryable<Entity.RolePermission> q = _dbContext.RolePermissions;
 
         q = q.Where(item => item.PermissionId == permissionId);
 
@@ -64,13 +64,13 @@ public sealed class GroupPermission : IRolePermission
              .Select(Mapper.RolePermission.EntityToDomain)
              .ToList(),
             FilteredCount = entities.Count,
-            TotalCount = await _dbContext.GroupPermissions.CountAsync(ct)
+            TotalCount = await _dbContext.RolePermissions.CountAsync(ct)
         };
     }
 
     public async Task<RepositoryResponseRange<Domain.RolePermission>> SearchByRoleIdAsync(Guid roleId, CancellationToken ct)
     {
-        IQueryable<Entity.RolePermission> q = _dbContext.GroupPermissions;
+        IQueryable<Entity.RolePermission> q = _dbContext.RolePermissions;
 
         q = q.Where(item => item.RoleId == roleId);
 
@@ -83,7 +83,7 @@ public sealed class GroupPermission : IRolePermission
              .Select(Mapper.RolePermission.EntityToDomain)
              .ToList(),
             FilteredCount = entities.Count,
-            TotalCount = await _dbContext.GroupPermissions.CountAsync(ct)
+            TotalCount = await _dbContext.RolePermissions.CountAsync(ct)
         };
     }
 }

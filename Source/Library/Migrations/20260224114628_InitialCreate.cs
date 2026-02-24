@@ -166,7 +166,8 @@ namespace Library.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Firstname = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Lastname = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Picture = table.Column<string>(type: "text", nullable: true),
                     RGBColor = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     Birthdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),

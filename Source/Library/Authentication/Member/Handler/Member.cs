@@ -120,9 +120,9 @@ public sealed class Member
 
     private void ValidateDomainRules(Domain.Member domain)
     {
-        if (string.IsNullOrWhiteSpace(domain.Name))
+        if (string.IsNullOrWhiteSpace(domain.Lastname))
         {
-            throw new ArgumentException("Name is required.", nameof(domain.Name));
+            throw new ArgumentException("Lastname is required.", nameof(domain.Lastname));
         }
         if (domain.Email != null && !domain.Email.Contains('@'))
         {

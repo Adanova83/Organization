@@ -6,9 +6,6 @@
 @using Microsoft.AspNetCore.Components.Authorization;
 @using Microsoft.AspNetCore.Components.Forms
 @using R = Library.Repository;
-@*@rendermode InteractiveServer*@
-@*@inject AuthenticationStateProvider AuthenticationStateProvider*@
-@*@inject IHttpContextAccessor HttpContextAccessor*@
 @inject NavigationManager NavigationManager
 @inject R.IMember MemberRepository;
 
@@ -24,7 +21,7 @@
                     <InputText id="username" class="form-control" @bind-Value="LoginRequest.Email" />
                 </div>
                 <div class="form-group mt-3">
-                    <label for="password">Password:</label>
+                    <label for="password">Mot de passe:</label>
                     <InputText id="password" type="password" class="form-control" @bind-Value="LoginRequest.Password" />
                 </div>
                 <div class="form-group mt-4 text-center">
@@ -58,6 +55,9 @@
     [SupplyParameterFromForm]
     private Credentials LoginRequest { get; set; } = new();
 
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
     private string? ErrorMessage;
     private bool isLoading = false;
 
@@ -73,27 +73,27 @@ CancellationToken());
                 var user = userValidation.Data;
                 if (user != null)
                 {
-                    var groupsValidation = await MemberRepository.FetchGroupsOfMemberAsync(user.Id, new CancellationToken());
-                    var rolesValidation = await MemberRepository.FetchPermissionsOfMemberAsync(user.Id, new CancellationToken());
-                    if (groupsValidation != null && rolesValidation != null)
+                    var rolesValidation = await MemberRepository.FetchRolesOfMemberAsync(user.Id, new CancellationToken());
+                    var permissionsValidation = await MemberRepository.FetchPermissionsOfMemberAsync(user.Id, new CancellationToken());
+                    if (rolesValidation != null && permissionsValidation != null)
                     {
-                        var groups = groupsValidation.Data;
                         var roles = rolesValidation.Data;
+                        var permissions = permissionsValidation.Data;
                         var claimsIdentity = new ClaimsIdentity(
                             [
                             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                            new(ClaimTypes.Name, user.Name),
+                            new(ClaimTypes.Name, (user.Firstname + " " + user.Lastname).TrimStart()),
                             new(ClaimTypes.Email, user.Email)
                             ], CookieAuthenticationDefaults.AuthenticationScheme
                         );
 
-                        claimsIdentity.AddClaims(groups.Select(g => new Claim(ClaimTypes.GroupSid, g.Id.ToString())));
-                        claimsIdentity.AddClaims(roles.Select(r => new Claim(r.Type, r.Value)));
+                        claimsIdentity.AddClaims(roles.Select(g => new Claim(ClaimTypes.GroupSid, g.Code)));
+                        claimsIdentity.AddClaims(permissions.Select(r => new Claim(r.Type, r.Value)));
 
                         var principal = new ClaimsPrincipal(claimsIdentity);
                         await HttpContext.SignInAsync(principal);
 
-                        HttpContext?.Response.Redirect("/");
+                        HttpContext.Response.Redirect(ReturnUrl ?? "/");
                     }
                 }
             }
