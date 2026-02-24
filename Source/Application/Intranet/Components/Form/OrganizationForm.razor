@@ -1,0 +1,103 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Antiforgery;
+@using D = Library.Domain;
+@using R = Library.Repository;
+@using System.Security.AccessControl
+@rendermode InteractiveServer
+@attribute [RequireAntiforgeryToken]
+@inject R.IOrganization OrganizationRepository;
+@inject NavigationManager Navigation;
+
+@if (EditContext is null)
+{
+    <span>Chargement...</span>
+}
+else
+{
+    <EditForm EditContext="EditContext" OnValidSubmit="HandleSave" FormName="organizationForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group mt-3">
+            <label for="name">Nom:</label>
+            <InputText id="name" class="form-control" @bind-Value="Organization.Name" />
+        </div>
+        <div class="form-group mt-3">
+            <label for="description">Couleur:</label>
+            <InputText id="description" class="form-control" @bind-Value="Organization.RGBColor" />
+        </div>
+        <div class="form-group mt-4 text-center">
+            <button class="btn btn-primary btn-block" type="submit" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span class="sr-only">Chargement...</span>
+                }
+                else
+                {
+                    <span>Sauvegarder</span>
+                }
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger mt-3">
+                @ErrorMessage
+            </div>
+        }
+    </EditForm>
+}
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private D.Organization Organization { get; set; } = new();
+
+    private EditContext? EditContext { get; set; }
+
+    private string? ErrorMessage;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await OrganizationRepository.SearchAsync(Id!.Value, default);
+        if (Id.HasValue && response != null && response.Data != null)
+        {
+            Organization = response.Data;
+        }
+        else
+        {
+            Organization = new();
+        }
+
+        EditContext = new EditContext(Organization);
+    }
+
+    private async Task HandleSave()
+    {
+        isLoading = true;
+        try
+        {
+            if (Organization.Id == Guid.Empty)
+            {
+                await OrganizationRepository.CreateAsync(Organization, default);
+            }
+            else
+            {
+                await OrganizationRepository.EditAsync(Organization, default);
+            }
+            Navigation.NavigateTo("/organizations");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

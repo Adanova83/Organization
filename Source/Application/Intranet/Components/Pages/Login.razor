@@ -1,118 +1,15 @@
 ﻿@page "/login"
-@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims;
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
-@using Microsoft.AspNetCore.Components.Authorization;
-@using Microsoft.AspNetCore.Components.Forms
-@using R = Library.Repository;
-@inject NavigationManager NavigationManager
-@inject R.IMember MemberRepository;
+@using Intranet.Components.Form
 
 <div class="d-flex justify-content-center align-items-center vh-100">
     <div class="card shadow-sm p-4" style="width: 100%; max-width: 400px;">
         <div class="card-body">
-            <h3 class="text-center mb-4">Login To App</h3>
-            <EditForm Model="LoginRequest" OnValidSubmit="HandleLogin" FormName="loginForm">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
-                <div class="form-group">
-                    <label for="username">Email:</label>
-                    <InputText id="username" class="form-control" @bind-Value="LoginRequest.Email" />
-                </div>
-                <div class="form-group mt-3">
-                    <label for="password">Mot de passe:</label>
-                    <InputText id="password" type="password" class="form-control" @bind-Value="LoginRequest.Password" />
-                </div>
-                <div class="form-group mt-4 text-center">
-                    <button class="btn btn-primary btn-block" type="submit" disabled="@isLoading">
-                        @if (isLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span class="sr-only">Loading...</span>
-                        }
-                        else
-                        {
-                            <span>Login</span>
-                        }
-                    </button>
-                </div>
-                @if (!string.IsNullOrEmpty(ErrorMessage))
-                {
-                    <div class="alert alert-danger mt-3">
-                        @ErrorMessage
-                    </div>
-                }
-            </EditForm>
+            <h3 class="text-center mb-4">Connexion</h3>
+            <LoginForm/>
         </div>
     </div>
 </div>
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm]
-    private Credentials LoginRequest { get; set; } = new();
-
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
-
-    private string? ErrorMessage;
-    private bool isLoading = false;
-
-    private async Task HandleLogin()
-    {
-        isLoading = true;
-        try
-        {
-            var userValidation = await MemberRepository.ValidateUserAsync(LoginRequest.Email, LoginRequest.Password, new
-CancellationToken());
-            if (userValidation != null)
-            {
-                var user = userValidation.Data;
-                if (user != null)
-                {
-                    var rolesValidation = await MemberRepository.FetchRolesOfMemberAsync(user.Id, new CancellationToken());
-                    var permissionsValidation = await MemberRepository.FetchPermissionsOfMemberAsync(user.Id, new CancellationToken());
-                    if (rolesValidation != null && permissionsValidation != null)
-                    {
-                        var roles = rolesValidation.Data;
-                        var permissions = permissionsValidation.Data;
-                        var claimsIdentity = new ClaimsIdentity(
-                            [
-                            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                            new(ClaimTypes.Name, (user.Firstname + " " + user.Lastname).TrimStart()),
-                            new(ClaimTypes.Email, user.Email)
-                            ], CookieAuthenticationDefaults.AuthenticationScheme
-                        );
-
-                        claimsIdentity.AddClaims(roles.Select(g => new Claim(ClaimTypes.GroupSid, g.Code)));
-                        claimsIdentity.AddClaims(permissions.Select(r => new Claim(r.Type, r.Value)));
-
-                        var principal = new ClaimsPrincipal(claimsIdentity);
-                        await HttpContext.SignInAsync(principal);
-
-                        HttpContext.Response.Redirect(ReturnUrl ?? "/");
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private class Credentials
-    {
-        [Required]
-        public string Email { get; set; } = string.Empty;
-        [Required]
-        public string Password { get; set; } = string.Empty;
-    }
 }

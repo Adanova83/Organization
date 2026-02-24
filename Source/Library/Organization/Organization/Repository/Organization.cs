@@ -32,11 +32,14 @@ public sealed class Organization : IOrganization
         return _dbContext.SaveChangesAsync(ct);
     }
 
-    public Task EditAsync(Domain.Organization domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Organization domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Organizations.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var existing = await _dbContext.Organizations.FindAsync(domain.Id);
+        if (existing != null)
+        {
+            _dbContext.Entry(existing).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Organization>> SearchAsync(Guid id, CancellationToken ct)

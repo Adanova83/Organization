@@ -1,5 +1,55 @@
-﻿<h3>OrganizationGrid</h3>
+﻿@using Microsoft.AspNetCore.Components.QuickGrid
+@using D = Library.Domain
+@using R = Library.Repository
+@inject R.IOrganization OrganizationRepository;
+
+<div class="grid" tabindex="-1">
+    <QuickGrid Items="Organizations" Pagination="Pagination" Class="table table-striped">
+        <PropertyColumn Property="@(o => o.Name)" Sortable="false" Class="col">
+            <HeaderTemplate>
+                <span class="col">Nom</span>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(o => o.Active.From)" Format="dd/MM/yyyy" Sortable="false" Class="col">
+            <HeaderTemplate>
+                <span class="col">Date de début d'activité</span>
+            </HeaderTemplate>
+        </PropertyColumn> 
+        <PropertyColumn Property="@(o => o.Active.Until)" Format="dd/MM/yyyy" Sortable="false" Class="col">
+            <HeaderTemplate>
+                <span class="col">Date de fin d'activité</span>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <TemplateColumn>
+            <HeaderTemplate>
+                <span class="col">Edition</span>
+            </HeaderTemplate>
+            <ChildContent Context="org">
+                <a href="@($"/organization/edit?id={org.Id}")" class="btn btn-sm btn-primary">Editer</a>
+            </ChildContent>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="Pagination" />
+</div>
 
 @code {
+    private IQueryable<D.Organization>? Organizations { get; set; }
 
+    private PaginationState Pagination = new PaginationState { ItemsPerPage = 10 };
+
+    protected override Task OnInitializedAsync()
+    {
+        base.OnInitializedAsync();
+        return LoadOrganizations();
+    }
+
+    private async Task LoadOrganizations()
+    {
+        var orgsResponse = await OrganizationRepository.SearchAsync(query: string.Empty, page: 0, pageSize: 0, ct: default!);
+
+        if (orgsResponse != null)
+        {
+            Organizations = orgsResponse.Data.AsQueryable();
+        }
+    }
 }

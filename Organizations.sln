@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library", "Source\Library\L
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application", "{CAB5C0CC-B9C9-6B72-A549-75248A847605}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sql", "Sql", "{E1D8A8F4-1A43-CA6F-969C-EEA7A4C90B8A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Intranet", "Source\Application\Intranet\Intranet.csproj", "{316BA276-7D36-44FE-AB52-80ED88779C5F}"
 EndProject
 Global
