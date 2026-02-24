@@ -1,8 +1,8 @@
 using Intranet;
 using Intranet.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 using D = Library.Data;
 using H = Library.Handler;
 using R = Library.Repository;
@@ -14,6 +14,9 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 AppSettings.Initialize(builder.Configuration);
+
+// Add MudBlazor services
+builder.Services.AddMudServices();
 
 // Configure OrganizationDbContext with PostgreSQL
 var connectionString = AppSettings.GetAdanovaConnectionString();
