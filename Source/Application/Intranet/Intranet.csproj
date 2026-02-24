@@ -14,11 +14,10 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
-    <PackageReference Include="MudBlazor" Version="8.15.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../Library/Library.csproj" />
-  </ItemGroup>
+  </ItemGroup>  
 
 </Project>
