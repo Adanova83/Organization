@@ -25,18 +25,24 @@ public sealed class Document : IDocument
         };
     }
 
-    public Task DeleteAsync(Domain.Document domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Document domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Documents.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Documents.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Documents.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Document domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Document domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Documents.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Documents.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Document>> SearchAsync(Guid id, CancellationToken ct)

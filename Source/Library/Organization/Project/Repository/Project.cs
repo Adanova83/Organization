@@ -25,18 +25,24 @@ public sealed class Project : IProject
         };
     }
 
-    public Task DeleteAsync(Domain.Project domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Project domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Projects.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Projects.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Projects.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Project domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Project domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Projects.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Projects.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Project>> SearchAsync(Guid id, CancellationToken ct)

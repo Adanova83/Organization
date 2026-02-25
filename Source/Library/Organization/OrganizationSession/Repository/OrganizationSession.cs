@@ -25,18 +25,24 @@ public sealed class OrganizationSession : IOrganizationSession
         };
     }
 
-    public Task DeleteAsync(Domain.OrganizationSession domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.OrganizationSession domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.OrganizationSessions.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.OrganizationSessions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.OrganizationSessions.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.OrganizationSession domain, CancellationToken ct)
+    public async Task EditAsync(Domain.OrganizationSession domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.OrganizationSessions.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.OrganizationSessions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.OrganizationSession>> SearchAsync(Guid id, CancellationToken ct)

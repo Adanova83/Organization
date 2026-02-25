@@ -25,18 +25,24 @@ public sealed class Permission : IPermission
         };
     }
 
-    public Task DeleteAsync(Domain.Permission domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Permission domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Permissions.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Permissions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Permissions.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Permission domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Permission domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Permissions.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Permissions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Permission>> SearchAsync(Guid id, CancellationToken ct)

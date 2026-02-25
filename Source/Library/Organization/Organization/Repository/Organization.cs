@@ -25,19 +25,22 @@ public sealed class Organization : IOrganization
         };
     }
 
-    public Task DeleteAsync(Domain.Organization domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Organization domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Organizations.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Organizations.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Organizations.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task EditAsync(Domain.Organization domain, CancellationToken ct)
     {
-        var existing = await _dbContext.Organizations.FindAsync(domain.Id);
-        if (existing != null)
+        var entity = await _dbContext.Organizations.FindAsync(domain.Id);
+        if (entity != null)
         {
-            _dbContext.Entry(existing).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }

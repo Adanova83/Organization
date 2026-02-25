@@ -25,18 +25,24 @@ public sealed class ActivitySessionSlotAnimation : IActivitySessionSlotAnimation
         };
     }
 
-    public Task DeleteAsync(Domain.ActivitySessionSlotAnimation domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.ActivitySessionSlotAnimation domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ActivitySessionSlotAnimations.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ActivitySessionSlotAnimations.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.ActivitySessionSlotAnimations.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.ActivitySessionSlotAnimation domain, CancellationToken ct)
+    public async Task EditAsync(Domain.ActivitySessionSlotAnimation domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ActivitySessionSlotAnimations.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ActivitySessionSlotAnimations.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.ActivitySessionSlotAnimation>> SearchAsync(Guid id, CancellationToken ct)

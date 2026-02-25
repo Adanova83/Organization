@@ -25,18 +25,24 @@ public sealed class RoleMember : IRoleMember
         };
     }
 
-    public Task DeleteAsync(Domain.RoleMember domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.RoleMember domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.RoleMembers.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.RoleMembers.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.RoleMembers.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.RoleMember domain, CancellationToken ct)
+    public async Task EditAsync(Domain.RoleMember domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.RoleMembers.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.RoleMembers.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.RoleMember>> SearchAsync(Guid id, CancellationToken ct)

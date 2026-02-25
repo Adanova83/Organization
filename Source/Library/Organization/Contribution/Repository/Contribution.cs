@@ -25,18 +25,24 @@ public sealed class Contribution : IContribution
         };
     }
 
-    public Task DeleteAsync(Domain.Contribution domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Contribution domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Contributions.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Contributions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Contributions.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Contribution domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Contribution domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Contributions.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Contributions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Contribution>> SearchAsync(Guid id, CancellationToken ct)

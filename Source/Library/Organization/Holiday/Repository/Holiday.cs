@@ -25,18 +25,24 @@ public sealed class Holiday : IHoliday
         };
     }
 
-    public Task DeleteAsync(Domain.Holiday domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Holiday domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Holidays.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Holidays.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Holidays.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Holiday domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Holiday domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Holidays.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Holidays.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Holiday>> SearchAsync(Guid id, CancellationToken ct)

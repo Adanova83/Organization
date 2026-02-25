@@ -25,18 +25,24 @@ public sealed class EventSubscription : IEventSubscription
         };
     }
 
-    public Task DeleteAsync(Domain.EventSubscription domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.EventSubscription domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.EventSubscriptions.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.EventSubscriptions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.EventSubscriptions.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.EventSubscription domain, CancellationToken ct)
+    public async Task EditAsync(Domain.EventSubscription domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.EventSubscriptions.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.EventSubscriptions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.EventSubscription>> SearchAsync(Guid id, CancellationToken ct)

@@ -25,18 +25,24 @@ public sealed class ActivitySessionSlot : IActivitySessionSlot
         };
     }
 
-    public Task DeleteAsync(Domain.ActivitySessionSlot domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.ActivitySessionSlot domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ActivitySessionSlots.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ActivitySessionSlots.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.ActivitySessionSlots.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.ActivitySessionSlot domain, CancellationToken ct)
+    public async Task EditAsync(Domain.ActivitySessionSlot domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ActivitySessionSlots.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ActivitySessionSlots.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.ActivitySessionSlot>> SearchAsync(Guid id, CancellationToken ct)

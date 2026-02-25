@@ -25,18 +25,24 @@ public sealed class GroupPermission : IRolePermission
         };
     }
 
-    public Task DeleteAsync(Domain.RolePermission domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.RolePermission domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.RolePermissions.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.RolePermissions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.RolePermissions.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.RolePermission domain, CancellationToken ct)
+    public async Task EditAsync(Domain.RolePermission domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.RolePermissions.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.RolePermissions.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.RolePermission>> SearchAsync(Guid id, CancellationToken ct)

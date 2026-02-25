@@ -26,18 +26,24 @@ public sealed class Member : IMember
         };
     }
 
-    public Task DeleteAsync(Domain.Member domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Member domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Members.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Members.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Members.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Member domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Member domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Members.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Members.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<bool> AskNewPasswordAsync(string email, CancellationToken ct)

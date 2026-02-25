@@ -25,18 +25,24 @@ public sealed class ProjectSlotAnimation : IProjectSlotAnimation
         };
     }
 
-    public Task DeleteAsync(Domain.ProjectSlotAnimation domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.ProjectSlotAnimation domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ProjectSlotAnimations.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ProjectSlotAnimations.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.ProjectSlotAnimations.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.ProjectSlotAnimation domain, CancellationToken ct)
+    public async Task EditAsync(Domain.ProjectSlotAnimation domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ProjectSlotAnimations.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ProjectSlotAnimations.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.ProjectSlotAnimation>> SearchAsync(Guid id, CancellationToken ct)

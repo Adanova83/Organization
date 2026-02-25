@@ -25,18 +25,24 @@ public sealed class Event : IEvent
         };
     }
 
-    public Task DeleteAsync(Domain.Event domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.Event domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Events.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Events.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Events.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.Event domain, CancellationToken ct)
+    public async Task EditAsync(Domain.Event domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.Events.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.Events.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.Event>> SearchAsync(Guid id, CancellationToken ct)

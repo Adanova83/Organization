@@ -25,18 +25,24 @@ public sealed class ChatMessage : IChatMessage
         };
     }
 
-    public Task DeleteAsync(Domain.ChatMessage domain, CancellationToken ct)
+    public async Task DeleteAsync(Domain.ChatMessage domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ChatMessages.Remove(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ChatMessages.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.ChatMessages.Remove(entity);
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
-    public Task EditAsync(Domain.ChatMessage domain, CancellationToken ct)
+    public async Task EditAsync(Domain.ChatMessage domain, CancellationToken ct)
     {
-        var entity = domain.DomainToEntity();
-        _dbContext.ChatMessages.Update(entity);
-        return _dbContext.SaveChangesAsync(ct);
+        var entity = await _dbContext.ChatMessages.FindAsync(domain.Id);
+        if (entity != null)
+        {
+            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     public async Task<RepositoryResponse<Domain.ChatMessage>> SearchAsync(Guid id, CancellationToken ct)
