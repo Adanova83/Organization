@@ -4,7 +4,7 @@
 @inject R.IOrganization OrganizationRepository;
 
 <div class="grid" tabindex="-1">
-    <QuickGrid Items="Organizations" Pagination="Pagination" Class="table table-striped">
+    @* <QuickGrid Items="Organizations" Pagination="Pagination" Class="table table-striped">
         <PropertyColumn Property="@(o => o.Name)" Sortable="false" Class="col">
             <HeaderTemplate>
                 <span class="col">Nom</span>
@@ -29,7 +29,7 @@
             </ChildContent>
         </TemplateColumn>
     </QuickGrid>
-    <Paginator State="Pagination" />
+    <Paginator State="Pagination" /> *@
 </div>
 
 @code {

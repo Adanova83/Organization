@@ -1,0 +1,139 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims;
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using R = Library.Repository;
+@inject NavigationManager NavigationManager
+@inject R.IMember MemberRepository
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@ErrorMessage</MudAlert>
+}
+
+<form method="post" action="/auth/signin" @onsubmit="HandleClientValidation">
+    <AntiforgeryToken/>
+    <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+    <MudGrid>
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField T="string" Label="Email" Required="true" RequiredError="L'email est requis."
+                                  @bind-Value="@Email" InputType="InputType.Text" />
+                    <MudTextField T="string" @bind-Value="@Password" Label="Mot de passe"
+                                  HelperText="Saisissez votre mot de passe" InputType="InputType.Password" Required="true"
+                                  RequiredError="Le mot de passe est requis." />
+                    <input type="hidden" name="email" value="@Email" />
+                    <input type="hidden" name="password" value="@Password" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@isLoading" ButtonType="ButtonType.Submit" Class="ml-auto">
+                        @if (isLoading)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Chargement...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Se connecter</MudText>
+                        }
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</form>
+
+@code {
+    @* private MudForm? form;
+
+    private bool success = true;
+
+    private string[] errors = []; *@
+
+    [Required(ErrorMessage = "L'email est requis.")]
+    public string? Email { get; set; }
+
+    [Required(AllowEmptyStrings = false, ErrorMessage = "Le mot de passe est requis.")]
+    public string? Password { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+    
+    [SupplyParameterFromQuery]
+    private string? ErrorMessage { get; set; }
+
+    private bool isLoading = false;
+
+    private async Task HandleClientValidation()
+    {
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Veuillez remplir tous les champs.";
+            return;
+        }
+
+        isLoading = true;
+
+        // On soumet via JS un vrai formulaire POST natif
+        await JS.InvokeVoidAsync("submitLoginForm",
+            Email,
+            Password,
+            ReturnUrl ?? "/",
+            "/auth/signin");    }
+/*
+    private async Task HandleLogin()
+    {
+        await form!.Validate();
+        if(!form.IsValid)
+        {
+            return;
+        }
+
+        isLoading = true;
+        try
+        {
+            var userResponse = await MemberRepository.ValidateUserAsync(Email!, Password!, default);
+            if (userResponse != null)
+            {
+                var user = userResponse.Data;
+                if (user != null)
+                {
+                    var rolesValidation = await MemberRepository.FetchRolesOfMemberAsync(user.Id, new CancellationToken());
+                    var permissionsValidation = await MemberRepository.FetchPermissionsOfMemberAsync(user.Id, new CancellationToken());
+                    if (rolesValidation != null && permissionsValidation != null)
+                    {
+                        var roles = rolesValidation.Data;
+                        var permissions = permissionsValidation.Data;
+                        var claimsIdentity = new ClaimsIdentity(
+                            [
+                            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                            new(ClaimTypes.Name, (user.Firstname + " " + user.Lastname).TrimStart()),
+                            new(ClaimTypes.Email, user.Email)
+                            ], CookieAuthenticationDefaults.AuthenticationScheme
+                        );
+
+                        claimsIdentity.AddClaims(roles.Select(g => new Claim(ClaimTypes.GroupSid, g.Code)));
+                        claimsIdentity.AddClaims(permissions.Select(r => new Claim(r.Type, r.Value)));
+
+                        var principal = new ClaimsPrincipal(claimsIdentity);
+                        await HttpContext.SignInAsync(principal);
+                        var returnUrl = Uri.EscapeDataString(ReturnUrl ?? "/");
+                        NavigationManager.NavigateTo(returnUrl);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+*/
+}

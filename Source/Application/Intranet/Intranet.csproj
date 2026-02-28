@@ -12,13 +12,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="8.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+    <PackageReference Include="Radzen.Blazor" Version="9.*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../Library/Library.csproj" />
-  </ItemGroup>  
+  </ItemGroup>
 
 </Project>

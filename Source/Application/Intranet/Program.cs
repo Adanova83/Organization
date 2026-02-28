@@ -2,6 +2,7 @@ using Intranet;
 using Intranet.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Radzen;
 using D = Library.Data;
 using H = Library.Handler;
 using R = Library.Repository;
@@ -131,6 +132,9 @@ builder.Services.AddScoped<H.Role>();
 builder.Services.AddScoped<H.RoleMember>();
 builder.Services.AddScoped<H.RolePermission>();
 builder.Services.AddScoped<H.Space>();
+
+// Add Radzen services
+builder.Services.AddRadzenComponents();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
