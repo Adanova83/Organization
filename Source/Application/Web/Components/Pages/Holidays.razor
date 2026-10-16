@@ -1,0 +1,117 @@
+@page "/holidays"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Jours fériés et vacances</PageTitle>
+
+<h1>Jours fériés et vacances</h1>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/holidays/new">Nouvelle période</a></p>
+
+    <EditForm Model="Generate" FormName="generate-holidays" OnValidSubmit="GenerateAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <fieldset>
+            <legend>Jours fériés légaux</legend>
+            <p class="muted">
+                Calcule et ajoute les 11 jours fériés de l'année (dont Pâques, l'Ascension et la Pentecôte).
+                Les jours déjà présents à la même date ne sont pas recréés.
+            </p>
+            <label>Année <InputNumber TValue="int" @bind-Value="Generate!.Year" min="1900" max="2200" /></label>
+            <label class="checkbox"><InputCheckbox @bind-Value="Generate!.AlsaceMoselle" /> Ajouter les jours propres à l'Alsace-Moselle (Vendredi saint, Saint-Étienne)</label>
+        </fieldset>
+        <p class="actions"><button type="submit">Générer les jours fériés</button></p>
+    </EditForm>
+}
+
+@if (generated is not null)
+{
+    <p class="notice">@generated</p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (holidays is not null)
+{
+    @if (holidays.Count == 0)
+    {
+        <p class="muted">Aucune période.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Nom</th><th>Du</th><th>Au</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var holiday in holidays)
+                {
+                    <tr>
+                        <td><a href="/holidays/@holiday.Id">@holiday.Name</a></td>
+                        <td>@Format.Date(holiday.StartDate)</td>
+                        <td>@Format.Date(holiday.EndDate)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "generate-holidays")]
+    private HolidayGenerationModel? Generate { get; set; }
+
+    // Résultat de la dernière génération, transmis par l'adresse après rechargement de la liste.
+    [SupplyParameterFromQuery] public int? Year { get; set; }
+    [SupplyParameterFromQuery] public int? Created { get; set; }
+    [SupplyParameterFromQuery] public int? Skipped { get; set; }
+
+    private List<Ct.Holiday>? holidays;
+    private string? generated;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Generate ??= new HolidayGenerationModel();
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        if (Year is { } year && Created is { } created)
+        {
+            generated = $"{year} : {created} jour(s) férié(s) ajouté(s)"
+                + (Skipped is > 0 ? $", {Skipped} déjà présent(s)." : ".");
+        }
+
+        try
+        {
+            holidays = (await Api.ListAllAsync<Ct.Holiday>(ApiRoutes.Holidays)).OrderByDescending(h => h.StartDate).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/holidays", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task GenerateAsync()
+    {
+        try
+        {
+            var result = await Api.GenerateHolidaysAsync(Generate!.Year, Generate.AlsaceMoselle);
+            Navigation.NavigateTo($"/holidays?year={result.Year}&created={result.Created.Count}&skipped={result.Skipped.Count}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

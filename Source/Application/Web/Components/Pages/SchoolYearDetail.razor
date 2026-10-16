@@ -1,0 +1,263 @@
+@page "/school-years/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+@* Vue d'ensemble d'une année : chaque bloc n'apparaît qu'avec la permission *.read de son domaine. *@
+
+<PageTitle>Année @(year?.Code)</PageTitle>
+
+<p><a href="/school-years">← Retour aux années scolaires</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (year is not null)
+{
+    <h1>Année scolaire @year.Code</h1>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/school-years/@Id/edit">Modifier l'année</a></p>
+    }
+
+    <dl class="meta">
+        <dt>Période</dt><dd>@Format.Period(year.StartDate, year.EndDate)</dd>
+        <dt>Zone de vacances</dt><dd>Zone @year.Zone</dd>
+    </dl>
+
+    <section class="card">
+        <h2>Saisons des organisations</h2>
+        @if (seasons.Count == 0)
+        {
+            <p class="muted">Aucune organisation n'a de saison pour cette année.</p>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>Organisation</th><th>Cotisation</th></tr></thead>
+                <tbody>
+                    @foreach (var season in seasons)
+                    {
+                        <tr>
+                            <td><a href="/organizations/@season.OrganizationId">@OrganizationName(season.OrganizationId)</a></td>
+                            <td>@Format.Price(season.Price)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    @if (activitySessions is not null)
+    {
+        <section class="card">
+            <h2>Activités</h2>
+            @if (activitySessions.Count == 0)
+            {
+                <p class="muted">Aucune session d'activité pour cette année.</p>
+            }
+            else
+            {
+                <table>
+                    <thead><tr><th>Activité</th><th>Période</th><th>Tarif</th></tr></thead>
+                    <tbody>
+                        @foreach (var session in activitySessions)
+                        {
+                            <tr>
+                                <td><a href="/activities/@session.ActivityId">@(activityNames.TryGetValue(session.ActivityId, out var name) ? name : "Activité")</a></td>
+                                <td>@Format.Period(session.EffectiveStartDate, session.EffectiveEndDate)</td>
+                                <td>@Format.Price(session.Price)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+
+    @if (events is not null)
+    {
+        <section class="card">
+            <h2>Événements</h2>
+            @if (events.Count == 0)
+            {
+                <p class="muted">Aucun événement pour cette année.</p>
+            }
+            else
+            {
+                <table>
+                    <thead><tr><th>Événement</th><th>Début</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in events)
+                        {
+                            <tr>
+                                <td><a href="/events/@item.Id">@item.Name</a></td>
+                                <td>@Format.DateTimeLabel(item.StartDate)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+
+    @if (projects is not null)
+    {
+        <section class="card">
+            <h2>Projets</h2>
+            @if (projects.Count == 0)
+            {
+                <p class="muted">Aucun projet pour cette année.</p>
+            }
+            else
+            {
+                <table>
+                    <thead><tr><th>Projet</th><th>Période</th></tr></thead>
+                    <tbody>
+                        @foreach (var project in projects)
+                        {
+                            <tr>
+                                <td><a href="/projects/@project.Id">@project.Name</a></td>
+                                <td>@Format.Period(project.EffectiveStartDate, project.EffectiveEndDate)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+
+    <section class="card">
+        <h2>Vacances scolaires</h2>
+        @if (imported is not null)
+        {
+            <p class="notice">@imported</p>
+        }
+        @if (canEdit)
+        {
+            <form method="post" @onsubmit="ImportAsync" @formname="import-holidays" class="inline">
+                <AntiforgeryToken />
+                <p>
+                    <button type="submit" class="link-button">Importer les vacances officielles (zone @year.Zone)</button>
+                    <span class="muted">Calendrier de l'Éducation nationale ; les périodes déjà présentes ne sont pas recréées.</span>
+                </p>
+            </form>
+        }
+        @if (holidays.Count == 0)
+        {
+            <p class="muted">Aucune période de vacances rattachée à cette année.</p>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>Nom</th><th>Du</th><th>Au</th></tr></thead>
+                <tbody>
+                    @foreach (var holiday in holidays)
+                    {
+                        <tr>
+                            <td><a href="/holidays/@holiday.Id">@holiday.Name</a></td>
+                            <td>@Format.Date(holiday.StartDate)</td>
+                            <td>@Format.Date(holiday.EndDate)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.SchoolYear? year;
+    private List<Ct.OrganizationSession> seasons = [];
+    private List<Ct.Holiday> holidays = [];
+    private Dictionary<Guid, string> organizationNames = [];
+
+    // null : l'utilisateur n'a pas la permission de lecture du domaine (bloc masqué).
+    private List<Ct.ActivitySession>? activitySessions;
+    private Dictionary<Guid, string> activityNames = [];
+    private List<Ct.Event>? events;
+    private List<Ct.Project>? projects;
+
+    private string? error;
+    private bool canEdit;
+
+    // Résultat du dernier import, transmis par l'adresse après rechargement.
+    [SupplyParameterFromQuery] public int? Created { get; set; }
+    [SupplyParameterFromQuery] public int? Skipped { get; set; }
+    private string? imported;
+
+    private async Task ImportAsync()
+    {
+        try
+        {
+            var result = await Api.ImportSchoolHolidaysAsync(Id);
+            Navigation.NavigateTo($"/school-years/{Id}?created={result.Created.Count}&skipped={result.Skipped.Count}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private string OrganizationName(Guid id) => organizationNames.TryGetValue(id, out var name) ? name : "Organisation";
+
+    private string ChildRoute(string child) => $"{ApiRoutes.SchoolYears}/{Id}/{child}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        if (Created is { } created)
+        {
+            imported = created == 0
+                ? "Import terminé : aucune nouvelle période (toutes étaient déjà présentes, ou le calendrier officiel de cette année n'est pas encore publié)."
+                : $"Import terminé : {created} période(s) ajoutée(s)" + (Skipped is > 0 ? $", {Skipped} déjà présente(s)." : ".");
+        }
+
+        try
+        {
+            year = await Api.GetByIdAsync<Ct.SchoolYear>(ApiRoutes.SchoolYears, Id);
+            seasons = await Api.ListAllAsync<Ct.OrganizationSession>(ChildRoute("organization-sessions"));
+            holidays = await Api.ListAllAsync<Ct.Holiday>(ChildRoute("holidays"));
+            organizationNames = (await Api.GetOrganizationsAsync()).ToDictionary(o => o.Id, o => o.Name);
+            seasons = seasons.OrderBy(s => OrganizationName(s.OrganizationId)).ToList();
+
+            if (await Access.CanAsync(Permissions.ActivityRead))
+            {
+                activitySessions = await Api.ListAllAsync<Ct.ActivitySession>(ChildRoute("activity-sessions"));
+                activityNames = (await Api.ListAllAsync<Ct.Activity>(ApiRoutes.Activities)).ToDictionary(a => a.Id, a => a.Name);
+                activitySessions = activitySessions
+                    .OrderBy(s => activityNames.TryGetValue(s.ActivityId, out var name) ? name : "")
+                    .ThenBy(s => s.EffectiveStartDate)
+                    .ToList();
+            }
+
+            if (await Access.CanAsync(Permissions.EventRead))
+            {
+                events = await Api.ListAllAsync<Ct.Event>(ChildRoute("events"));
+            }
+
+            if (await Access.CanAsync(Permissions.ProjectRead))
+            {
+                projects = await Api.ListAllAsync<Ct.Project>(ChildRoute("projects"));
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/school-years/{Id}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

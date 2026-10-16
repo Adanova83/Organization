@@ -1,0 +1,105 @@
+@page "/members/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.MemberRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>@(member is null ? "Membre" : FullName)</PageTitle>
+
+<p><a href="/members">← Retour aux membres</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (member is not null)
+{
+    <h1>@FullName</h1>
+
+    @if (canEdit || canReadContributions)
+    {
+        <p class="actions">
+            @if (canEdit)
+            {
+                <a class="button" href="/members/@Id/edit">Modifier le membre</a>
+            }
+            @if (canReadContributions)
+            {
+                <a class="button" href="/members/@Id/contributions">Cotisations</a>
+            }
+        </p>
+    }
+
+    <dl class="meta">
+        <dt>E-mail</dt><dd>@member.Email</dd>
+        <dt>Téléphone</dt><dd>@(member.PhoneNumber ?? "—")</dd>
+        <dt>Naissance</dt><dd>@(member.Birthdate is { } birthdate ? $"{Format.Date(birthdate)} ({Format.AgeYears(birthdate)} ans)" : "—")</dd>
+        <dt>Adresse</dt>
+        <dd>
+            @member.Addr.Line1<br />
+            @if (!string.IsNullOrWhiteSpace(member.Addr.Line2))
+            {
+                @member.Addr.Line2<br />
+            }
+            @if (!string.IsNullOrWhiteSpace(member.Addr.Line3))
+            {
+                @member.Addr.Line3<br />
+            }
+            @member.Addr.PostalCode @member.Addr.City
+            @if (countryName is not null)
+            {
+                <br />@countryName
+            }
+        </dd>
+        <dt>Statut</dt><dd>@(member.Active?.IsActive == false ? "Inactif" : "Actif")</dd>
+        <dt>Compte de l'annuaire</dt><dd>@(string.IsNullOrEmpty(member.ExternalId) ? "Pas encore connecté" : "Rattaché")</dd>
+    </dl>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Member? member;
+    private string? countryName;
+    private string? error;
+    private bool canEdit;
+    private bool canReadContributions;
+
+    private string FullName => $"{member!.Lastname} {member.Firstname}".Trim();
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.MemberEdit);
+        canReadContributions = await Access.CanAsync(Permissions.ContributionRead);
+
+        try
+        {
+            member = await Api.GetMemberAsync(Id);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/members/{Id}", forceLoad: true);
+            return;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+            return;
+        }
+
+        // Nom du pays : demande organization.read ; sans elle, il n'est pas affiché.
+        try
+        {
+            countryName = (await Api.GetByIdAsync<Ct.Country>(ApiRoutes.Countries, member.Addr.CountryId)).Name;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            countryName = null;
+        }
+    }
+}

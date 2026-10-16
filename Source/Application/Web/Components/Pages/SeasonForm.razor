@@ -1,0 +1,141 @@
+@page "/organizations/{OrganizationId:guid}/seasons/new"
+@page "/organization-sessions/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.OrganizationEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouvelle saison" : "Modifier la saison")</PageTitle>
+
+<h1>@(IsNew ? "Nouvelle saison" : "Modifier la saison")</h1>
+
+@if (organizationId is not null)
+{
+    <p><a href="/organizations/@organizationId">← Retour à l'organisation</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="season" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Saison</legend>
+            <label>
+                Année scolaire
+                <InputSelect @bind-Value="Model.SchoolYearId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var year in schoolYears)
+                    {
+                        <option value="@year.Id">@year.Code (@Format.Period(year.StartDate, year.EndDate).ToLowerInvariant())</option>
+                    }
+                </InputSelect>
+            </label>
+            @if (schoolYears.Count == 0)
+            {
+                <p class="muted">Aucune année scolaire disponible : <a href="/school-years/new">créer une année scolaire</a>.</p>
+            }
+            <label>Cotisation (€) <InputNumber TValue="float" @bind-Value="Model.Price" step="0.01" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="/organizations/@organizationId">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-season" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette saison ?');">Supprimer cette saison</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? OrganizationId { get; set; }
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "season")]
+    private SeasonModel? Model { get; set; }
+
+    private Guid? organizationId;
+    private List<Ct.SchoolYear> schoolYears = [];
+    private string? error;
+
+    private bool IsNew => Id is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                organizationId = OrganizationId;
+                Model ??= new SeasonModel();
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.OrganizationSession>(ApiRoutes.OrganizationSessions, Id!.Value);
+                organizationId = existing.OrganizationId;
+                Model ??= SeasonModel.From(existing);
+            }
+
+            // Années proposées : celles où l'organisation n'a pas encore de saison (plus l'année actuelle en modification).
+            var used = (await Api.GetOrganizationSessionsAsync(organizationId!.Value))
+                .Where(s => s.Id != Id)
+                .Select(s => s.SchoolYearId)
+                .ToHashSet();
+            schoolYears = (await Api.GetSchoolYearsAsync()).Where(y => !used.Contains(y.Id)).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                await Api.CreateAsync(ApiRoutes.OrganizationSessions, Model!.ApplyTo(new Ct.OrganizationSession { OrganizationId = organizationId!.Value }));
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.OrganizationSession>(ApiRoutes.OrganizationSessions, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.OrganizationSessions, Id.Value, Model!.ApplyTo(existing));
+            }
+
+            Navigation.NavigateTo($"/organizations/{organizationId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.OrganizationSessions, Id!.Value);
+            Navigation.NavigateTo($"/organizations/{organizationId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

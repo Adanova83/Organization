@@ -1,0 +1,55 @@
+@* Le menu n'affiche que ce que l'utilisateur peut consulter (*.read) ; l'API fait foi pour les droits. *@
+<ul class="nav">
+    <li><NavLink href="" Match="NavLinkMatch.All">Accueil</NavLink></li>
+
+    <AuthorizeView Context="mine">
+        @if (mine.User.HasClaim("member_linked", "true"))
+        {
+            <li><NavLink href="me/profile">Mon profil</NavLink></li>
+            <li><NavLink href="me/subscriptions">Mes inscriptions</NavLink></li>
+            <li><NavLink href="me/animations">Mes animations</NavLink></li>
+            <li><NavLink href="notes">Mes notes</NavLink></li>
+        }
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.MemberRead" Context="members">
+        <li><NavLink href="members">Membres</NavLink></li>
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.ActivityRead" Context="activities">
+        <li><NavLink href="activities">Activités</NavLink></li>
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.EventRead" Context="events">
+        <li><NavLink href="events">Événements</NavLink></li>
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.ProjectRead" Context="projects">
+        <li><NavLink href="projects">Projets</NavLink></li>
+    </AuthorizeView>
+
+    @* Calendrier : activités (activity.read) et/ou événements (event.read). *@
+    <AuthorizeView Context="calendar">
+        @if (Permissions.Has(calendar.User, Permissions.ActivityRead) || Permissions.Has(calendar.User, Permissions.EventRead))
+        {
+            <li><NavLink href="calendar">Calendrier</NavLink></li>
+        }
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.OrganizationRead" Context="organizations">
+        <li class="nav-section">Référentiels</li>
+        <li><NavLink href="school-years">Années scolaires</NavLink></li>
+        <li><NavLink href="organizations">Organisations</NavLink></li>
+        <li><NavLink href="holidays">Jours fériés</NavLink></li>
+        <li><NavLink href="countries">Pays</NavLink></li>
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.SpaceRead" Context="spaces">
+        <li><NavLink href="spaces">Espaces</NavLink></li>
+    </AuthorizeView>
+
+    <AuthorizeView Policy="@Permissions.AccessRead" Context="access">
+        <li class="nav-section">Contrôle d'accès</li>
+        <li><NavLink href="badges">Badges</NavLink></li>
+    </AuthorizeView>
+</ul>

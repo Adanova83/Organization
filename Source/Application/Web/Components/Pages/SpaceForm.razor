@@ -1,0 +1,107 @@
+@page "/spaces/new"
+@page "/spaces/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.SpaceEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouvel espace" : "Modifier l'espace")</PageTitle>
+
+<h1>@(IsNew ? "Nouvel espace" : "Modifier l'espace")</h1>
+
+<p><a href="@BackUrl">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="space" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Espace</legend>
+            <label>Nom <InputText @bind-Value="Model.Name" /></label>
+            <label>Couleur (calendrier) <InputText type="color" @bind-Value="Model.Color" class="color" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-space" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cet espace ?');">Supprimer cet espace</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "space")]
+    private SpaceModel? Model { get; set; }
+
+    private string? error;
+
+    private bool IsNew => Id is null;
+    private string BackUrl => IsNew ? "/spaces" : $"/spaces/{Id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model ??= IsNew ? new SpaceModel() : SpaceModel.From(await Api.GetByIdAsync<Ct.Space>(ApiRoutes.Spaces, Id!.Value));
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var created = await Api.CreateAsync(ApiRoutes.Spaces, Model!.ApplyTo(new Ct.Space()));
+                Navigation.NavigateTo($"/spaces/{created.Id}");
+            }
+            else
+            {
+                // On repart de l'espace actuel : image, couleur et période de validité sont conservées.
+                var existing = await Api.GetByIdAsync<Ct.Space>(ApiRoutes.Spaces, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.Spaces, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/spaces/{Id}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Spaces, Id!.Value);
+            Navigation.NavigateTo("/spaces");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

@@ -1,0 +1,168 @@
+@page "/event-series/{SeriesId:guid}/edit"
+@attribute [Authorize(Policy = Permissions.EventEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+@*
+    Modification d'une série d'événements : les champs communs s'appliquent à toute la série, ou à partir d'une date
+    (?from=yyyy-MM-dd). Chaque occurrence garde sa date ; une date seule se modifie depuis sa propre fiche.
+*@
+
+<PageTitle>Modifier la série</PageTitle>
+
+<h1>@(FromDate is null ? "Modifier toute la série" : $"Modifier la série à partir du {Format.Date(FromDate.Value)}")</h1>
+
+@if (backUrl is not null)
+{
+    <p><a href="@backUrl">← Retour à l'événement</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <p class="muted">@targets.Count date(s) concernée(s) : @string.Join(", ", targets.Select(t => Format.Date(t.StartDate)))</p>
+
+    <EditForm Model="Model" FormName="event-series" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Champs communs</legend>
+            <label>Nom <InputText @bind-Value="Model.Name" /></label>
+            <label>Description <InputTextArea @bind-Value="Model.Description" rows="4" /></label>
+            <label>Heure de début <InputText type="time" @bind-Value="Model.StartTime" /></label>
+            <label>Heure de fin <InputText type="time" @bind-Value="Model.EndTime" /></label>
+            <label>Âge minimum (vide = tout âge) <InputNumber TValue="int?" @bind-Value="Model.AgeMinimum" /></label>
+            <label>
+                Organisation
+                <InputSelect @bind-Value="Model.OrganizationId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var organization in organizations)
+                    {
+                        <option value="@organization.Id">@organization.Name</option>
+                    }
+                </InputSelect>
+            </label>
+            <label>
+                Année scolaire
+                <InputSelect @bind-Value="Model.SchoolYearId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var year in schoolYears)
+                    {
+                        <option value="@year.Id">@year.Code</option>
+                    }
+                </InputSelect>
+            </label>
+            <label>
+                Lieu
+                <InputSelect @bind-Value="Model.SpaceId">
+                    <option value="">— Aucun —</option>
+                    @foreach (var space in spaces)
+                    {
+                        <option value="@space.Id">@space.Name</option>
+                    }
+                </InputSelect>
+            </label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer pour ces @targets.Count date(s)</button>
+            @if (backUrl is not null)
+            {
+                <a href="@backUrl">Annuler</a>
+            }
+        </p>
+    </EditForm>
+
+    <form method="post" @onsubmit="DeleteAsync" @formname="delete-series" class="danger">
+        <AntiforgeryToken />
+        <button type="submit" class="danger-button" onclick="return confirm('Supprimer ces @targets.Count date(s) ?');">
+            @(FromDate is null ? "Supprimer toute la série" : "Supprimer cette date et les suivantes")
+        </button>
+    </form>
+}
+
+@code {
+    [Parameter] public Guid SeriesId { get; set; }
+
+    /// <summary>Première date concernée (yyyy-MM-dd) ; vide : toute la série.</summary>
+    [SupplyParameterFromQuery(Name = "from")] public string? From { get; set; }
+
+    [SupplyParameterFromForm(FormName = "event-series")]
+    private EventSeriesModel? Model { get; set; }
+
+    private List<Ct.Event> targets = [];
+    private List<Ct.Organization> organizations = [];
+    private List<Ct.SchoolYear> schoolYears = [];
+    private List<Ct.Space> spaces = [];
+    private string? backUrl;
+    private string? error;
+
+    private DateOnly? FromDate
+        => DateOnly.TryParseExact(From, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var date)
+            ? date
+            : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var series = await Api.GetEventSeriesAsync(SeriesId);
+            targets = series
+                .Where(e => FromDate is not { } from || DateOnly.FromDateTime(Format.ParisLocal(e.StartDate)) >= from)
+                .ToList();
+
+            if (targets.Count == 0)
+            {
+                Navigation.NavigateTo("/not-found");
+                return;
+            }
+
+            backUrl = $"/events/{targets[0].Id}";
+            organizations = (await Api.GetOrganizationsAsync()).OrderBy(o => o.Name).ToList();
+            schoolYears = await Api.GetSchoolYearsAsync();
+            spaces = (await Api.GetSpacesAsync()).OrderBy(s => s.Name).ToList();
+
+            // Préremplissage : première occurrence concernée.
+            Model ??= EventSeriesModel.From(targets[0]);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            await Api.UpdateEventSeriesAsync(SeriesId, FromDate, Model!.ToUpdate());
+            Navigation.NavigateTo(backUrl!);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteEventSeriesAsync(SeriesId, FromDate);
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

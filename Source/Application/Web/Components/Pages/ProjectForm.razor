@@ -1,0 +1,142 @@
+@page "/projects/new"
+@page "/projects/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.ProjectEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouveau projet" : "Modifier le projet")</PageTitle>
+
+<h1>@(IsNew ? "Nouveau projet" : "Modifier le projet")</h1>
+
+<p><a href="@(IsNew ? "/projects" : $"/projects/{Id}")">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="project" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Projet</legend>
+            <label>Nom <InputText @bind-Value="Model.Name" /></label>
+            <label>Code <InputText @bind-Value="Model.Code" /></label>
+            <label>Description <InputTextArea @bind-Value="Model.Description" rows="4" /></label>
+            <label>Âge minimum <InputNumber @bind-Value="Model.AgeMinimum" /></label>
+            <label>
+                Organisation
+                <InputSelect @bind-Value="Model.OrganizationId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var organization in organizations)
+                    {
+                        <option value="@organization.Id">@organization.Name</option>
+                    }
+                </InputSelect>
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Année et période</legend>
+            <label>
+                Année scolaire
+                <InputSelect @bind-Value="Model.SchoolYearId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var year in schoolYears)
+                    {
+                        <option value="@year.Id">@year.Code (@Format.Period(year.StartDate, year.EndDate).ToLowerInvariant())</option>
+                    }
+                </InputSelect>
+            </label>
+            <p class="muted">Dates facultatives : laisser vide pour un projet sur toute l'année scolaire.</p>
+            <label>Début <InputDate TValue="DateTime?" @bind-Value="Model.StartDate" /></label>
+            <label>Fin <InputDate TValue="DateTime?" @bind-Value="Model.EndDate" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@(IsNew ? "/projects" : $"/projects/{Id}")">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-project" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce projet ?');">Supprimer ce projet</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "project")]
+    private ProjectModel? Model { get; set; }
+
+    private List<Ct.Organization> organizations = [];
+    private List<Ct.SchoolYear> schoolYears = [];
+    private string? error;
+
+    private bool IsNew => Id is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            organizations = await Api.GetOrganizationsAsync();
+            schoolYears = await Api.GetSchoolYearsAsync();
+
+            if (Model is null)
+            {
+                Model = IsNew ? new ProjectModel() : ProjectModel.From(await Api.GetByIdAsync<Ct.Project>(ApiRoutes.Projects, Id!.Value));
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var created = await Api.CreateAsync(ApiRoutes.Projects, Model!.ApplyTo(new Ct.Project()));
+                Navigation.NavigateTo($"/projects/{created.Id}");
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.Project>(ApiRoutes.Projects, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.Projects, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/projects/{Id}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Projects, Id!.Value);
+            Navigation.NavigateTo("/projects");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

@@ -1,0 +1,145 @@
+@page "/activities/{ActivityId:guid}/sessions/new"
+@page "/activity-sessions/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.ActivityEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouvelle session" : "Modifier la session")</PageTitle>
+
+<h1>@(IsNew ? "Nouvelle session" : "Modifier la session")</h1>
+
+<p><a href="/activities/@activityId">← Retour à l'activité</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="session" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Session</legend>
+            <label>
+                Année scolaire
+                <InputSelect @bind-Value="Model.SchoolYearId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var year in schoolYears)
+                    {
+                        <option value="@year.Id">@year.Code (@Format.Period(year.StartDate, year.EndDate).ToLowerInvariant())</option>
+                    }
+                </InputSelect>
+            </label>
+            <label>Tarif (€) <InputNumber @bind-Value="Model.Price" step="0.01" /></label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Rythme</legend>
+            <label class="checkbox"><InputCheckbox @bind-Value="Model.DuringTermTime" /> Hors vacances scolaires (période scolaire)</label>
+            <label class="checkbox"><InputCheckbox @bind-Value="Model.DuringSchoolHolidays" /> Pendant les vacances scolaires</label>
+            <p class="muted">Aucun créneau les jours fériés. Les vacances scolaires sont celles rattachées à une année scolaire.</p>
+        </fieldset>
+
+        <fieldset>
+            <legend>Période (facultatif)</legend>
+            <p class="muted">Laisser vide pour une session sur toute l'année scolaire. À renseigner pour un stage ou une session plus courte.</p>
+            <label>Début <InputDate TValue="DateTime?" @bind-Value="Model.StartDate" /></label>
+            <label>Fin <InputDate TValue="DateTime?" @bind-Value="Model.EndDate" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="/activities/@activityId">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-session" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette session ?');">Supprimer cette session</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? ActivityId { get; set; }
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "session")]
+    private SessionModel? Model { get; set; }
+
+    private List<Ct.SchoolYear> schoolYears = [];
+    private Guid activityId;
+    private string? error;
+
+    private bool IsNew => Id is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Ct.ActivitySession? existing = null;
+            if (!IsNew)
+            {
+                existing = await Api.GetByIdAsync<Ct.ActivitySession>(ApiRoutes.ActivitySessions, Id!.Value);
+            }
+
+            activityId = ActivityId ?? existing!.ActivityId;
+
+            schoolYears = await Api.GetSchoolYearsAsync();
+
+            if (Model is null)
+            {
+                Model = existing is null ? new SessionModel { DuringTermTime = true } : SessionModel.From(existing);
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var session = Model!.ApplyTo(new Ct.ActivitySession { ActivityId = activityId });
+                await Api.CreateAsync(ApiRoutes.ActivitySessions, session);
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.ActivitySession>(ApiRoutes.ActivitySessions, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.ActivitySessions, Id.Value, Model!.ApplyTo(existing));
+            }
+
+            Navigation.NavigateTo($"/activities/{activityId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.ActivitySessions, Id!.Value);
+            Navigation.NavigateTo($"/activities/{activityId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

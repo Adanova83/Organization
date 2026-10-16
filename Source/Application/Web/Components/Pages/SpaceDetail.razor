@@ -1,0 +1,57 @@
+@page "/spaces/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.SpaceRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>@(space?.Name ?? "Espace")</PageTitle>
+
+<p><a href="/spaces">← Retour aux espaces</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (space is not null)
+{
+    <h1>@space.Name</h1>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/spaces/@Id/edit">Modifier l'espace</a></p>
+    }
+
+    <dl class="meta">
+        <dt>Statut</dt><dd>@(space.Active?.IsActive == false ? "Inactif" : "Actif")</dd>
+    </dl>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Space? space;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.SpaceEdit);
+
+        try
+        {
+            space = await Api.GetByIdAsync<Ct.Space>(ApiRoutes.Spaces, Id);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/spaces/{Id}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}
