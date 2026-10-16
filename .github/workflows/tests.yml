@@ -1,0 +1,51 @@
+# Compilation de la solution et tests automatiques, à chaque push sur main / develop et à chaque pull request.
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Compilation et tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation du SDK .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restauration des paquets
+        run: dotnet restore Organizations.sln
+
+      - name: Compilation
+        run: dotnet build Organizations.sln --no-restore --configuration Release
+
+      - name: Tests
+        run: >-
+          dotnet test Source/Tests/Organizations.Tests/Organizations.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=resultats.trx"
+          --results-directory TestResults
+
+      - name: Résultats des tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultats-tests
+          path: TestResults
+          if-no-files-found: ignore
