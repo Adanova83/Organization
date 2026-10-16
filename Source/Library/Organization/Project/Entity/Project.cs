@@ -17,6 +17,8 @@ internal class Project : PrimaryKey
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     [Required] public Guid SchoolYearId { get; set; }
+    [Required] public bool DuringTermTime { get; set; } = true;
+    [Required] public bool DuringSchoolHolidays { get; set; }
     [ForeignKey(nameof(SchoolYearId))] public SchoolYear SchoolYear { get; set; } = default!;
     [Required] public Guid OrganizationId { get; set; }
     [ForeignKey(nameof(OrganizationId))] public Organization Organization { get; set; } = default!;

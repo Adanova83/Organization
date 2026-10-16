@@ -639,6 +639,12 @@ namespace Library.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<bool>("DuringSchoolHolidays")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("DuringTermTime")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 

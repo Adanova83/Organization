@@ -15,8 +15,8 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 
 ## Fonctionnalités incomplètes
 
-- [ ] **Projets** : les afficher dans le calendrier et ajouter à leurs créneaux le rythme « hors vacances / pendant
-      les vacances » (comme les sessions d'ateliers).
+- [x] **Projets** : rythme « hors vacances / pendant les vacances » (jamais les jours fériés), couleur, et affichage
+      dans le calendrier et le flux ICS.
 - [ ] **Inscriptions** : appliquer les règles côté API (âge minimum, capacité maximale, doublons). Aujourd'hui,
       seul le site contrôle l'âge, et la capacité n'existe pas dans le modèle.
 - [ ] **Suppression en cascade** : supprimer une activité laisse ses sessions, créneaux, inscriptions et animateurs ;

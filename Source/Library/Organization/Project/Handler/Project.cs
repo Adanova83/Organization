@@ -122,6 +122,10 @@ public sealed class Project : ICrudHandler<Domain.Project>
         {
             throw new ArgumentException("School year ID must not be empty.", nameof(domain.SchoolYearId));
         }
+        if (!domain.DuringTermTime && !domain.DuringSchoolHolidays)
+        {
+            throw new ArgumentException("The project must take place during term time, during school holidays, or both.", nameof(domain.DuringTermTime));
+        }
         // Dates facultatives (sinon celles de l'année scolaire) ; si les deux sont données, la fin suit le début.
         if (domain.EndDate < domain.StartDate)
         {

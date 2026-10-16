@@ -28,9 +28,9 @@
         <li><NavLink href="projects">Projets</NavLink></li>
     </AuthorizeView>
 
-    @* Calendrier : activités (activity.read) et/ou événements (event.read). *@
+    @* Calendrier : activités (activity.read), événements (event.read) et/ou projets (project.read). *@
     <AuthorizeView Context="calendar">
-        @if (Permissions.Has(calendar.User, Permissions.ActivityRead) || Permissions.Has(calendar.User, Permissions.EventRead))
+        @if (Permissions.Has(calendar.User, Permissions.ActivityRead) || Permissions.Has(calendar.User, Permissions.EventRead) || Permissions.Has(calendar.User, Permissions.ProjectRead))
         {
             <li><NavLink href="calendar">Calendrier</NavLink></li>
         }

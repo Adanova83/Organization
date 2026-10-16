@@ -14,6 +14,10 @@ public class Project : PrimaryKey
     public Guid OrganizationId { get; set; }
     public Guid SchoolYearId { get; set; }
 
+    // Rythme des créneaux : hors vacances scolaires et/ou pendant les vacances (au moins l'un des deux). Jamais les jours fériés.
+    public bool DuringTermTime { get; set; } = true;
+    public bool DuringSchoolHolidays { get; set; }
+
     // Lecture seule (renseignés à la lecture) : année scolaire et dates effectives (propres, sinon celles de l'année).
     public string? SchoolYearCode { get; set; }
     public DateTime? EffectiveStartDate { get; set; }

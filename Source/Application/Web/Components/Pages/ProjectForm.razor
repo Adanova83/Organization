@@ -27,6 +27,7 @@
             <label>Code <InputText @bind-Value="Model.Code" /></label>
             <label>Description <InputTextArea @bind-Value="Model.Description" rows="4" /></label>
             <label>Âge minimum <InputNumber @bind-Value="Model.AgeMinimum" /></label>
+            <label>Couleur (calendrier) <InputText type="color" @bind-Value="Model.Color" class="color" /></label>
             <label>
                 Organisation
                 <InputSelect @bind-Value="Model.OrganizationId">
@@ -54,6 +55,13 @@
             <p class="muted">Dates facultatives : laisser vide pour un projet sur toute l'année scolaire.</p>
             <label>Début <InputDate TValue="DateTime?" @bind-Value="Model.StartDate" /></label>
             <label>Fin <InputDate TValue="DateTime?" @bind-Value="Model.EndDate" /></label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Rythme des créneaux</legend>
+            <label class="checkbox"><InputCheckbox @bind-Value="Model.DuringTermTime" /> Hors vacances scolaires (période scolaire)</label>
+            <label class="checkbox"><InputCheckbox @bind-Value="Model.DuringSchoolHolidays" /> Pendant les vacances scolaires</label>
+            <p class="muted">Aucun créneau les jours fériés. Les vacances sont celles rattachées aux années scolaires.</p>
         </fieldset>
 
         <p class="actions">
@@ -92,7 +100,7 @@
 
             if (Model is null)
             {
-                Model = IsNew ? new ProjectModel() : ProjectModel.From(await Api.GetByIdAsync<Ct.Project>(ApiRoutes.Projects, Id!.Value));
+                Model = IsNew ? new ProjectModel { DuringTermTime = true } : ProjectModel.From(await Api.GetByIdAsync<Ct.Project>(ApiRoutes.Projects, Id!.Value));
             }
         }
         catch (Exception ex) when (ApiErrors.IsNotFound(ex))

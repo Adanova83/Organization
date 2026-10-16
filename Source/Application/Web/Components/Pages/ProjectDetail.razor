@@ -29,6 +29,7 @@ else if (project is not null)
         <dt>Code</dt><dd>@project.Code</dd>
         <dt>Année scolaire</dt><dd>@project.SchoolYearCode</dd>
         <dt>Période</dt><dd>@Format.Period(project.EffectiveStartDate, project.EffectiveEndDate)@(project.StartDate is not null || project.EndDate is not null ? " (période restreinte)" : "")</dd>
+        <dt>Rythme</dt><dd>@Library.Domain.SessionSchedule.Label(project.DuringTermTime, project.DuringSchoolHolidays)</dd>
         <dt>Âge</dt><dd>@Format.Age(project.AgeMinimum)</dd>
         @if (!string.IsNullOrWhiteSpace(project.Description))
         {
