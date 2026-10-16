@@ -1,4 +1,3 @@
-using Library.Authentication;
 using Library.Data;
 using Library.Mapper;
 using Microsoft.EntityFrameworkCore;
@@ -41,138 +40,20 @@ public sealed class Member : IMember
         var entity = await _dbContext.Members.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            var updated = domain.DomainToEntity();
+            _dbContext.UpdateFrom(entity, updated);
+
+            // Addr est un type détenu : SetValues ne le copie pas.
+            entity.Addr.Line1 = updated.Addr.Line1;
+            entity.Addr.Line2 = updated.Addr.Line2;
+            entity.Addr.Line3 = updated.Addr.Line3;
+            entity.Addr.City = updated.Addr.City;
+            entity.Addr.PostalCode = updated.Addr.PostalCode;
+            entity.Addr.CountryId = updated.Addr.CountryId;
+
             await _dbContext.SaveChangesAsync(ct);
         }
     }
-
-    public async Task<bool> AskNewPasswordAsync(string email, CancellationToken ct)
-    {
-        bool result = true;
-
-        Entity.Member? member = await _dbContext.Members.FirstOrDefaultAsync(m => m.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase), ct);
-        if (member != null)
-        {
-            member.AskedNewPassword = Guid.NewGuid();
-            _dbContext.Members.Update(member);
-            await _dbContext.SaveChangesAsync(ct);
-        }
-        return result;
-    }
-
-    public async Task<bool> ChangeEmailAsync(string email, string password, CancellationToken ct)
-    {
-        bool result = true;
-
-        Entity.Member? member = await _dbContext.Members.FirstOrDefaultAsync(m => m.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase), ct);
-        if (member != null)
-        {
-            result = Encryptor.Verify(password, member.HashedPassword);
-            if (result)
-            {
-                member.Email = email;
-                _dbContext.Members.Update(member);
-                await _dbContext.SaveChangesAsync(ct);
-            }
-        }
-        return result;
-    }
-
-    public async Task<bool> ChangePasswordAsync(string email, string oldPassword, string newPassword, CancellationToken ct)
-    {
-        bool result = true;
-
-        Entity.Member? member = await _dbContext.Members.FirstOrDefaultAsync(m => m.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase), ct);
-        if (member != null)
-        {
-            result = Encryptor.Verify(oldPassword, member.HashedPassword);
-            if (result)
-            {
-                member.AskedNewPassword = null;
-                member.HashedPassword = Encryptor.Hash(newPassword);
-                _dbContext.Members.Update(member);
-                await _dbContext.SaveChangesAsync(ct);
-            }
-        }
-        return result;
-    }
-
-    public async Task<bool> CreateNewPasswordAsync(Guid askedNewPassword, CancellationToken ct)
-    {
-        bool result = true;
-
-        Entity.Member? member = await _dbContext.Members.FirstOrDefaultAsync(m => m.AskedNewPassword.Equals(askedNewPassword), ct);
-        if (member != null)
-        {
-            Guid newPassword = Guid.NewGuid();
-            member.HashedPassword = Encryptor.Hash(newPassword.ToString());
-            _dbContext.Members.Update(member);
-            await _dbContext.SaveChangesAsync(ct);
-        }
-        return result;
-    }
-
-    public async Task<RepositoryResponseRange<Domain.Role>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
-    {
-        IQueryable<Entity.Role> q = _dbContext.RoleMembers
-            .Where(item => item.MemberId == id)
-            .Join(_dbContext.Roles,
-                gm => gm.RoleId,
-                r => r.Id,
-                (gm, r) => new {gm, r})
-            .Select(item => item.r);
-
-        var entities = await q
-            .ToListAsync(ct);
-
-        return new RepositoryResponseRange<Domain.Role>()
-        {
-            Data = entities.Distinct()
-             .Select(Mapper.Role.EntityToDomain)
-             .ToList(),
-            FilteredCount = entities.Count,
-            TotalCount = await _dbContext.Roles.CountAsync(ct)
-        };
-    }
-
-    public async Task<RepositoryResponseRange<Domain.Permission>> FetchPermissionsOfMemberAsync(Guid id, CancellationToken ct)
-    {
-        IQueryable<Entity.Permission> q = _dbContext.PermissionMembers
-            .Where(item => item.MemberId == id)
-            .Join(_dbContext.Permissions,
-                mr => mr.PermissionId,
-                r => r.Id,
-                (mr, r) => new {mr, r})
-            .Select(item => item.r);
-
-        var entities = await q
-            .ToListAsync(ct);
-
-        q = _dbContext.RoleMembers
-            .Where(item => item.MemberId == id)
-            .Join(_dbContext.RolePermissions,
-                gm => gm.RoleId,
-                gr => gr.RoleId,
-                (gm, gr) => new {gm, gr})
-            .Select(item => item.gr)
-            .Join(_dbContext.Permissions,
-                gr => gr.PermissionId,
-                r => r.Id,
-                (gr, r) => new {gr, r})
-            .Select(item => item.r);
-
-        entities.AddRange(await q.ToListAsync(ct));
-
-        return new RepositoryResponseRange<Domain.Permission>()
-        {
-            Data = entities.Distinct()
-             .Select(Mapper.Permission.EntityToDomain)
-             .ToList(),
-            FilteredCount = entities.Count,
-            TotalCount = await _dbContext.Permissions.CountAsync(ct)
-        };
-    }
-
 
     public async Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)
     {
@@ -189,14 +70,16 @@ public sealed class Member : IMember
         IQueryable<Entity.Member> q = _dbContext.Members;
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{query}%";
             q = q.Where(item =>
-                EF.Functions.ILike(item.Lastname + " " + item.Firstname + " " + item.Lastname, pattern)
+                EF.Functions.ILike(item.Lastname + " " + (item.Firstname ?? ""), pattern)
             );
         }
 
         q = q.OrderBy(item => EF.Functions.Collate(item.Lastname, "C"))
             .ThenBy(item => EF.Functions.Collate(item.Firstname, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -211,7 +94,7 @@ public sealed class Member : IMember
             Data = entities
              .Select(Mapper.Member.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Members.CountAsync(ct)
         };
     }
@@ -226,36 +109,39 @@ public sealed class Member : IMember
         };
     }
 
-    public async Task<RepositoryResponse<Domain.Member>> ValidateUserAsync(string email, string password, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Member>> SearchByExternalIdAsync(string externalId, CancellationToken ct)
     {
-        bool result = true;
-
-        var member = await _dbContext.Members
-            .FirstOrDefaultAsync(item => EF.Functions.ILike(item.Email, email), ct);
-
-        if (member == null)
+        var entity = await _dbContext.Members
+            .FirstOrDefaultAsync(item => item.ExternalId == externalId, ct);
+        return new RepositoryResponse<Domain.Member>()
         {
-            return new RepositoryResponse<Domain.Member>() { Data = null };
-        }
-            
-        // Vérification du mot de passe dans un thread séparé (BCrypt est CPU-intensif)
-        result = await Encryptor.VerifyAsync(password, member.HashedPassword, ct);
+            Data = entity?.EntityToDomain()
+        };
+    }
 
-        if (!result)
-        {
-            return new RepositoryResponse<Domain.Member>() { Data = null };
-        }
+    public async Task<RepositoryResponse<Domain.Member>> LinkExternalAccountAsync(string externalId, string email, CancellationToken ct)
+    {
+        var entity = await _dbContext.Members
+            .FirstOrDefaultAsync(item => item.ExternalId == externalId, ct);
 
-        if (member.AskedNewPassword.HasValue)
+        if (entity == null)
         {
-            member.AskedNewPassword = null;
-            _dbContext.Members.Update(member);
-            await _dbContext.SaveChangesAsync(ct);
+            // Premier passage : rattachement par e-mail, uniquement si le membre n'est lié à aucun compte externe
+            // (on ne reprend jamais un membre déjà lié à un autre compte).
+            string normalizedEmail = email.ToUpper();
+            entity = await _dbContext.Members
+                .FirstOrDefaultAsync(item => item.Email.ToUpper() == normalizedEmail && item.ExternalId == null, ct);
+
+            if (entity != null)
+            {
+                entity.ExternalId = externalId;
+                await _dbContext.SaveChangesAsync(ct);
+            }
         }
 
         return new RepositoryResponse<Domain.Member>()
         {
-            Data = member.EntityToDomain()
+            Data = entity?.EntityToDomain()
         };
     }
 }

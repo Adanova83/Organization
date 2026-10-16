@@ -1,0 +1,67 @@
+@page "/spaces"
+@attribute [Authorize(Policy = Permissions.SpaceRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Espaces</PageTitle>
+
+<h1>Espaces</h1>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/spaces/new">Nouvel espace</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (spaces is not null)
+{
+    @if (spaces.Count == 0)
+    {
+        <p class="muted">Aucun espace.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Espace</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var space in spaces)
+                {
+                    <tr>
+                        <td><a href="/spaces/@space.Id">@space.Name</a></td>
+                        <td>@(space.Active?.IsActive == false ? "Inactif" : "Actif")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<Ct.Space>? spaces;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.SpaceEdit);
+
+        try
+        {
+            spaces = (await Api.ListAllAsync<Ct.Space>(ApiRoutes.Spaces)).OrderBy(s => s.Name).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/spaces", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

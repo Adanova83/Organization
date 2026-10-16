@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class ActivitySessionSlotAnimation
+public sealed class ActivitySessionSlotAnimation : ICrudHandler<Domain.ActivitySessionSlotAnimation>
 {
     private readonly IActivitySessionSlotAnimation _repository;
 
@@ -11,7 +11,7 @@ public sealed class ActivitySessionSlotAnimation
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.ActivitySessionSlotAnimation domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.ActivitySessionSlotAnimation>> CreateAsync(Domain.ActivitySessionSlotAnimation domain, CancellationToken ct)
     {
         if (domain == null)
         {

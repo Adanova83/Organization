@@ -40,7 +40,7 @@ public sealed class Country : ICountry
         var entity = await _dbContext.Countries.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -80,7 +80,7 @@ public sealed class Country : ICountry
         IQueryable<Entity.Country> q = _dbContext.Countries;
         if (!string.IsNullOrWhiteSpace(namePattern))
         {
-            var pattern = $"%{namePattern}";
+            var pattern = $"%{namePattern}%";
             q = q.Where(item =>
                 EF.Functions.ILike(item.Name, pattern)
             );
@@ -88,6 +88,8 @@ public sealed class Country : ICountry
 
         q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"))
             .ThenBy(item => EF.Functions.Collate(item.CodeAlpha3, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -102,7 +104,7 @@ public sealed class Country : ICountry
             Data = entities
              .Select(Mapper.Country.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Countries.CountAsync(ct)
         };
     }

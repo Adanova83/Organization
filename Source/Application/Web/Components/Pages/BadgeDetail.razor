@@ -1,0 +1,187 @@
+@page "/badges/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.AccessRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Badge @badge?.Identifier</PageTitle>
+
+<p><a href="/badges">← Retour aux badges</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (badge is not null)
+{
+    <h1>Badge @badge.Identifier</h1>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/badges/@Id/edit">Modifier le badge</a></p>
+    }
+
+    <dl class="meta">
+        <dt>Statut</dt><dd>@(badge.Active?.IsActive == false ? "Inactif" : "Actif")</dd>
+    </dl>
+
+    <section class="card">
+        <h2>Attribué à</h2>
+
+        @if (assignations.Count == 0)
+        {
+            <p class="muted">Ce badge n'est attribué à personne.</p>
+        }
+        else
+        {
+            <table>
+                <tbody>
+                    @foreach (var assignation in assignations)
+                    {
+                        <tr>
+                            <td>@MemberName(assignation.MemberId)</td>
+                            @if (canEdit)
+                            {
+                                <td>
+                                    <form method="post" class="inline" @onsubmit="() => UnassignAsync(assignation.Id)" @formname="@($"unassign-{assignation.Id}")">
+                                        <AntiforgeryToken />
+                                        <button type="submit" class="link-button">Retirer</button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (canEdit)
+        {
+            @if (members.Count == 0)
+            {
+                <p class="muted">La liste des membres est inaccessible (permission member.read) : impossible d'attribuer le badge.</p>
+            }
+            else
+            {
+                <EditForm Model="Assign" FormName="assign-badge" OnValidSubmit="AssignAsync" Enhance class="form">
+                    <DataAnnotationsValidator />
+                    <fieldset>
+                        <legend>Attribuer le badge</legend>
+                        <label>
+                            Membre
+                            <InputSelect @bind-Value="Assign!.MemberId">
+                                <option value="">— Choisir —</option>
+                                @foreach (var member in members.Where(m => assignations.All(a => a.MemberId != m.Id)))
+                                {
+                                    <option value="@member.Id">@member.Lastname @member.Firstname</option>
+                                }
+                            </InputSelect>
+                        </label>
+                        <ValidationMessage For="() => Assign!.MemberId" />
+                    </fieldset>
+                    <p class="actions"><button type="submit">Attribuer</button></p>
+                </EditForm>
+            }
+        }
+    </section>
+
+    <section class="card">
+        <h2>Passages</h2>
+
+        @if (events.Count == 0)
+        {
+            <p class="muted">Aucun passage enregistré.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr><th>Entrée</th><th>Sortie</th><th>Lecteur</th><th>Accès</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in events)
+                    {
+                        <tr>
+                            <td>@Format.DateTimeLabel(item.AccessedAt)</td>
+                            <td>@(item.ExitedAt is { } exited ? Format.DateTimeLabel(exited) : "—")</td>
+                            <td title="@item.ApplicationId">@item.ApplicationId.ToString()[..8]</td>
+                            <td>@(item.IsAuthorized ? "Autorisé" : "Refusé")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "assign-badge")]
+    private MemberChoiceModel? Assign { get; set; }
+
+    private Ct.Badge? badge;
+    private List<Ct.BadgeAssignation> assignations = [];
+    private List<Ct.AccessEvent> events = [];
+    private List<Ct.Member> members = [];
+    private string? error;
+    private bool canEdit;
+
+    private string MemberName(Guid id)
+        => members.FirstOrDefault(m => m.Id == id) is { } member ? $"{member.Lastname} {member.Firstname}".Trim() : "Membre (détails indisponibles)";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Assign ??= new MemberChoiceModel();
+        canEdit = await Access.CanAsync(Permissions.AccessEdit);
+
+        try
+        {
+            badge = await Api.GetByIdAsync<Ct.Badge>(ApiRoutes.Badges, Id);
+            assignations = await Api.ListAllAsync<Ct.BadgeAssignation>(ApiRoutes.BadgeAssignations, Id);
+            events = (await Api.ListAllAsync<Ct.AccessEvent>(ApiRoutes.AccessEvents, Id)).OrderByDescending(e => e.AccessedAt).ToList();
+
+            // Noms des membres : demande member.read ; sans elle, on affiche un libellé neutre.
+            members = await Api.GetMembersOrEmptyAsync();
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/badges/{Id}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task AssignAsync()
+    {
+        try
+        {
+            await Api.CreateAsync(ApiRoutes.BadgeAssignations, new Ct.BadgeAssignation { BadgeId = Id, MemberId = Assign!.MemberId!.Value });
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task UnassignAsync(Guid assignationId)
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.BadgeAssignations, assignationId);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

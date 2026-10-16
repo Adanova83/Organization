@@ -40,7 +40,7 @@ public sealed class ActivitySessionSlotAnimation : IActivitySessionSlotAnimation
         var entity = await _dbContext.ActivitySessionSlotAnimations.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -68,8 +68,10 @@ public sealed class ActivitySessionSlotAnimation : IActivitySessionSlotAnimation
             q = q.Where(item => item.MemberId.Equals(memberId.Value));
         }
 
-        q = q.OrderBy(item => EF.Functions.Collate(item.SessionSlotId, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.MemberId, "C"));
+        q = q.OrderBy(item => item.SessionSlotId)
+            .ThenBy(item => item.MemberId);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -84,7 +86,7 @@ public sealed class ActivitySessionSlotAnimation : IActivitySessionSlotAnimation
             Data = entities
              .Select(Mapper.ActivitySessionSlotAnimation.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.ActivitySessionSlotAnimations.CountAsync(ct)
         };
     }

@@ -1,0 +1,142 @@
+@page "/events/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.EventRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+@inject SubscriptionClient Subs
+
+<PageTitle>@(item?.Name ?? "Événement")</PageTitle>
+
+<p><a href="/events">← Retour aux événements</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (item is not null)
+{
+    <h1>@item.Name</h1>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/events/@Id/edit">Modifier l'événement</a></p>
+    }
+
+    <dl class="meta">
+        <dt>Code</dt><dd>@item.Code</dd>
+        <dt>Année scolaire</dt><dd>@item.SchoolYearCode</dd>
+        <dt>Début</dt><dd>@Format.DateTimeLabel(item.StartDate)</dd>
+        <dt>Fin</dt><dd>@Format.DateTimeLabel(item.EndDate)</dd>
+        <dt>Lieu</dt><dd>@(item.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</dd>
+        <dt>Âge</dt><dd>@Format.Age(item.AgeMinimum)</dd>
+        @if (!string.IsNullOrWhiteSpace(item.Description))
+        {
+            <dt>Description</dt>
+            <dd>@item.Description</dd>
+        }
+    </dl>
+
+    <p><a href="/animations/event/@Id">Animateurs</a></p>
+
+    @if (series.Count > 1)
+    {
+        <section class="card">
+            <h2>Série de @series.Count dates</h2>
+            @if (canEdit)
+            {
+                <p class="actions">
+                    <a href="/event-series/@item.SeriesId/edit?from=@OccurrenceDay">Modifier cette date et les suivantes</a>
+                    <a href="/event-series/@item.SeriesId/edit">Modifier toute la série</a>
+                </p>
+            }
+            <p class="series-dates">
+                @foreach (var occurrence in series)
+                {
+                    @if (occurrence.Id == Id)
+                    {
+                        <strong>@Format.Date(occurrence.StartDate)</strong>
+                    }
+                    else
+                    {
+                        <a href="/events/@occurrence.Id">@Format.Date(occurrence.StartDate)</a>
+                    }
+                }
+            </p>
+        </section>
+    }
+
+    @if (me is not null || canSeeSubscribers)
+    {
+        <p class="actions">
+            <SubscribeToggle Kind="SubscriptionKind.Event" TargetId="Id" MemberId="me" SubscriptionId="mySubscription" BlockReason="@BlockReason" />
+            @if (canSeeSubscribers)
+            {
+                <a href="/subscriptions/event/@Id">Voir les inscrits</a>
+            }
+        </p>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Event? item;
+    private Dictionary<Guid, string> spaces = [];
+    private string? error;
+    private bool canEdit;
+    private bool canSeeSubscribers;
+    private Guid? me;
+    private int? myAge;
+    private Guid? mySubscription;
+    private List<Ct.Event> series = [];
+
+    // Jour de cette occurrence (heure de Paris), pour « cette date et les suivantes ».
+    private string OccurrenceDay => DateOnly.FromDateTime(Format.ParisLocal(item!.StartDate)).ToString("yyyy-MM-dd");
+
+    private string? BlockReason
+        => item is { AgeMinimum: > 0 } && myAge is { } age && age < item.AgeMinimum
+            ? $"Âge minimum : {item.AgeMinimum} ans"
+            : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.EventEdit);
+
+        try
+        {
+            item = await Api.GetEventAsync(Id);
+
+            // Occurrences de la même série (événement récurrent).
+            if (item.SeriesId is { } seriesId)
+            {
+                series = await Api.GetEventSeriesAsync(seriesId);
+            }
+
+            canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
+            me = await Access.MemberIdAsync();
+            myAge = await Access.AgeAsync();
+            if (me is { } memberId)
+            {
+                mySubscription = (await Subs.ListAsync(SubscriptionKind.Event, Id, memberId)).FirstOrDefault()?.Id;
+            }
+
+            spaces = await Api.GetSpaceNamesAsync();
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/events/{Id}", forceLoad: true);
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "L'API est injoignable.";
+        }
+    }
+}

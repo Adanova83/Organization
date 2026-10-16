@@ -14,13 +14,8 @@ public class FullDbContext : DbContext
     internal DbSet<Application> Applications => Set<Application>();
     internal DbSet<Badge> Badges => Set<Badge>();
     internal DbSet<BadgeAssignation> BadgeAssignations => Set<BadgeAssignation>();
-    internal DbSet<Chat> Chats => Set<Chat>();
-    internal DbSet<ChatMember> ChatMembers => Set<ChatMember>();
-    internal DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
-    internal DbSet<ChatMessageRecipient> ChatMessageRecipients => Set<ChatMessageRecipient>();
     internal DbSet<Contribution> Contributions=> Set<Contribution>();
     internal DbSet<Country> Countries => Set<Country>();
-    internal DbSet<Document> Documents => Set<Document>();
     internal DbSet<Event> Events => Set<Event>();
     internal DbSet<EventAnimation> EventAnimations => Set<EventAnimation>();
     internal DbSet<EventSubscription> EventSubscriptions => Set<EventSubscription>();
@@ -30,15 +25,12 @@ public class FullDbContext : DbContext
     internal DbSet<NoteLink> NoteLinks => Set<NoteLink>();
     internal DbSet<Organization> Organizations => Set<Organization>();
     internal DbSet<OrganizationSession> OrganizationSessions => Set<OrganizationSession>();
-    internal DbSet<Permission> Permissions => Set<Permission>();
-    internal DbSet<PermissionMember> PermissionMembers => Set<PermissionMember>();
     internal DbSet<Project> Projects => Set<Project>();
     internal DbSet<ProjectSlot> ProjectSlots => Set<ProjectSlot>();
     internal DbSet<ProjectSlotAnimation> ProjectSlotAnimations => Set<ProjectSlotAnimation>();
     internal DbSet<ProjectSlotSubscription> ProjectSlotSubscriptions => Set<ProjectSlotSubscription>();
     internal DbSet<Role> Roles => Set<Role>();
-    internal DbSet<RoleMember> RoleMembers => Set<RoleMember>();
-    internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    internal DbSet<SchoolYear> SchoolYears => Set<SchoolYear>();
     internal DbSet<Space> Spaces => Set<Space>();
 
     public FullDbContext(DbContextOptions<FullDbContext> options)
@@ -52,18 +44,17 @@ public class FullDbContext : DbContext
 
         modelBuilder.HasDefaultSchema("Organization");
 
+        modelBuilder.Entity<AccessEvent>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Application>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Badge>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<BadgeAssignation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Activity>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ActivitySession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ActivitySessionSlot>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ActivitySessionSlotAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ActivitySessionSlotSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<Chat>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<ChatMember>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<ChatMessage>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<ChatMessageRecipient>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Contribution>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Country>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<Document>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Event>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<EventAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<EventSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
@@ -73,16 +64,23 @@ public class FullDbContext : DbContext
         modelBuilder.Entity<NoteLink>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<OrganizationSession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<Permission>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<PermissionMember>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Project>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ProjectSlot>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ProjectSlotAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<ProjectSlotSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Role>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<RoleMember>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<RolePermission>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<SchoolYear>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Space>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+
+        // Suppression logique : une ligne supprimée garde ses valeurs. Les index uniques ([Index(..., IsUnique = true)])
+        // ne portent donc que sur les lignes non supprimées, pour pouvoir recréer un élément avec le même code, e-mail...
+        foreach (var index in modelBuilder.Model.GetEntityTypes()
+                     .Where(type => !type.IsOwned())
+                     .SelectMany(type => type.GetIndexes())
+                     .Where(index => index.IsUnique))
+        {
+            index.SetFilter("\"Audit_DeletedAt\" IS NULL");
+        }
     }
 
     public override int SaveChanges()
@@ -99,27 +97,48 @@ public class FullDbContext : DbContext
 
     private void ApplyAuditInformation()
     {
-        var entries = ChangeTracker.Entries()
-            .Where(e => e.Entity is Audit && (e.State == EntityState.Added || e.State == EntityState.Modified));
+        var entries = ChangeTracker.Entries<PrimaryKey>()
+            .Where(e => e.State == EntityState.Added
+                     || e.State == EntityState.Modified
+                     || e.State == EntityState.Deleted)
+            .ToList();
 
         var utcNow = DateTime.UtcNow;
 
         foreach (var entry in entries)
         {
-            var entity = (Audit)entry.Entity;
+            var entity = entry.Entity;
+            entity.Audit ??= new Audit();
 
-            switch(entry.State)
+            switch (entry.State)
             {
                 case EntityState.Added:
-                    entity.CreatedAt = utcNow;
-                    entity.LastUpdatedAt = utcNow;
+                    entity.Audit.CreatedAt = utcNow;
+                    entity.Audit.LastUpdatedAt = utcNow;
                     break;
                 case EntityState.Modified:
-                    entity.LastUpdatedAt = utcNow;
+                    entity.Audit.LastUpdatedAt = utcNow;
+                    // CreatedAt ne doit jamais changer après la création.
+                    entry.Reference(e => e.Audit).TargetEntry!
+                        .Property(nameof(Audit.CreatedAt)).IsModified = false;
                     break;
                 case EntityState.Deleted:
-                    entity.DeletedAt = utcNow;
+                    // Suppression logique : on conserve la ligne et on renseigne DeletedAt.
                     entry.State = EntityState.Modified;
+
+                    // Remove() a aussi marqué les types détenus (Audit, Active, Addr...) comme supprimés :
+                    // on les remet à Unchanged, seul Audit est enregistré comme modifié.
+                    foreach (var reference in entry.References)
+                    {
+                        if (reference.TargetEntry != null && reference.Metadata.TargetEntityType.IsOwned())
+                        {
+                            reference.TargetEntry.State = EntityState.Unchanged;
+                        }
+                    }
+
+                    entity.Audit.LastUpdatedAt = utcNow;
+                    entity.Audit.DeletedAt = utcNow;
+                    entry.Reference(e => e.Audit).TargetEntry!.State = EntityState.Modified;
                     break;
             }
         }

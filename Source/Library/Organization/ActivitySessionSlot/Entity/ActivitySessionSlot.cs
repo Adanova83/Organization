@@ -12,6 +12,6 @@ internal class ActivitySessionSlot : PrimaryKey
     [Required] public int Frequency { get; set; }
     [Required] public Guid SessionId { get; set; }
     [ForeignKey(nameof(SessionId))] public ActivitySession Session { get; set; } = default!;
-    [Required] public Guid? SpaceId { get; set; }
+    public Guid? SpaceId { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
 }

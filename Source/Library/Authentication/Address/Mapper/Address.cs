@@ -19,6 +19,20 @@ public static class Address
         };
     }
 
+    /// <summary>Adresse reçue de l'API ; les champs obligatoires sont contrôlés (ArgumentException sinon).</summary>
+    public static Do.Address ContractToDomain(this Ct.Address? source)
+    {
+        if (source is null)
+        {
+            throw new ArgumentException("Address is required.", nameof(source));
+        }
+
+        return new Do.Address(source.Line1, source.Line2, source.Line3, source.City, source.PostalCode)
+        {
+            CountryId = source.CountryId
+        };
+    }
+
     internal static En.Address DomainToEntity(this Do.Address source)
     {
         return new En.Address

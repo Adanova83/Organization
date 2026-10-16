@@ -1,0 +1,105 @@
+@page "/badges/new"
+@page "/badges/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.AccessEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouveau badge" : "Modifier le badge")</PageTitle>
+
+<h1>@(IsNew ? "Nouveau badge" : "Modifier le badge")</h1>
+
+<p><a href="@BackUrl">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="badge" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Badge</legend>
+            <label>Identifiant (numéro lu par le lecteur) <InputText @bind-Value="Model.Identifier" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-badge" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce badge ?');">Supprimer ce badge</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "badge")]
+    private BadgeModel? Model { get; set; }
+
+    private string? error;
+
+    private bool IsNew => Id is null;
+    private string BackUrl => IsNew ? "/badges" : $"/badges/{Id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model ??= IsNew ? new BadgeModel() : BadgeModel.From(await Api.GetByIdAsync<Ct.Badge>(ApiRoutes.Badges, Id!.Value));
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var created = await Api.CreateAsync(ApiRoutes.Badges, Model!.ApplyTo(new Ct.Badge()));
+                Navigation.NavigateTo($"/badges/{created.Id}");
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.Badge>(ApiRoutes.Badges, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.Badges, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/badges/{Id}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Badges, Id!.Value);
+            Navigation.NavigateTo("/badges");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

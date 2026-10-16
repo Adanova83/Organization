@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.env
+**/*.user
+.git/
+.gitignore
+.gitattributes
+Sql/
+LICENCE
+*.md
+docker-compose*.yml

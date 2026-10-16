@@ -1,0 +1,374 @@
+@page "/calendar"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+@*
+    Calendrier hebdomadaire : créneaux d'activités (activity.read) et événements (event.read).
+    Chaque bloc est hachuré : moitié couleur de l'activité ou de l'événement, moitié couleur de la salle
+    (gris si la salle n'est pas précisée ou si l'utilisateur n'a pas space.read).
+*@
+
+<PageTitle>Calendrier</PageTitle>
+
+<h1>Calendrier</h1>
+
+<div class="calendar-toolbar">
+    <a class="button" href="@WeekUrl(weekStart.AddDays(-7))" aria-label="Semaine précédente">←</a>
+    <a class="button" href="/calendar">Cette semaine</a>
+    <a class="button" href="@WeekUrl(weekStart.AddDays(7))" aria-label="Semaine suivante">→</a>
+    <strong>@WeekLabel</strong>
+</div>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (loaded)
+{
+    @if (holidaysUnavailable)
+    {
+        <p class="notice">Les vacances scolaires et jours fériés ne sont pas pris en compte (permission organization.read nécessaire pour les lire).</p>
+    }
+
+    @if (items.Count == 0)
+    {
+        <p class="muted">Rien de prévu cette semaine.</p>
+    }
+
+    <div class="calendar" style="--hours: @(lastHour - firstHour); --hour-height: @(HourHeight)px">
+        <div class="calendar-corner"></div>
+        @for (var day = 0; day < 7; day++)
+        {
+            var date = weekStart.AddDays(day);
+            var dayHolidays = HolidaysOn(date);
+            <div class="calendar-day-header @(date == today ? "today" : "")">
+                <span>@Format.Day((int)date.DayOfWeek) @date.Day</span>
+                @foreach (var holiday in dayHolidays)
+                {
+                    <span class="calendar-holiday" title="@holiday">@holiday</span>
+                }
+            </div>
+        }
+
+        <div class="calendar-hours">
+            @for (var hour = firstHour; hour < lastHour; hour++)
+            {
+                <span style="top: @((hour - firstHour) * HourHeight)px">@hour.ToString("00"):00</span>
+            }
+        </div>
+
+        @for (var day = 0; day < 7; day++)
+        {
+            var date = weekStart.AddDays(day);
+            <div class="calendar-column @(HolidaysOn(date).Count > 0 ? "holiday" : "")">
+                @foreach (var item in items.Where(i => i.Day == day))
+                {
+                    <a class="calendar-event @(item.Kind == ItemKind.Event ? "is-event" : "")" href="@item.Url"
+                       title="@item.Tooltip"
+                       style="@BlockStyle(item)">
+                        <span class="calendar-event-label">
+                            <span class="calendar-kind">@(item.Kind == ItemKind.Event ? "Événement" : "Atelier")</span>
+                            <strong>@item.Title</strong>
+                            <span>@TimeLabel(item.StartMinute)–@TimeLabel(item.EndMinute)</span>
+                            <span>@(item.Space?.Name ?? "Lieu non précisé")</span>
+                        </span>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+    @if (items.Count > 0)
+    {
+        <div class="calendar-legend">
+            @foreach (var kind in new[] { ItemKind.Activity, ItemKind.Event })
+            {
+                var colored = items.Where(i => i.Kind == kind).DistinctBy(i => i.Title).OrderBy(i => i.Title).ToList();
+                @if (colored.Count > 0)
+                {
+                    <div>
+                        <h2>@(kind == ItemKind.Activity ? "Activités" : "Événements")</h2>
+                        @foreach (var item in colored)
+                        {
+                            <span><span class="swatch" style="background: @Colors.Css(item.Color, NoColor)"></span>@item.Title</span>
+                        }
+                    </div>
+                }
+            }
+            <div>
+                <h2>Salles</h2>
+                @foreach (var space in items.Select(i => i.Space).DistinctBy(s => s?.Id).OrderBy(s => s?.Name))
+                {
+                    <span><span class="swatch" style="background: @Colors.Css(space?.RGBColor, NoColor)"></span>@(space?.Name ?? "Lieu non précisé")</span>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private const int HourHeight = 48;
+    private const string NoColor = "#c4ced3";
+
+    private enum ItemKind { Activity, Event }
+
+    /// <summary>Bloc d'une journée : créneau d'activité, ou partie d'un événement sur ce jour (minutes depuis minuit, heure de Paris).</summary>
+    private sealed record CalendarItem(
+        ItemKind Kind, string Title, string Url, string? Color, Ct.Space? Space, int Day, int StartMinute, int EndMinute, string Tooltip)
+    {
+        public int Lane { get; set; }
+        public int Lanes { get; set; } = 1;
+    }
+
+    /// <summary>Lundi de la semaine affichée (yyyy-MM-dd) ; par défaut la semaine en cours.</summary>
+    [SupplyParameterFromQuery] public string? Week { get; set; }
+
+    private DateOnly weekStart;
+    private DateOnly today;
+    private List<CalendarItem> items = [];
+    private Dictionary<Guid, Ct.Space> spaces = [];
+    private List<(DateOnly Start, DateOnly End, string Name)> holidays = [];
+    private List<Library.Domain.ClosedPeriod> closedPeriods = [];
+    private bool holidaysUnavailable;
+    private int firstHour = 8;
+    private int lastHour = 20;
+    private string? error;
+    private bool loaded;
+
+    private string WeekLabel
+        => $"Semaine du {Format.Date(weekStart)} au {Format.Date(weekStart.AddDays(6))}";
+
+    private static string WeekUrl(DateOnly monday) => $"/calendar?week={monday:yyyy-MM-dd}";
+
+    private static DateOnly MondayOf(DateOnly date) => date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+
+    private static DateOnly ParisDate(DateTime utc) => DateOnly.FromDateTime(Format.ParisLocal(utc));
+
+    private static string TimeLabel(int minutes) => $"{minutes / 60:00}:{minutes % 60:00}";
+
+    private static int MinutesOf(TimeOnly time) => time.Hour * 60 + time.Minute;
+
+    private Ct.Space? SpaceOf(Guid? id) => id is { } spaceId && spaces.TryGetValue(spaceId, out var space) ? space : null;
+
+    private List<string> HolidaysOn(DateOnly date)
+        => holidays.Where(h => h.Start <= date && date <= h.End).Select(h => h.Name).ToList();
+
+    /// <summary>Position dans la journée, voie (blocs simultanés côte à côte) et hachures couleur propre / salle.</summary>
+    private string BlockStyle(CalendarItem item)
+    {
+        var top = (item.StartMinute - firstHour * 60) * HourHeight / 60.0;
+        var height = Math.Max((item.EndMinute - item.StartMinute) * HourHeight / 60.0, 18);
+        var ownColor = Colors.Css(item.Color, NoColor);
+        var spaceColor = Colors.Css(item.Space?.RGBColor, NoColor);
+        var width = 100.0 / item.Lanes;
+
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture,
+            $"top: {top:0.#}px; height: {height:0.#}px; left: {item.Lane * width:0.##}%; width: {width:0.##}%; " +
+            $"background: repeating-linear-gradient(135deg, {ownColor} 0 10px, {spaceColor} 10px 20px);");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        today = DateOnly.FromDateTime(Format.ParisLocal(DateTime.UtcNow));
+        weekStart = MondayOf(DateOnly.TryParse(Week, System.Globalization.CultureInfo.InvariantCulture, out var requested) ? requested : today);
+
+        var canActivities = await Access.CanAsync(Permissions.ActivityRead);
+        var canEvents = await Access.CanAsync(Permissions.EventRead);
+        if (!canActivities && !canEvents)
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        try
+        {
+            // Vacances et jours fériés d'abord : ils décident des créneaux qui ont lieu (rythme des sessions).
+            await LoadHolidaysAsync();
+
+            // Salles : demandent space.read ; sans elle, blocs en gris « Lieu non précisé ».
+            spaces = (await Api.GetSpacesAsync()).ToDictionary(s => s.Id);
+
+            if (canActivities)
+            {
+                await LoadActivitiesAsync();
+            }
+
+            if (canEvents)
+            {
+                await LoadEventsAsync();
+            }
+
+            LayOut();
+            loaded = true;
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/calendar", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task LoadActivitiesAsync()
+    {
+        foreach (var activity in await Api.ListAllAsync<Ct.Activity>(ApiRoutes.Activities))
+        {
+            foreach (var session in await Api.GetActivitySessionsAsync(activity.Id))
+            {
+                if (session.EffectiveStartDate is not { } start || session.EffectiveEndDate is not { } end)
+                {
+                    continue;
+                }
+
+                var first = ParisDate(start);
+                var last = ParisDate(end);
+
+                foreach (var slot in await Api.GetActivitySessionSlotsAsync(session.Id))
+                {
+                    AddSlot(activity, session, slot, first, last);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Occurrence du créneau dans la semaine : bon jour (0 = dimanche), dans la période de la session,
+    /// semaine retenue par la fréquence (toutes les N semaines à partir de la semaine de début de la session)
+    /// et rythme de la session (hors vacances et/ou pendant les vacances scolaires, jamais les jours fériés).
+    /// </summary>
+    private void AddSlot(Ct.Activity activity, Ct.ActivitySession session, Ct.ActivitySessionSlot slot, DateOnly first, DateOnly last)
+    {
+        for (var day = 0; day < 7; day++)
+        {
+            var date = weekStart.AddDays(day);
+            if ((int)date.DayOfWeek != slot.DayOfWeek || date < first || date > last)
+            {
+                continue;
+            }
+
+            var weeksSinceStart = (weekStart.DayNumber - MondayOf(first).DayNumber) / 7;
+            if (slot.Frequency > 1 && weeksSinceStart % slot.Frequency != 0)
+            {
+                continue;
+            }
+
+            if (!Library.Domain.SessionSchedule.IsActiveOn(date, session.DuringTermTime, session.DuringSchoolHolidays, closedPeriods))
+            {
+                continue;
+            }
+
+            var space = SpaceOf(slot.SpaceId);
+            items.Add(new CalendarItem(
+                ItemKind.Activity, activity.Name, $"/activities/{activity.Id}", activity.RGBColor, space, day,
+                MinutesOf(slot.StartTime), MinutesOf(slot.EndTime),
+                $"{activity.Name} · {Format.Time(slot.StartTime)}–{Format.Time(slot.EndTime)} · {space?.Name ?? "Lieu non précisé"}"));
+        }
+    }
+
+    /// <summary>Événements qui touchent la semaine ; un événement sur plusieurs jours donne un bloc par jour.</summary>
+    private async Task LoadEventsAsync()
+    {
+        var weekFirst = weekStart.ToDateTime(TimeOnly.MinValue);
+        var weekEnd = weekStart.AddDays(7).ToDateTime(TimeOnly.MinValue);
+
+        foreach (var item in await Api.ListAllAsync<Ct.Event>(ApiRoutes.Events))
+        {
+            var start = Format.ParisLocal(item.StartDate);
+            var end = Format.ParisLocal(item.EndDate);
+            if (end <= weekFirst || start >= weekEnd)
+            {
+                continue;
+            }
+
+            var space = SpaceOf(item.SpaceId);
+            var tooltip = $"{item.Name} · {Format.DateTimeLabel(item.StartDate)} → {Format.DateTimeLabel(item.EndDate)} · {space?.Name ?? "Lieu non précisé"}";
+
+            for (var day = 0; day < 7; day++)
+            {
+                var dayStart = weekStart.AddDays(day).ToDateTime(TimeOnly.MinValue);
+                var segmentStart = start > dayStart ? start : dayStart;
+                var segmentEnd = end < dayStart.AddDays(1) ? end : dayStart.AddDays(1);
+                if (segmentEnd <= segmentStart)
+                {
+                    continue;
+                }
+
+                items.Add(new CalendarItem(
+                    ItemKind.Event, item.Name, $"/events/{item.Id}", item.RGBColor, space, day,
+                    (int)(segmentStart - dayStart).TotalMinutes, (int)(segmentEnd - dayStart).TotalMinutes, tooltip));
+            }
+        }
+    }
+
+    /// <summary>Jours fériés et vacances de la semaine (organization.read) : affichés dans l'en-tête des jours.</summary>
+    private async Task LoadHolidaysAsync()
+    {
+        try
+        {
+            var week = (await Api.ListAllAsync<Ct.Holiday>(ApiRoutes.Holidays))
+                .Where(h => ParisDate(h.StartDate) <= weekStart.AddDays(6) && ParisDate(h.EndDate) >= weekStart)
+                .ToList();
+
+            holidays = week.Select(h => (ParisDate(h.StartDate), ParisDate(h.EndDate), h.Name)).ToList();
+            closedPeriods = week
+                .Select(h => new Library.Domain.ClosedPeriod(ParisDate(h.StartDate), ParisDate(h.EndDate), h.SchoolYearId.HasValue))
+                .ToList();
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            // Sans organization.read, les vacances ne sont pas connues : tous les créneaux « hors vacances » sont affichés.
+            holidays = [];
+            closedPeriods = [];
+            holidaysUnavailable = true;
+        }
+    }
+
+    /// <summary>Plage horaire affichée et répartition des blocs simultanés en voies côte à côte.</summary>
+    private void LayOut()
+    {
+        if (items.Count > 0)
+        {
+            firstHour = Math.Min(firstHour, items.Min(i => i.StartMinute) / 60);
+            lastHour = Math.Min(Math.Max(lastHour, (items.Max(i => i.EndMinute) + 59) / 60), 24);
+        }
+
+        foreach (var day in items.GroupBy(i => i.Day))
+        {
+            // Groupes de blocs qui se chevauchent : chacun prend la première voie libre, le groupe partage la largeur.
+            var cluster = new List<CalendarItem>();
+            var laneEnds = new List<int>();
+            var clusterEnd = 0;
+
+            foreach (var item in day.OrderBy(i => i.StartMinute).ThenBy(i => i.EndMinute))
+            {
+                if (cluster.Count > 0 && item.StartMinute >= clusterEnd)
+                {
+                    cluster.ForEach(i => i.Lanes = laneEnds.Count);
+                    cluster.Clear();
+                    laneEnds.Clear();
+                }
+
+                var lane = laneEnds.FindIndex(end => end <= item.StartMinute);
+                if (lane < 0)
+                {
+                    lane = laneEnds.Count;
+                    laneEnds.Add(item.EndMinute);
+                }
+                else
+                {
+                    laneEnds[lane] = item.EndMinute;
+                }
+
+                item.Lane = lane;
+                cluster.Add(item);
+                clusterEnd = cluster.Count == 1 ? item.EndMinute : Math.Max(clusterEnd, item.EndMinute);
+            }
+
+            cluster.ForEach(i => i.Lanes = laneEnds.Count);
+        }
+    }
+}

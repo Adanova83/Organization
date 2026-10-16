@@ -1,0 +1,161 @@
+@page "/members/new"
+@page "/members/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.MemberEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouveau membre" : "Modifier un membre")</PageTitle>
+
+<h1>@(IsNew ? "Nouveau membre" : "Modifier un membre")</h1>
+
+<p><a href="@BackUrl">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="member" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Identité</legend>
+            <label>Nom <InputText @bind-Value="Model.Lastname" autocomplete="family-name" /></label>
+            <label>Prénom <InputText @bind-Value="Model.Firstname" autocomplete="given-name" /></label>
+            <label>Date de naissance <InputDate TValue="DateTime?" @bind-Value="Model.Birthdate" /></label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Contact</legend>
+            <label>E-mail <InputText type="email" @bind-Value="Model.Email" autocomplete="email" /></label>
+            <label>Téléphone <InputText type="tel" @bind-Value="Model.PhoneNumber" autocomplete="tel" /></label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Adresse</legend>
+            <label>Adresse <InputText @bind-Value="Model.Line1" /></label>
+            <label>Complément <InputText @bind-Value="Model.Line2" /></label>
+            <label>Complément (suite) <InputText @bind-Value="Model.Line3" /></label>
+            <label>Code postal <InputText @bind-Value="Model.PostalCode" /></label>
+            <label>Ville <InputText @bind-Value="Model.City" /></label>
+            <label>
+                Pays
+                <InputSelect @bind-Value="Model.CountryId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var country in countries)
+                    {
+                        <option value="@country.Id">@country.Name</option>
+                    }
+                </InputSelect>
+            </label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-member" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce membre ?');">Supprimer ce membre</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "member")]
+    private MemberModel? Model { get; set; }
+
+    private IReadOnlyList<Ct.Country> countries = [];
+    private string? error;
+
+    private bool IsNew => Id is null;
+    private string BackUrl => IsNew ? "/members" : $"/members/{Id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            countries = await Api.GetCountriesAsync();
+        }
+        catch (ApiException ex)
+        {
+            error = ex.StatusCode == System.Net.HttpStatusCode.Forbidden
+                ? "La liste des pays est inaccessible : la permission organization.read est nécessaire pour saisir une adresse."
+                : ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "L'API est injoignable.";
+        }
+
+        // Première visite (GET) : formulaire prérempli. À l'envoi (POST), Model est déjà rempli par le formulaire.
+        if (Model is null)
+        {
+            try
+            {
+                Model = IsNew ? new MemberModel() : MemberModel.From(await Api.GetMemberAsync(Id!.Value));
+            }
+            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                Navigation.NavigateTo("/not-found");
+            }
+            catch (ApiException ex)
+            {
+                error = ex.Message;
+            }
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var created = await Api.CreateMemberAsync(Model!.ApplyTo(new Ct.Member()));
+                Navigation.NavigateTo($"/members/{created.Id}");
+            }
+            else
+            {
+                // On repart du membre actuel : image, couleur et période de validité sont conservées.
+                var existing = await Api.GetMemberAsync(Id!.Value);
+                await Api.UpdateMemberAsync(Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/members/{Id}");
+            }
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "L'API est injoignable.";
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteMemberAsync(Id!.Value);
+            Navigation.NavigateTo("/members");
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "L'API est injoignable.";
+        }
+    }
+}

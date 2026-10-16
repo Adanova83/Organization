@@ -40,7 +40,7 @@ public sealed class Activity : IActivity
         var entity = await _dbContext.Activities.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,7 +60,7 @@ public sealed class Activity : IActivity
         IQueryable<Entity.Activity> q = _dbContext.Activities;
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{query}%";
             q = q.Where(item =>
                 EF.Functions.ILike(item.Code, pattern) ||
                 EF.Functions.ILike(item.Name, pattern)
@@ -69,6 +69,8 @@ public sealed class Activity : IActivity
 
         q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"))
             .ThenBy(item => EF.Functions.Collate(item.Code, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -83,7 +85,7 @@ public sealed class Activity : IActivity
             Data = entities
              .Select(Mapper.Activity.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Activities.CountAsync(ct)
         };
     }

@@ -40,7 +40,7 @@ public sealed class Note : INote
         var entity = await _dbContext.Notes.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -52,6 +52,31 @@ public sealed class Note : INote
         return new RepositoryResponse<Domain.Note>()
         {
             Data = entity?.EntityToDomain()
+        };
+    }
+
+    public async Task<RepositoryResponseRange<Domain.Note>> SearchAsync(Guid memberId, int page, int pageSize, CancellationToken ct)
+    {
+        IQueryable<Entity.Note> q = _dbContext.Notes
+            .Where(item => item.MemberId == memberId)
+            .OrderByDescending(item => item.Audit.LastUpdatedAt);
+
+        var filteredCount = await q.CountAsync(ct);
+
+        if (page > 0 && pageSize > 0)
+        {
+            q = q.Skip((page - 1) * pageSize).Take(pageSize);
+        }
+
+        var entities = await q.ToListAsync(ct);
+
+        return new RepositoryResponseRange<Domain.Note>()
+        {
+            Data = entities
+             .Select(Mapper.Note.EntityToDomain)
+             .ToList(),
+            FilteredCount = filteredCount,
+            TotalCount = await _dbContext.Notes.CountAsync(ct)
         };
     }
 }

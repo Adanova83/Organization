@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Member
+public sealed class Member : ICrudHandler<Domain.Member>
 {
     private readonly IMember _repository;
 
@@ -60,16 +60,6 @@ public sealed class Member
         await _repository.EditAsync(domain, ct);
     }
 
-    public async Task<RepositoryResponseRange<Domain.Permission>> FetchRolesOfMemberAsync(Guid id, CancellationToken ct)
-    {
-        if (id == Guid.Empty)
-        {
-            throw new ArgumentException("ID must not be empty for search.", nameof(id));
-        }
-
-        return await _repository.FetchPermissionsOfMemberAsync(id, ct);
-    }
-
     public async Task<RepositoryResponse<Domain.Member>> SearchAsync(Guid id, CancellationToken ct)
     {
         if (id == Guid.Empty)
@@ -105,17 +95,28 @@ public sealed class Member
         return await _repository.SearchAsync(query, page, pageSize, ct);
     }
 
-    public async Task<RepositoryResponse<Domain.Member>> ValidateUserAsync(string email, string password, CancellationToken ct)
+    public async Task<RepositoryResponse<Domain.Member>> SearchByExternalIdAsync(string externalId, CancellationToken ct)
     {
-        if (email == null)
+        if (string.IsNullOrWhiteSpace(externalId))
+        {
+            throw new ArgumentException("External ID is required.", nameof(externalId));
+        }
+
+        return await _repository.SearchByExternalIdAsync(externalId, ct);
+    }
+
+    public async Task<RepositoryResponse<Domain.Member>> LinkExternalAccountAsync(string externalId, string email, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(externalId))
+        {
+            throw new ArgumentException("External ID is required.", nameof(externalId));
+        }
+        if (string.IsNullOrWhiteSpace(email))
         {
             throw new ArgumentException("Email is required.", nameof(email));
         }
-        if (password == null)
-        {
-            throw new ArgumentException("Password is required.", nameof(password));
-        }
-        return await _repository.ValidateUserAsync(email, password, ct);
+
+        return await _repository.LinkExternalAccountAsync(externalId, email, ct);
     }
 
     private void ValidateDomainRules(Domain.Member domain)
@@ -124,7 +125,11 @@ public sealed class Member
         {
             throw new ArgumentException("Lastname is required.", nameof(domain.Lastname));
         }
-        if (domain.Email != null && !domain.Email.Contains('@'))
+        if (string.IsNullOrWhiteSpace(domain.Email))
+        {
+            throw new ArgumentException("Email is required.", nameof(domain.Email));
+        }
+        if (!domain.Email.Contains('@'))
         {
             throw new ArgumentException("Email is not valid.", nameof(domain.Email));
         }

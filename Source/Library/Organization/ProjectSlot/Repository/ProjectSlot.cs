@@ -40,7 +40,7 @@ public sealed class ProjectSlot : IProjectSlot
         var entity = await _dbContext.ProjectSlots.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,9 +60,11 @@ public sealed class ProjectSlot : IProjectSlot
         IQueryable<Entity.ProjectSlot> q = _dbContext.ProjectSlots;
 
         q = q.Where(item => item.ProjectId.Equals(projectId))
-            .OrderBy(item => EF.Functions.Collate(item.DayOfWeek, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.StartTime, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.EndTime, "C"));
+            .OrderBy(item => item.DayOfWeek)
+            .ThenBy(item => item.StartTime)
+            .ThenBy(item => item.EndTime);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -77,7 +79,7 @@ public sealed class ProjectSlot : IProjectSlot
             Data = entities
              .Select(Mapper.ProjectSlot.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.ProjectSlots.CountAsync(ct)
         };
     }

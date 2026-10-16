@@ -1,0 +1,66 @@
+@page "/notes"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject UserAccess Access
+@inject NavigationManager Navigation
+
+@* Notes personnelles : visibles et modifiables par leur seul auteur, sans permission particulière. *@
+
+<PageTitle>Mes notes</PageTitle>
+
+<h1>Mes notes</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (me is null)
+{
+    <p class="notice">Aucun membre n'est rattaché à votre compte.</p>
+}
+else
+{
+    <p><a class="button" href="/notes/new">Nouvelle note</a></p>
+
+    @if (notes.Count == 0)
+    {
+        <p class="muted">Aucune note.</p>
+    }
+
+    @foreach (var note in notes)
+    {
+        <section class="card">
+            <h2><a href="/notes/@note.Id">@note.Title</a></h2>
+            <p class="note-body">@note.Body</p>
+        </section>
+    }
+}
+
+@code {
+    private Guid? me;
+    private List<Ct.Note> notes = [];
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        me = await Access.MemberIdAsync();
+        if (me is not { } memberId)
+        {
+            return;
+        }
+
+        try
+        {
+            notes = (await Api.ListAllAsync<Ct.Note>(ApiRoutes.Notes, null, memberId))
+                .OrderBy(n => n.Title).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/notes", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

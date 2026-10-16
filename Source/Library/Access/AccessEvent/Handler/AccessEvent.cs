@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class AccessEvent
+public sealed class AccessEvent : ICrudHandler<Domain.AccessEvent>
 {
     private readonly IAccessEvent _repository;
 
@@ -11,7 +11,7 @@ public sealed class AccessEvent
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.AccessEvent domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.AccessEvent>> CreateAsync(Domain.AccessEvent domain, CancellationToken ct)
     {
         if (domain == null)
         {

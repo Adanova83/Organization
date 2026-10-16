@@ -1,0 +1,140 @@
+@page "/projects/{ProjectId:guid}/slots/new"
+@page "/project-slots/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.ProjectEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouveau créneau" : "Modifier le créneau")</PageTitle>
+
+<h1>@(IsNew ? "Nouveau créneau" : "Modifier le créneau")</h1>
+
+<p><a href="/projects/@projectId">← Retour au projet</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="project-slot" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Créneau</legend>
+            <label>
+                Jour
+                <InputSelect @bind-Value="Model.DayOfWeek">
+                    @foreach (var day in new[] { 1, 2, 3, 4, 5, 6, 0 })
+                    {
+                        <option value="@day">@Format.Day(day)</option>
+                    }
+                </InputSelect>
+            </label>
+            <label>Début <InputText type="time" @bind-Value="Model.StartTime" /></label>
+            <label>Fin <InputText type="time" @bind-Value="Model.EndTime" /></label>
+            <label>
+                Lieu
+                <InputSelect @bind-Value="Model.SpaceId">
+                    <option value="">— Aucun —</option>
+                    @foreach (var space in spaces)
+                    {
+                        <option value="@space.Id">@space.Name</option>
+                    }
+                </InputSelect>
+            </label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="/projects/@projectId">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-project-slot" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce créneau ?');">Supprimer ce créneau</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? ProjectId { get; set; }
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "project-slot")]
+    private SlotModel? Model { get; set; }
+
+    private List<Ct.Space> spaces = [];
+    private Guid projectId;
+    private string? error;
+
+    private bool IsNew => Id is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Ct.ProjectSlot? existing = null;
+            if (!IsNew)
+            {
+                existing = await Api.GetByIdAsync<Ct.ProjectSlot>(ApiRoutes.ProjectSlots, Id!.Value);
+            }
+
+            projectId = ProjectId ?? existing!.ProjectId;
+            spaces = (await Api.GetSpacesAsync()).OrderBy(s => s.Name).ToList();
+
+            if (Model is null)
+            {
+                Model = existing is null ? new SlotModel() : SlotModel.From(existing);
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var slot = Model!.ApplyTo(new Ct.ProjectSlot { ProjectId = projectId });
+                await Api.CreateAsync(ApiRoutes.ProjectSlots, slot);
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.ProjectSlot>(ApiRoutes.ProjectSlots, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.ProjectSlots, Id.Value, Model!.ApplyTo(existing));
+            }
+
+            Navigation.NavigateTo($"/projects/{projectId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.ProjectSlots, Id!.Value);
+            Navigation.NavigateTo($"/projects/{projectId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

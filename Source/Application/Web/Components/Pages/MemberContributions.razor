@@ -1,0 +1,190 @@
+@page "/members/{MemberId:guid}/contributions"
+@attribute [Authorize(Policy = Permissions.ContributionRead)]
+@inject ApiClient Api
+@inject UserAccess Access
+@inject NavigationManager Navigation
+
+<PageTitle>Cotisations</PageTitle>
+
+<h1>Cotisations</h1>
+
+<p><a href="/members/@MemberId">← Retour au membre</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (loaded)
+{
+    <p class="muted">@memberName</p>
+
+    @if (contributions.Count == 0)
+    {
+        <p class="muted">Aucune cotisation enregistrée.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Saison</th><th>Payée le</th>@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var item in contributions)
+                {
+                    <tr>
+                        <td>@SeasonLabel(item.OrganizationSessionId)</td>
+                        <td>@Format.Date(item.PayedDate)</td>
+                        @if (canEdit)
+                        {
+                            <td>
+                                <form method="post" class="inline" @onsubmit="() => RemoveAsync(item.Id)" @formname="@($"remove-{item.Id}")">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="link-button" onclick="return confirm('Supprimer cette cotisation ?');">Supprimer</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (canEdit)
+    {
+        @if (seasons.Count == 0)
+        {
+            <p class="muted">Aucune saison disponible (permission organization.read nécessaire, ou aucune saison créée).</p>
+        }
+        else
+        {
+            <EditForm Model="Add" FormName="add-contribution" OnValidSubmit="AddAsync" Enhance class="form">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <fieldset>
+                    <legend>Enregistrer une cotisation</legend>
+                    <label>
+                        Saison
+                        <InputSelect @bind-Value="Add!.OrganizationSessionId">
+                            <option value="">— Choisir —</option>
+                            @foreach (var season in seasons)
+                            {
+                                <option value="@season.Key">@season.Value</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label>Payée le <InputDate TValue="DateOnly?" @bind-Value="Add!.PayedDate" /></label>
+                </fieldset>
+                <p class="actions"><button type="submit">Enregistrer</button></p>
+            </EditForm>
+        }
+    }
+}
+
+@code {
+    [Parameter] public Guid MemberId { get; set; }
+
+    [SupplyParameterFromForm(FormName = "add-contribution")]
+    private ContributionModel? Add { get; set; }
+
+    private List<Ct.Contribution> contributions = [];
+    private Dictionary<Guid, string> seasons = [];
+    private string memberName = "";
+    private string? error;
+    private bool canEdit;
+    private bool loaded;
+
+    private string SeasonLabel(Guid id) => seasons.TryGetValue(id, out var label) ? label : "Saison";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Add ??= new ContributionModel();
+        canEdit = await Access.CanAsync(Permissions.ContributionEdit);
+
+        try
+        {
+            contributions = (await Api.ListAllAsync<Ct.Contribution>(ApiRoutes.Contributions, null, MemberId))
+                .OrderByDescending(c => c.PayedDate).ToList();
+
+            memberName = await MemberNameAsync();
+            seasons = await SeasonsAsync();
+            loaded = true;
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/members/{MemberId}/contributions", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    /// <summary>Nom du membre : demande member.read ; sans elle, libellé neutre.</summary>
+    private async Task<string> MemberNameAsync()
+    {
+        try
+        {
+            var member = await Api.GetMemberAsync(MemberId);
+            return $"{member.Lastname} {member.Firstname}".Trim();
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex) && !ApiErrors.IsUnauthorized(ex))
+        {
+            return "Membre";
+        }
+    }
+
+    /// <summary>Saisons de toutes les organisations, libellées « Organisation : début – fin » (vide sans organization.read).</summary>
+    private async Task<Dictionary<Guid, string>> SeasonsAsync()
+    {
+        var result = new Dictionary<Guid, string>();
+
+        try
+        {
+            foreach (var organization in await Api.GetOrganizationsAsync())
+            {
+                foreach (var season in await Api.GetOrganizationSessionsAsync(organization.Id))
+                {
+                    result[season.Id] = $"{organization.Name} : {season.SchoolYearCode} ({Format.Price(season.Price)})";
+                }
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex) && !ApiErrors.IsUnauthorized(ex))
+        {
+            result.Clear();
+        }
+
+        return result;
+    }
+
+    private async Task AddAsync()
+    {
+        try
+        {
+            await Api.CreateAsync(ApiRoutes.Contributions, new Ct.Contribution
+            {
+                MemberId = MemberId,
+                OrganizationSessionId = Add!.OrganizationSessionId!.Value,
+                PayedDate = Add.PayedDate!.Value
+            });
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task RemoveAsync(Guid contributionId)
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Contributions, contributionId);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

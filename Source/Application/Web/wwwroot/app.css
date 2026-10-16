@@ -1,0 +1,288 @@
+/*
+ * Thème inspiré du site de l'association (https://adanova.generation83.org) :
+ * fond clair, bleu pétrole (#043d54), accents cyan (#00b0c2) et vert (#a1c854), boutons en pilule,
+ * titres en Montserrat, texte en DM Sans, boutons en Prosto One.
+ * Les polices ne sont pas chargées depuis un service tiers : si elles ne sont pas installées,
+ * le navigateur utilise la police système. Pour les embarquer, déposer les fichiers .woff2 dans wwwroot/fonts
+ * et les déclarer avec @font-face.
+ */
+:root {
+    --navy: #043d54;
+    --cyan: #00b0c2;
+    --green: #a1c854;
+
+    --bg: #f2f6f7;
+    --surface: #ffffff;
+    --text: #1d1e20;
+    --heading: #043d54;
+    --muted: #5d6f78;
+    --border: #d8e1e5;
+    --accent: #043d54;
+    --accent-text: #ffffff;
+    --accent-hover: #065a7a;
+    --link: #043d54;
+    --link-hover: #00899a;
+    --notice-bg: #fff4d6;
+    --notice-text: #6b4a00;
+    --danger: #c0392b;
+
+    --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-heading: "Montserrat", "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-button: "Prosto One", "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0d1f27;
+        --surface: #12303d;
+        --text: #e8f0f3;
+        --heading: #e8f0f3;
+        --muted: #9db3bd;
+        --border: #24475a;
+        --accent: #00b0c2;
+        --accent-text: #04202a;
+        --accent-hover: #35c8d6;
+        --link: #6fd3de;
+        --link-hover: #a1c854;
+        --notice-bg: #3a2f10;
+        --notice-text: #f3dfa8;
+        --danger: #e5604f;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+}
+
+a { color: var(--link); text-underline-offset: 2px; }
+a:hover { color: var(--link-hover); }
+
+:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+h1, h2, h3 { font-family: var(--font-heading); font-weight: 600; color: var(--heading); line-height: 1.25; }
+h1 { margin-top: 0; font-size: 1.7rem; }
+
+.shell {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "top top" "side main";
+    min-height: 100vh;
+}
+
+/* En-tête : fond blanc, filet dégradé vert -> cyan comme signature */
+.topbar {
+    grid-area: top;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1.5rem;
+    background: var(--surface);
+    border-bottom: 4px solid transparent;
+    border-image: linear-gradient(90deg, var(--green), var(--cyan)) 1;
+}
+
+.brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.3rem;
+    text-decoration: none;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+}
+.brand span:nth-child(2) { color: var(--cyan); }
+.brand span:nth-child(3) { color: var(--green); }
+@media (prefers-color-scheme: dark) { .brand { color: var(--text); } }
+
+.topbar-user { display: flex; gap: 1rem; align-items: center; font-size: 0.95rem; }
+.topbar-user a { font-family: var(--font-button); text-decoration: none; }
+
+.sidebar { grid-area: side; padding: 1.25rem 1rem; background: var(--surface); border-right: 1px solid var(--border); }
+.nav { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.nav a {
+    display: block;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-family: var(--font-button);
+    color: var(--text);
+}
+.nav a:hover { background: var(--bg); color: var(--link-hover); }
+.nav a.active { background: var(--accent); color: var(--accent-text); }
+
+.content { grid-area: main; padding: 1.75rem 2rem; max-width: 1100px; }
+
+.muted { color: var(--muted); }
+.notice { background: var(--notice-bg); color: var(--notice-text); padding: 0.75rem 1rem; border-radius: 12px; border-left: 4px solid var(--green); }
+
+/* Boutons en pilule */
+.button, button {
+    display: inline-block;
+    padding: 0.6rem 1.6rem;
+    border: 0;
+    border-radius: 50px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-family: var(--font-button);
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+.button:hover, button:hover { background: var(--accent-hover); color: var(--accent-text); }
+
+.search { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.search input {
+    flex: 1;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--border); }
+th { font-family: var(--font-heading); font-weight: 600; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--bg); }
+tbody tr:hover { background: var(--bg); }
+tbody tr:last-child td { border-bottom: 0; }
+
+.pager { display: flex; gap: 1rem; align-items: center; color: var(--muted); }
+
+/* Formulaires */
+.form { display: grid; gap: 1rem; max-width: 640px; }
+.form fieldset { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 1rem 1.25rem; display: grid; gap: 0.75rem; }
+.form legend { padding: 0 0.5rem; color: var(--heading); font-family: var(--font-heading); font-weight: 600; font-size: 0.9rem; }
+.form label { display: grid; gap: 0.25rem; font-size: 0.9rem; color: var(--muted); }
+.form input, .form select, .form textarea {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+}
+.form input:focus, .form select:focus, .search input:focus { border-color: var(--cyan); }
+.form .invalid { border-color: var(--danger); }
+.validation-message, .validation-errors { color: var(--danger); font-size: 0.85rem; }
+.actions { display: flex; gap: 1rem; align-items: center; }
+.danger { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.danger-button { background: var(--danger); color: #fff; }
+.danger-button:hover { background: #a62f23; color: #fff; }
+
+@media (max-width: 700px) {
+    .shell { grid-template-columns: 1fr; grid-template-areas: "top" "side" "main"; }
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
+    .nav { grid-auto-flow: column; justify-content: start; overflow-x: auto; }
+    .content { padding: 1.25rem 1rem; }
+    table { display: block; overflow-x: auto; }
+}
+
+/* Fiches en lecture */
+.meta { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1.25rem; margin: 0 0 1.5rem; }
+.meta dt { color: var(--muted); }
+.meta dd { margin: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.card h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.card table { border: 0; }
+.swatch { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 50%; margin-right: 0.4rem; vertical-align: middle; border: 1px solid var(--border); }
+
+form.inline { display: inline; }
+.form input.color { padding: 0.15rem; width: 4rem; height: 2.2rem; cursor: pointer; }
+
+/* Calendrier hebdomadaire des activités */
+.calendar-toolbar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+.calendar-toolbar .button { padding: 0.45rem 1.1rem; }
+.calendar {
+    display: grid;
+    grid-template-columns: 3.5rem repeat(7, minmax(7.5rem, 1fr));
+    grid-template-rows: auto calc(var(--hours) * var(--hour-height));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    overflow-x: auto;
+}
+.calendar-corner, .calendar-day-header { border-bottom: 1px solid var(--border); background: var(--bg); }
+.calendar-day-header { padding: 0.5rem; font-family: var(--font-heading); font-weight: 600; font-size: 0.85rem; color: var(--muted); display: grid; gap: 0.2rem; border-left: 1px solid var(--border); }
+.calendar-day-header.today { color: var(--heading); box-shadow: inset 0 -3px 0 var(--cyan); }
+.calendar-holiday { font-family: var(--font-body); font-weight: 400; font-size: 0.75rem; color: var(--notice-text); background: var(--notice-bg); border-radius: 6px; padding: 0 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendar-hours { position: relative; }
+.calendar-hours span { position: absolute; right: 0.4rem; transform: translateY(-0.55em); font-size: 0.75rem; color: var(--muted); }
+.calendar-hours span:first-child { transform: none; }
+.calendar-column {
+    position: relative;
+    border-left: 1px solid var(--border);
+    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hour-height) - 1px), var(--border) calc(var(--hour-height) - 1px), var(--border) var(--hour-height));
+}
+.calendar-column.holiday { background-color: color-mix(in srgb, var(--notice-bg) 45%, transparent); }
+.calendar-event {
+    position: absolute;
+    box-sizing: border-box;
+    /* Marge autour du voile : les hachures restent visibles sur le pourtour du créneau. */
+    padding: 2px;
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+}
+.calendar-event:hover { box-shadow: 0 0 0 2px var(--cyan); z-index: 1; }
+/* Étiquette sur fond uni pour rester lisible quelles que soient les deux couleurs des hachures. */
+.calendar-event-label {
+    display: grid;
+    align-content: start;
+    gap: 0.05rem;
+    box-sizing: border-box;
+    height: 100%;
+    padding: 0.15rem 0.35rem;
+    border-radius: 6px;
+    /* Voile sur toute la hauteur du créneau : assez transparent pour laisser voir les hachures, assez couvrant pour le texte. */
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    font-size: 0.75rem;
+    line-height: 1.25;
+}
+.calendar-event-label strong { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendar-event-label span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); opacity: 0.85; }
+.calendar-legend { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1rem; }
+.calendar-legend > div { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
+.calendar-legend h2 { flex-basis: 100%; margin: 0; font-size: 0.95rem; }
+.calendar-legend .swatch { width: 1rem; height: 1rem; border-radius: 4px; }
+@media (max-width: 700px) {
+    .calendar { grid-template-columns: 3rem repeat(7, minmax(6.5rem, 1fr)); }
+}
+
+.form label.checkbox { display: flex; gap: 0.5rem; align-items: center; }
+.form fieldset p { margin: 0; }
+.note-body { white-space: pre-wrap; margin: 0.5rem 0 0; }
+.form input[readonly] { color: var(--muted); }
+.nav-section { margin-top: 0.75rem; padding: 0 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.link-button { padding: 0.25rem 0.9rem; font-size: 0.85rem; background: transparent; color: var(--link); border: 1px solid var(--link); }
+.link-button:hover { background: var(--accent); color: var(--accent-text); }
+.series-dates { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin: 0.5rem 0 0; }
+.form .inline-field { display: flex; gap: 0.6rem; align-items: center; }
+.form .inline-field { flex-wrap: wrap; }
+.form .inline-field input[type="number"] { width: 5rem; }
+.form .inline-field > label { flex: 1 1 10rem; }
+.form ul.hint { margin: -0.4rem 0 0; padding-left: 1.2rem; font-size: 0.85rem; }
+
+/* Formulaire d'événement : blocs affichés selon la répétition choisie (#repeat), sans JavaScript. */
+.event-dates .when-once, .event-dates .when-repeat,
+.event-dates .repeat-weekly, .event-dates .repeat-monthly-date, .event-dates .repeat-monthly-weekday { display: grid; gap: 0.75rem; }
+.event-dates .when-repeat,
+.event-dates .repeat-weekly, .event-dates .repeat-monthly-date, .event-dates .repeat-monthly-weekday,
+.event-dates .unit { display: none; }
+.event-dates:has(#repeat option:checked:not([value=""])) .when-once { display: none; }
+.event-dates:has(#repeat option:checked:not([value=""])) .when-repeat { display: grid; }
+.event-dates:has(#repeat option[value="Daily"]:checked) .unit-daily { display: inline; }
+.event-dates:has(#repeat option[value="Weekly"]:checked) .repeat-weekly { display: grid; }
+.event-dates:has(#repeat option[value="Weekly"]:checked) .unit-weekly { display: inline; }
+.event-dates:has(#repeat option[value="MonthlyByDate"]:checked) .repeat-monthly-date { display: grid; }
+.event-dates:has(#repeat option[value="MonthlyByWeekday"]:checked) .repeat-monthly-weekday { display: grid; }
+.event-dates:has(#repeat option[value^="Monthly"]:checked) .unit-monthly { display: inline; }
+.calendar-kind { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }

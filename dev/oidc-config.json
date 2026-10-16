@@ -1,0 +1,22 @@
+{
+  "interactiveLogin": true,
+  "tokenCallbacks": [
+    {
+      "issuerId": "adanova",
+      "tokenExpiry": 3600,
+      "requestMappings": [
+        {
+          "requestParam": "grant_type",
+          "match": "*",
+          "claims": {
+            "sub": "dev-admin",
+            "email": "adanova83@adanova83.org",
+            "email_verified": true,
+            "name": "Admin Adanova",
+            "groups": ["authentik Admins"]
+          }
+        }
+      ]
+    }
+  ]
+}

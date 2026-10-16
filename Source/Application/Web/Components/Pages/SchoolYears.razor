@@ -1,0 +1,73 @@
+@page "/school-years"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Années scolaires</PageTitle>
+
+<h1>Années scolaires</h1>
+
+<p class="muted">
+    Une année scolaire est commune à toutes les organisations : les saisons, les sessions d'activité, les événements
+    et les projets s'y rattachent et en prennent les dates.
+</p>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/school-years/new">Nouvelle année scolaire</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (years is not null)
+{
+    @if (years.Count == 0)
+    {
+        <p class="muted">Aucune année scolaire.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Année</th><th>Période</th><th>Zone</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var year in years)
+                {
+                    <tr>
+                        <td><a href="/school-years/@year.Id">@year.Code</a></td>
+                        <td>@Format.Period(year.StartDate, year.EndDate)</td>
+                        <td>Zone @year.Zone</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<Ct.SchoolYear>? years;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        try
+        {
+            years = await Api.GetSchoolYearsAsync();
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/school-years", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

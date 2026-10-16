@@ -1,0 +1,58 @@
+@page "/countries/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>@(country?.Name ?? "Pays")</PageTitle>
+
+<p><a href="/countries">← Retour aux pays</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (country is not null)
+{
+    <h1>@country.Name</h1>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/countries/@Id/edit">Modifier le pays</a></p>
+    }
+
+    <dl class="meta">
+        <dt>Code ISO à 2 lettres</dt><dd>@country.CodeAlpha2</dd>
+        <dt>Code ISO à 3 lettres</dt><dd>@country.CodeAlpha3</dd>
+    </dl>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Country? country;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        try
+        {
+            country = await Api.GetByIdAsync<Ct.Country>(ApiRoutes.Countries, Id);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/countries/{Id}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

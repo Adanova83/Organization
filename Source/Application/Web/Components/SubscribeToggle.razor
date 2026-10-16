@@ -1,0 +1,75 @@
+@inject SubscriptionClient Subscriptions
+@inject NavigationManager Navigation
+
+@* Bouton « S'inscrire » / « Se désinscrire » pour le membre connecté. L'API vérifie que chacun ne gère que ses propres inscriptions. *@
+@if (MemberId is not null)
+{
+    @if (SubscriptionId is { } existing)
+    {
+        <form method="post" class="inline" @onsubmit="() => RemoveAsync(existing)" @formname="@UnsubscribeForm">
+            <AntiforgeryToken />
+            <button type="submit" class="link-button">Se désinscrire</button>
+        </form>
+    }
+    else if (BlockReason is not null)
+    {
+        <span class="muted">@BlockReason</span>
+    }
+    else
+    {
+        <form method="post" class="inline" @onsubmit="AddAsync" @formname="@SubscribeForm">
+            <AntiforgeryToken />
+            <button type="submit" class="link-button">S'inscrire</button>
+        </form>
+    }
+}
+
+@if (error is not null)
+{
+    <span class="validation-message">@error</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public SubscriptionKind Kind { get; set; }
+    [Parameter, EditorRequired] public Guid TargetId { get; set; }
+
+    /// <summary>Membre pour lequel on agit (le membre connecté). Nul : rien n'est affiché.</summary>
+    [Parameter] public Guid? MemberId { get; set; }
+
+    /// <summary>Inscription existante du membre à cet élément, s'il y en a une.</summary>
+    [Parameter] public Guid? SubscriptionId { get; set; }
+
+    /// <summary>Si renseigné, l'inscription est impossible et ce texte l'explique (âge minimum, par exemple).</summary>
+    [Parameter] public string? BlockReason { get; set; }
+
+    private string? error;
+
+    private string SubscribeForm => $"subscribe-{Kind}-{TargetId}";
+    private string UnsubscribeForm => $"unsubscribe-{Kind}-{TargetId}";
+
+    private async Task AddAsync()
+    {
+        try
+        {
+            await Subscriptions.CreateAsync(Kind, TargetId, MemberId!.Value);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task RemoveAsync(Guid subscriptionId)
+    {
+        try
+        {
+            await Subscriptions.DeleteAsync(Kind, subscriptionId);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

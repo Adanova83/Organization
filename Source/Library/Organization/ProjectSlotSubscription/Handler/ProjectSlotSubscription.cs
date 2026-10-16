@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class ProjectSlotSubscription
+public sealed class ProjectSlotSubscription : ICrudHandler<Domain.ProjectSlotSubscription>
 {
     private readonly IProjectSlotSubscription _repository;
 
@@ -11,7 +11,7 @@ public sealed class ProjectSlotSubscription
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.ProjectSlotSubscription domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.ProjectSlotSubscription>> CreateAsync(Domain.ProjectSlotSubscription domain, CancellationToken ct)
     {
         if (domain == null)
         {

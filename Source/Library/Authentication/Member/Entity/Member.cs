@@ -6,6 +6,7 @@ namespace Library.Entity;
 
 [Table("Member", Schema = "Authentication")]
 [Index(nameof(Email), IsUnique = true)]
+[Index(nameof(ExternalId), IsUnique = true)]
 public class Member : PrimaryKey
 {
     [MaxLength(200)] public string? Firstname { get; set; } = default;
@@ -14,8 +15,7 @@ public class Member : PrimaryKey
     [Required, MaxLength(8)] public string RGBColor { get; set; } = "FFFFFFFF";
     public DateTime? Birthdate { get; set; } = null;
     [Required, MaxLength(320)] public string Email { get; set; } = default!;
-    [Required, MaxLength(255)] public string HashedPassword { get; set; } = default!;
-    public Guid? AskedNewPassword { get; set; }
+    [MaxLength(255)] public string? ExternalId { get; set; }
     public string? PhoneNumber { get; set; }
     [Required] public Address Addr { get; set; } = default!;
 }

@@ -10,6 +10,13 @@ public class Event : PrimaryKey
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int? AgeMinimum { get; set; } = null;
-    public Guid OrganizationSessionId { get; set; }
+    public Guid OrganizationId { get; set; }
+    public Guid SchoolYearId { get; set; }
     public Guid? SpaceId { get; set; }
+
+    // Série d'événements récurrents : même identifiant pour toutes les occurrences (null : événement isolé).
+    public Guid? SeriesId { get; set; }
+
+    // Code de l'année scolaire (lecture seule, renseigné à la lecture).
+    public string? SchoolYearCode { get; set; }
 }

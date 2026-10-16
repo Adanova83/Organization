@@ -1,0 +1,273 @@
+@page "/events/new"
+@page "/events/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.EventEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouvel événement" : "Modifier l'événement")</PageTitle>
+
+<h1>@(IsNew ? "Nouvel événement" : "Modifier l'événement")</h1>
+
+<p><a href="@(IsNew ? "/events" : $"/events/{Id}")">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="event" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Événement</legend>
+            <label>Nom <InputText @bind-Value="Model.Name" /></label>
+            <label>Code <InputText @bind-Value="Model.Code" /></label>
+            <label>Description <InputTextArea @bind-Value="Model.Description" rows="4" /></label>
+            <label>Âge minimum (vide = tout âge) <InputNumber TValue="int?" @bind-Value="Model.AgeMinimum" /></label>
+            <label>Couleur (calendrier) <InputText type="color" @bind-Value="Model.Color" class="color" /></label>
+            <label>
+                Organisation
+                <InputSelect @bind-Value="Model.OrganizationId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var organization in organizations)
+                    {
+                        <option value="@organization.Id">@organization.Name</option>
+                    }
+                </InputSelect>
+            </label>
+            <label>
+                Année scolaire
+                <InputSelect @bind-Value="Model.SchoolYearId">
+                    <option value="">— Choisir —</option>
+                    @foreach (var year in schoolYears)
+                    {
+                        <option value="@year.Id">@year.Code</option>
+                    }
+                </InputSelect>
+            </label>
+            <label>
+                Lieu
+                <InputSelect @bind-Value="Model.SpaceId">
+                    <option value="">— Aucun —</option>
+                    @foreach (var space in spaces)
+                    {
+                        <option value="@space.Id">@space.Name</option>
+                    }
+                </InputSelect>
+            </label>
+        </fieldset>
+
+        @* Les blocs suivants s'affichent selon la fréquence choisie (règles CSS « :has() » sur #repeat, voir app.css) : pas de JavaScript. *@
+        <fieldset class="event-dates">
+            <legend>Date et horaires</legend>
+
+            @if (IsNew)
+            {
+                <label>
+                    Répétition
+                    <InputSelect @bind-Value="Model.Repeat" id="repeat">
+                        <option value="">Non : événement unique</option>
+                        <option value="@Ct.RecurrenceFrequency.Daily">Chaque jour</option>
+                        <option value="@Ct.RecurrenceFrequency.Weekly">Chaque semaine</option>
+                        <option value="@Ct.RecurrenceFrequency.MonthlyByDate">Chaque mois, à la même date (ex. le 15)</option>
+                        <option value="@Ct.RecurrenceFrequency.MonthlyByWeekday">Chaque mois, le même jour (ex. le dernier vendredi)</option>
+                    </InputSelect>
+                </label>
+            }
+
+            <div class="when-once">
+                <label>Début <InputDate TValue="DateTime?" Type="InputDateType.DateTimeLocal" @bind-Value="Model.StartDate" /></label>
+                <label>Fin <InputDate TValue="DateTime?" Type="InputDateType.DateTimeLocal" @bind-Value="Model.EndDate" /></label>
+            </div>
+
+            @if (IsNew)
+            {
+                <div class="when-repeat">
+                    <div class="repeat-weekly">
+                        <label>
+                            Jour de la semaine
+                            <InputSelect @bind-Value="Model.WeeklyDay">
+                                <option value="">— Choisir —</option>
+                                @foreach (var day in WeekDays)
+                                {
+                                    <option value="@day">@Format.Day(day)</option>
+                                }
+                            </InputSelect>
+                        </label>
+                    </div>
+
+                    <div class="repeat-monthly-date">
+                        <label>
+                            Jour du mois
+                            <InputSelect @bind-Value="Model.MonthDay">
+                                <option value="">— Choisir —</option>
+                                @for (var day = 1; day <= 31; day++)
+                                {
+                                    <option value="@day">Le @(day == 1 ? "1er" : day.ToString())</option>
+                                }
+                            </InputSelect>
+                        </label>
+                        <p class="muted">Les mois plus courts (ex. le 31 en avril), l'événement a lieu le dernier jour du mois.</p>
+                    </div>
+
+                    <div class="repeat-monthly-weekday">
+                        <div class="inline-field">
+                            <label>
+                                Semaine du mois
+                                <InputSelect @bind-Value="Model.MonthRank">
+                                    <option value="">— Choisir —</option>
+                                    <option value="1">1re</option>
+                                    <option value="2">2e</option>
+                                    <option value="3">3e</option>
+                                    <option value="4">4e</option>
+                                    <option value="-1">Dernière</option>
+                                </InputSelect>
+                            </label>
+                            <label>
+                                Jour
+                                <InputSelect @bind-Value="Model.MonthWeekday">
+                                    <option value="">— Choisir —</option>
+                                    @foreach (var day in WeekDays)
+                                    {
+                                        <option value="@day">@Format.Day(day)</option>
+                                    }
+                                </InputSelect>
+                            </label>
+                        </div>
+                        <p class="muted">Ex. « Dernière » + « Vendredi » : le dernier vendredi de chaque mois.</p>
+                    </div>
+
+                    <div class="inline-field">
+                        <label>Heure de début <InputText type="time" @bind-Value="Model.StartTime" /></label>
+                        <label>Heure de fin <InputText type="time" @bind-Value="Model.EndTime" /></label>
+                    </div>
+
+                    <label>
+                        Fréquence
+                        <span class="inline-field">
+                            <span>Tous les</span>
+                            <InputNumber @bind-Value="Model.Interval" min="1" max="52" />
+                            <span class="unit unit-daily">jour(s)</span>
+                            <span class="unit unit-weekly">semaine(s)</span>
+                            <span class="unit unit-monthly">mois</span>
+                        </span>
+                    </label>
+                    <p class="muted">1 = à chaque fois ; 2 = une fois sur deux (ex. une semaine sur deux) ; 3 = une fois sur trois…</p>
+
+                    <div class="inline-field">
+                        <label class="checkbox"><InputCheckbox @bind-Value="Model.DuringTermTime" /> Hors vacances scolaires</label>
+                        <label class="checkbox"><InputCheckbox @bind-Value="Model.DuringSchoolHolidays" /> Pendant les vacances scolaires</label>
+                    </div>
+                    <p class="muted">Aucune date les jours fériés. Les vacances sont celles rattachées aux années scolaires (importées automatiquement).</p>
+
+                    <p class="muted">
+                        Période : celle de l'année scolaire choisie, jusqu'à sa fin (à partir d'aujourd'hui si elle a déjà commencé)
+                        @foreach (var year in schoolYears)
+                        {
+                            <br />@($"{year.Code} : {Format.Period(year.StartDate, year.EndDate).ToLowerInvariant()}")
+                        }
+                    </p>
+                    <p class="muted">Chaque date devient un événement à part entière (inscrits, modification ou annulation propres), relié aux autres en série.</p>
+                </div>
+            }
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@(IsNew ? "/events" : $"/events/{Id}")">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-event" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cet événement ?');">Supprimer cet événement</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "event")]
+    private EventModel? Model { get; set; }
+
+    private List<Ct.Organization> organizations = [];
+    private List<Ct.SchoolYear> schoolYears = [];
+    private List<Ct.Space> spaces = [];
+    private string? error;
+
+    private bool IsNew => Id is null;
+
+    // Jours de la semaine, du lundi au dimanche (0 = dimanche, comme l'API).
+    private static readonly int[] WeekDays = [1, 2, 3, 4, 5, 6, 0];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            organizations = (await Api.GetOrganizationsAsync()).OrderBy(o => o.Name).ToList();
+            schoolYears = await Api.GetSchoolYearsAsync();
+
+            spaces = (await Api.GetSpacesAsync()).OrderBy(s => s.Name).ToList();
+
+            if (Model is null)
+            {
+                Model = IsNew ? new EventModel { DuringTermTime = true } : EventModel.From(await Api.GetByIdAsync<Ct.Event>(ApiRoutes.Events, Id!.Value));
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew && Model!.Repeat is not null)
+            {
+                // Série : une occurrence par date ; on ouvre la première, qui liste les autres.
+                var series = await Api.CreateEventSeriesAsync(Model.ToSeries());
+                Navigation.NavigateTo($"/events/{series[0].Id}");
+            }
+            else if (IsNew)
+            {
+                var created = await Api.CreateAsync(ApiRoutes.Events, Model!.ApplyTo(new Ct.Event()));
+                Navigation.NavigateTo($"/events/{created.Id}");
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.Event>(ApiRoutes.Events, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.Events, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/events/{Id}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Events, Id!.Value);
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

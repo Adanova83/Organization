@@ -1,0 +1,67 @@
+@page "/organizations"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Organisations</PageTitle>
+
+<h1>Organisations</h1>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/organizations/new">Nouvelle organisation</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (organizations is not null)
+{
+    @if (organizations.Count == 0)
+    {
+        <p class="muted">Aucune organisation.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Organisation</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var organization in organizations)
+                {
+                    <tr>
+                        <td><a href="/organizations/@organization.Id">@organization.Name</a></td>
+                        <td>@(organization.Active?.IsActive == false ? "Inactive" : "Active")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<Ct.Organization>? organizations;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        try
+        {
+            organizations = (await Api.GetOrganizationsAsync()).OrderBy(o => o.Name).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/organizations", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

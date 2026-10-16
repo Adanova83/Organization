@@ -59,3 +59,7 @@ nunit-*.xml
 # Assets Cache & FileListAbsolute.txt
 *.assets.cache
 *.FileListAbsolute.txt
+
+# Visual Studio : fichiers locaux
+.vs/
+*.user

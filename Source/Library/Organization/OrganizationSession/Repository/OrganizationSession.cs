@@ -1,4 +1,4 @@
-﻿using Library.Data;
+using Library.Data;
 using Library.Mapper;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +13,16 @@ public sealed class OrganizationSession : IOrganizationSession
         _dbContext = dbContext;
     }
 
+    // Lectures avec l'année scolaire, qui porte les dates.
+    private IQueryable<Entity.OrganizationSession> Query => _dbContext.OrganizationSessions.Include(item => item.SchoolYear);
+
     public async Task<RepositoryResponse<Domain.OrganizationSession>> CreateAsync(Domain.OrganizationSession domain, CancellationToken ct)
     {
         var entity = domain.DomainToEntity();
         entity.Id = Guid.NewGuid();
         _dbContext.OrganizationSessions.Add(entity);
         await _dbContext.SaveChangesAsync(ct);
+        await _dbContext.Entry(entity).Reference(item => item.SchoolYear).LoadAsync(ct);
         return new RepositoryResponse<Domain.OrganizationSession>()
         {
             Data = entity.EntityToDomain()
@@ -40,14 +44,14 @@ public sealed class OrganizationSession : IOrganizationSession
         var entity = await _dbContext.OrganizationSessions.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
 
     public async Task<RepositoryResponse<Domain.OrganizationSession>> SearchAsync(Guid id, CancellationToken ct)
     {
-        var entity = await _dbContext.OrganizationSessions
+        var entity = await Query
             .FirstOrDefaultAsync(item => item.Id == id, ct);
         return new RepositoryResponse<Domain.OrganizationSession>()
         {
@@ -55,13 +59,19 @@ public sealed class OrganizationSession : IOrganizationSession
         };
     }
 
-    public async Task<RepositoryResponseRange<Domain.OrganizationSession>> SearchAsync(Guid OrganizationId, int page, int pageSize, CancellationToken ct)
-    {
-        IQueryable<Entity.OrganizationSession> q = _dbContext.OrganizationSessions;
+    public Task<RepositoryResponseRange<Domain.OrganizationSession>> SearchAsync(Guid OrganizationId, int page, int pageSize, CancellationToken ct)
+        => ListAsync(Query.Where(item => item.OrganizationId == OrganizationId), page, pageSize, ct);
 
-        q = q.Where(item => item.OrganizationId == OrganizationId)
-            .OrderBy(item => EF.Functions.Collate(item.StartDate, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.EndDate, "C"));
+    public Task<RepositoryResponseRange<Domain.OrganizationSession>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+        => ListAsync(Query.Where(item => item.SchoolYearId == schoolYearId), page, pageSize, ct);
+
+    private async Task<RepositoryResponseRange<Domain.OrganizationSession>> ListAsync(
+        IQueryable<Entity.OrganizationSession> q, int page, int pageSize, CancellationToken ct)
+    {
+        // La plus récente d'abord.
+        q = q.OrderByDescending(item => item.SchoolYear.StartDate);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -76,7 +86,7 @@ public sealed class OrganizationSession : IOrganizationSession
             Data = entities
              .Select(Mapper.OrganizationSession.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.OrganizationSessions.CountAsync(ct)
         };
     }
