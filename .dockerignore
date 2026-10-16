@@ -8,6 +8,6 @@
 .gitignore
 .gitattributes
 Sql/
-LICENSE.txt
+LICENCE
 *.md
 docker-compose*.yml
