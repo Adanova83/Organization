@@ -35,4 +35,16 @@ public static class Badge
             Active = source.Active.EntityToDomain(),
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Badge ContractToDomain(this Ct.Badge source, Guid id)
+    {
+        return new Do.Badge
+        {
+            Id = id,
+            Identifier = source.Identifier,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

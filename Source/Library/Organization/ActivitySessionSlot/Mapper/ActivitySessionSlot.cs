@@ -13,6 +13,7 @@ public static class ActivitySessionSlot
             Id = source.Id,
             DayOfWeek = source.DayOfWeek,
             EndTime = source.EndTime,
+            Frequency = source.Frequency,
             SessionId = source.SessionId,
             SpaceId = source.SpaceId,
             StartTime = source.StartTime,
@@ -27,6 +28,7 @@ public static class ActivitySessionSlot
             Id = source.Id,
             DayOfWeek = source.DayOfWeek,
             EndTime = source.EndTime,
+            Frequency = source.Frequency,
             SessionId = source.SessionId,
             SpaceId = source.SpaceId,
             StartTime = source.StartTime,
@@ -41,10 +43,29 @@ public static class ActivitySessionSlot
             Id = source.Id,
             DayOfWeek = source.DayOfWeek,
             EndTime = source.EndTime,
+            Frequency = source.Frequency,
             SessionId = source.SessionId,
             SpaceId = source.SpaceId,
             StartTime = source.StartTime,
-            Active = source.Active.EntityToDomain()
+            Active = source.Active.EntityToDomain(),
+            Audit = source.Audit.EntityToDomain()
+        };
+    }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.ActivitySessionSlot ContractToDomain(this Ct.ActivitySessionSlot source, Guid id)
+    {
+        return new Do.ActivitySessionSlot
+        {
+            Id = id,
+            DayOfWeek = source.DayOfWeek,
+            StartTime = source.StartTime,
+            EndTime = source.EndTime,
+            Frequency = source.Frequency,
+            SessionId = source.SessionId,
+            SpaceId = source.SpaceId,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
         };
     }
 }

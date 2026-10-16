@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class ActivitySessionSlotSubscription
+public sealed class ActivitySessionSlotSubscription : ICrudHandler<Domain.ActivitySessionSlotSubscription>
 {
     private readonly IActivitySessionSlotSubscription _repository;
 
@@ -11,7 +11,7 @@ public sealed class ActivitySessionSlotSubscription
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.ActivitySessionSlotSubscription domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.ActivitySessionSlotSubscription>> CreateAsync(Domain.ActivitySessionSlotSubscription domain, CancellationToken ct)
     {
         if (domain == null)
         {

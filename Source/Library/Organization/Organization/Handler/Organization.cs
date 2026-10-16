@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Organization
+public sealed class Organization : ICrudHandler<Domain.Organization>
 {
     private readonly IOrganization _repository;
 
@@ -11,7 +11,7 @@ public sealed class Organization
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Organization domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Organization>> CreateAsync(Domain.Organization domain, CancellationToken ct)
     {
         if (domain == null)
         {

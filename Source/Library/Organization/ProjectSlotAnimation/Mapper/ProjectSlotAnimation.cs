@@ -41,4 +41,18 @@ public static class ProjectSlotAnimation
             Active = source.Active.EntityToDomain()
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.ProjectSlotAnimation ContractToDomain(this Ct.ProjectSlotAnimation source, Guid id)
+    {
+        return new Do.ProjectSlotAnimation
+        {
+            Id = id,
+            ProjectSlotId = source.ProjectSlotId,
+            MemberId = source.MemberId,
+            Order = source.Order,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

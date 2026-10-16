@@ -4,6 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Library.Entity;
 
+/// <summary>
+/// Présentation d'un rôle. Les rôles et leurs membres sont les groupes de l'annuaire (Authentik/LDAP) :
+/// Code = nom du groupe. Cette table ne porte que ce que l'annuaire ne sait pas stocker (libellé, image, couleur).
+/// </summary>
 [Table("Role", Schema = "Authentication")]
 [Index(nameof(Code), IsUnique = true)]
 public class Role : PrimaryKey

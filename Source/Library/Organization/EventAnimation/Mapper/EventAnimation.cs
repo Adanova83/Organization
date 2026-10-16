@@ -41,4 +41,18 @@ public static class EventAnimation
             Active = source.Active.EntityToDomain()
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.EventAnimation ContractToDomain(this Ct.EventAnimation source, Guid id)
+    {
+        return new Do.EventAnimation
+        {
+            Id = id,
+            EventId = source.EventId,
+            MemberId = source.MemberId,
+            Order = source.Order,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

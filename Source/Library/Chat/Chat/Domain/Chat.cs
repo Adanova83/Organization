@@ -1,8 +1,0 @@
-namespace Library.Domain;
-
-public class Chat : PrimaryKey
-{
-    public string? Title { get; set; }
-    public bool IsGroup { get; set; } = false;
-    public bool IsPublic { get; set; } = true;
-}

@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class ActivitySession
+public sealed class ActivitySession : ICrudHandler<Domain.ActivitySession>
 {
     private readonly IActivitySession _repository;
 
@@ -11,7 +11,7 @@ public sealed class ActivitySession
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.ActivitySession domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.ActivitySession>> CreateAsync(Domain.ActivitySession domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -85,8 +85,24 @@ public sealed class ActivitySession
         return _repository.SearchAsync(activityId, page, pageSize, ct);
     }
 
+    public Task<RepositoryResponseRange<Domain.ActivitySession>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+    {
+        if (schoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID must not be empty for search.", nameof(schoolYearId));
+        }
+
+        if (page < 0 || pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page and page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchBySchoolYearAsync(schoolYearId, page, pageSize, ct);
+    }
+
     private void ValidateDomainRules(Domain.ActivitySession domain)
     {
+        // Dates facultatives (sinon celles de l'année scolaire) ; si les deux sont données, la fin suit le début.
         if (domain.EndDate < domain.StartDate)
         {
             throw new ArgumentOutOfRangeException(nameof(domain.EndDate), "End date must be greater than or equal to start date.");
@@ -99,9 +115,13 @@ public sealed class ActivitySession
         {
             throw new ArgumentException("Activity ID must not be empty.", nameof(domain));
         }
-        if(domain.OrganizationSessionId == Guid.Empty)
+        if (domain.SchoolYearId == Guid.Empty)
         {
-            throw new ArgumentException("Organization session ID must not be empty.", nameof(domain));
+            throw new ArgumentException("School year ID must not be empty.", nameof(domain.SchoolYearId));
+        }
+        if (!domain.DuringTermTime && !domain.DuringSchoolHolidays)
+        {
+            throw new ArgumentException("The session must take place during term time, during school holidays, or both.", nameof(domain.DuringTermTime));
         }
     }
 }

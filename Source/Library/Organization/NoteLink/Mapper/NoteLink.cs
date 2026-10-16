@@ -38,4 +38,18 @@ public static class NoteLink
             NoteId = source.NoteId
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.NoteLink ContractToDomain(this Ct.NoteLink source, Guid id)
+    {
+        return new Do.NoteLink
+        {
+            Id = id,
+            NoteId = source.NoteId,
+            LinkedType = source.LinkedType,
+            LinkedId = source.LinkedId,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

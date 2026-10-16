@@ -40,7 +40,7 @@ public sealed class ProjectSlotAnimation : IProjectSlotAnimation
         var entity = await _dbContext.ProjectSlotAnimations.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -68,8 +68,10 @@ public sealed class ProjectSlotAnimation : IProjectSlotAnimation
             q = q.Where(item => item.MemberId.Equals(memberId.Value));
         }
 
-        q = q.OrderBy(item => EF.Functions.Collate(item.ProjectSlotId, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.MemberId, "C"));
+        q = q.OrderBy(item => item.ProjectSlotId)
+            .ThenBy(item => item.MemberId);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -84,7 +86,7 @@ public sealed class ProjectSlotAnimation : IProjectSlotAnimation
             Data = entities
              .Select(Mapper.ProjectSlotAnimation.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.ProjectSlotAnimations.CountAsync(ct)
         };
     }

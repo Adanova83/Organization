@@ -6,6 +6,7 @@ namespace Library.Entity;
 
 [Table("Event", Schema = "Organization")]
 [Index(nameof(Code), IsUnique = true)]
+[Index(nameof(SeriesId))]
 internal class Event : PrimaryKey
 {
     [Required, MaxLength(50)] public string Code { get; set; } = default!;
@@ -16,8 +17,11 @@ internal class Event : PrimaryKey
     [Required] public DateTime StartDate { get; set; }
     [Required] public DateTime EndDate { get; set; }
     public int? AgeMinimum { get; set; } = null;
-    [Required] public Guid OrganizationSessionId { get; set; }
-    [ForeignKey(nameof(OrganizationSessionId))] public OrganizationSession OrganizationSession { get; set; } = default!;
+    [Required] public Guid OrganizationId { get; set; }
+    [ForeignKey(nameof(OrganizationId))] public Organization Organization { get; set; } = default!;
+    [Required] public Guid SchoolYearId { get; set; }
+    [ForeignKey(nameof(SchoolYearId))] public SchoolYear SchoolYear { get; set; } = default!;
     public Guid? SpaceId { get; set; }
+    public Guid? SeriesId { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
 }

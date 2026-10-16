@@ -14,6 +14,7 @@ public static class Holiday
             EndDate = source.EndDate,
             Name = source.Name,
             StartDate = source.StartDate,
+            SchoolYearId = source.SchoolYearId,
             Active = source.Active.DomainToContract()
         };
     }
@@ -26,6 +27,7 @@ public static class Holiday
             EndDate = source.EndDate,
             Name = source.Name,
             StartDate = source.StartDate,
+            SchoolYearId = source.SchoolYearId,
             Active = source.Active.DomainToEntity()
         };
     }
@@ -38,7 +40,24 @@ public static class Holiday
             EndDate = source.EndDate,
             Name = source.Name,
             StartDate = source.StartDate,
-            Active = source.Active.EntityToDomain()
+            SchoolYearId = source.SchoolYearId,
+            Active = source.Active.EntityToDomain(),
+            Audit = source.Audit.EntityToDomain()
+        };
+    }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Holiday ContractToDomain(this Ct.Holiday source, Guid id)
+    {
+        return new Do.Holiday
+        {
+            Id = id,
+            Name = source.Name,
+            StartDate = source.StartDate,
+            SchoolYearId = source.SchoolYearId,
+            EndDate = source.EndDate,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
         };
     }
 }

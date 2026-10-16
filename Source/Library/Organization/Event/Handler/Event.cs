@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Event
+public sealed class Event : ICrudHandler<Domain.Event>
 {
     private readonly IEvent _repository;
 
@@ -11,7 +11,7 @@ public sealed class Event
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Event domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Event>> CreateAsync(Domain.Event domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -85,6 +85,59 @@ public sealed class Event
         return _repository.SearchAsync(query, page, pageSize, ct);
     }
 
+    public Task<RepositoryResponseRange<Domain.Event>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+    {
+        if (schoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID must not be empty for search.", nameof(schoolYearId));
+        }
+
+        if (page < 0 || pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page and page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchBySchoolYearAsync(schoolYearId, page, pageSize, ct);
+    }
+
+    public Task<RepositoryResponseRange<Domain.Event>> SearchBySeriesAsync(Guid seriesId, CancellationToken ct)
+    {
+        if (seriesId == Guid.Empty)
+        {
+            throw new ArgumentException("Series ID must not be empty for search.", nameof(seriesId));
+        }
+
+        return _repository.SearchBySeriesAsync(seriesId, ct);
+    }
+
+    /// <summary>Crée les occurrences d'une série : elles reçoivent un même identifiant de série et un code suffixé par leur date.</summary>
+    public Task<IReadOnlyList<Domain.Event>> CreateSeriesAsync(IReadOnlyList<Domain.Event> occurrences, DateOnly[] localDates, CancellationToken ct)
+    {
+        if (occurrences.Count == 0 || occurrences.Count != localDates.Length)
+        {
+            throw new ArgumentException("A series needs at least one occurrence, each with its date.", nameof(occurrences));
+        }
+
+        var seriesId = Guid.NewGuid();
+        for (var index = 0; index < occurrences.Count; index++)
+        {
+            var occurrence = occurrences[index];
+            if (occurrence.Id != Guid.Empty)
+            {
+                throw new ArgumentException("ID must be empty for creation.", nameof(occurrence.Id));
+            }
+
+            ValidateDomainRules(occurrence);
+
+            // Codes uniques : code de la série + date (50 caractères au plus).
+            var baseCode = occurrence.Code.Trim();
+            occurrence.Code = $"{baseCode[..Math.Min(baseCode.Length, 41)]}-{localDates[index]:yyyyMMdd}";
+            occurrence.SeriesId = seriesId;
+        }
+
+        return _repository.CreateRangeAsync(occurrences, ct);
+    }
+
     private void ValidateDomainRules(Domain.Event domain)
     {
         if (string.IsNullOrWhiteSpace(domain.Code))
@@ -103,9 +156,13 @@ public sealed class Event
         {
             throw new ArgumentOutOfRangeException(nameof(domain.AgeMinimum), "Age minimum must be greater or equal than 0.");
         }
-        if (domain.OrganizationSessionId == Guid.Empty)
+        if (domain.OrganizationId == Guid.Empty)
         {
-            throw new ArgumentException("Organization ID is required.", nameof(domain.OrganizationSessionId));
+            throw new ArgumentException("Organization ID is required.", nameof(domain.OrganizationId));
+        }
+        if (domain.SchoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID is required.", nameof(domain.SchoolYearId));
         }
     }
 }

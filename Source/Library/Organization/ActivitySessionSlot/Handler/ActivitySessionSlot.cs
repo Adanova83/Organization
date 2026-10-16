@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class ActivitySessionSlot
+public sealed class ActivitySessionSlot : ICrudHandler<Domain.ActivitySessionSlot>
 {
     private readonly IActivitySessionSlot _repository;
 
@@ -11,7 +11,7 @@ public sealed class ActivitySessionSlot
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.ActivitySessionSlot domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.ActivitySessionSlot>> CreateAsync(Domain.ActivitySessionSlot domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -94,6 +94,10 @@ public sealed class ActivitySessionSlot
         if (domain.DayOfWeek >= 7)
         {
             throw new ArgumentOutOfRangeException(nameof(domain.DayOfWeek), "Day of week must be less than 7.");
+        }
+        if (domain.Frequency < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(domain.Frequency), "Frequency must be greater or equal than 1 (number of weeks between two occurrences).");
         }
         if (domain.EndTime <= domain.StartTime)
         {

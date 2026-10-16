@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class BadgeAssignation
+public sealed class BadgeAssignation : ICrudHandler<Domain.BadgeAssignation>
 {
     private readonly IBadgeAssignation _repository;
 
@@ -11,7 +11,7 @@ public sealed class BadgeAssignation
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.BadgeAssignation domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.BadgeAssignation>> CreateAsync(Domain.BadgeAssignation domain, CancellationToken ct)
     {
         if (domain == null)
         {

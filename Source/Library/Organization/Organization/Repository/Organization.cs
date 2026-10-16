@@ -40,7 +40,7 @@ public sealed class Organization : IOrganization
         var entity = await _dbContext.Organizations.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,13 +60,15 @@ public sealed class Organization : IOrganization
         IQueryable<Entity.Organization> q = _dbContext.Organizations;
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{query}%";
             q = q.Where(item =>
                 EF.Functions.ILike(item.Name, pattern)
             );
         }
 
         q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -81,7 +83,7 @@ public sealed class Organization : IOrganization
             Data = entities
              .Select(Mapper.Organization.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Organizations.CountAsync(ct)
         };
     }

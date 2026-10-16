@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Country
+public sealed class Country : ICrudHandler<Domain.Country>
 {
     private readonly ICountry _repository;
 
