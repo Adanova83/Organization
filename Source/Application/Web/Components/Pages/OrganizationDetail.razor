@@ -1,0 +1,87 @@
+@page "/organizations/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>@(organization?.Name ?? "Organisation")</PageTitle>
+
+<p><a href="/organizations">← Retour aux organisations</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (organization is not null)
+{
+    <h1>@organization.Name</h1>
+
+    @if (canEdit)
+    {
+        <p class="actions">
+            <a class="button" href="/organizations/@Id/edit">Modifier l'organisation</a>
+            <a class="button" href="/organizations/@Id/seasons/new">Nouvelle saison</a>
+        </p>
+    }
+
+    <h2>Saisons</h2>
+
+    @if (seasons.Count == 0)
+    {
+        <p class="muted">Aucune saison.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Année scolaire</th><th>Période</th><th>Cotisation</th>@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var season in seasons)
+                {
+                    <tr>
+                        <td><a href="/school-years/@season.SchoolYearId">@season.SchoolYearCode</a></td>
+                        <td>@Format.Period(season.StartDate, season.EndDate)</td>
+                        <td>@Format.Price(season.Price)</td>
+                        @if (canEdit)
+                        {
+                            <td><a href="/organization-sessions/@season.Id/edit">Modifier</a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Organization? organization;
+    private List<Ct.OrganizationSession> seasons = [];
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        try
+        {
+            organization = await Api.GetByIdAsync<Ct.Organization>(ApiRoutes.Organizations, Id);
+            seasons = (await Api.GetOrganizationSessionsAsync(Id)).OrderByDescending(s => s.StartDate).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/organizations/{Id}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

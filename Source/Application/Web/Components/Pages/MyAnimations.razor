@@ -1,0 +1,94 @@
+@page "/me/animations"
+@attribute [Authorize]
+@inject AnimationClient Animations
+@inject SubscriptionClient Subscriptions
+@inject UserAccess Access
+
+<PageTitle>Mes animations</PageTitle>
+
+<h1>Mes animations</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (me is null)
+{
+    <p class="notice">Aucun membre n'est rattaché à votre compte.</p>
+}
+else if (rows.Count == 0)
+{
+    <p class="muted">Vous n'animez rien pour le moment.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr><th>Type</th><th>Animation</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var row in rows)
+            {
+                <tr>
+                    <td>@KindLabel(row.Kind)</td>
+                    <td>
+                        @if (row.Url is not null)
+                        {
+                            <a href="@row.Url">@row.Title</a>
+                        }
+                        else
+                        {
+                            @row.Title
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private sealed record Row(SubscriptionKind Kind, string Title, string? Url);
+
+    private Guid? me;
+    private List<Row> rows = [];
+    private string? error;
+
+    private static string KindLabel(SubscriptionKind kind) => kind switch
+    {
+        SubscriptionKind.Slot => "Atelier",
+        SubscriptionKind.Event => "Événement",
+        _ => "Projet"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        me = await Access.MemberIdAsync();
+        if (me is not { } memberId)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var kind in Enum.GetValues<SubscriptionKind>())
+            {
+                // Les animations d'un domaine ne sont lisibles qu'avec sa permission *.read.
+                if (!await Access.CanAsync(AnimationClient.ReadPermission(kind)))
+                {
+                    continue;
+                }
+
+                foreach (var item in await Animations.ListAsync(kind, null, memberId))
+                {
+                    var (title, url) = await Subscriptions.DescribeAsync(kind, item.TargetId);
+                    rows.Add(new Row(kind, title, url));
+                }
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

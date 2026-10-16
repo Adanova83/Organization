@@ -1,0 +1,58 @@
+@page "/holidays/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>@(holiday?.Name ?? "Période")</PageTitle>
+
+<p><a href="/holidays">← Retour aux jours fériés et vacances</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (holiday is not null)
+{
+    <h1>@holiday.Name</h1>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/holidays/@Id/edit">Modifier la période</a></p>
+    }
+
+    <dl class="meta">
+        <dt>Du</dt><dd>@Format.Date(holiday.StartDate)</dd>
+        <dt>Au (inclus)</dt><dd>@Format.Date(holiday.EndDate)</dd>
+    </dl>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Holiday? holiday;
+    private string? error;
+    private bool canEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        try
+        {
+            holiday = await Api.GetByIdAsync<Ct.Holiday>(ApiRoutes.Holidays, Id);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/holidays/{Id}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

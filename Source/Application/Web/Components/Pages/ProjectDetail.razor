@@ -1,0 +1,140 @@
+@page "/projects/{Id:guid}"
+@attribute [Authorize(Policy = Permissions.ProjectRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+@inject SubscriptionClient Subs
+
+<PageTitle>@(project?.Name ?? "Projet")</PageTitle>
+
+<p><a href="/projects">← Retour aux projets</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (project is not null)
+{
+    <h1>@project.Name</h1>
+
+    @if (canEdit)
+    {
+        <p class="actions">
+            <a class="button" href="/projects/@Id/edit">Modifier le projet</a>
+            <a class="button" href="/projects/@Id/slots/new">Nouveau créneau</a>
+        </p>
+    }
+
+    <dl class="meta">
+        <dt>Code</dt><dd>@project.Code</dd>
+        <dt>Année scolaire</dt><dd>@project.SchoolYearCode</dd>
+        <dt>Période</dt><dd>@Format.Period(project.EffectiveStartDate, project.EffectiveEndDate)@(project.StartDate is not null || project.EndDate is not null ? " (période restreinte)" : "")</dd>
+        <dt>Âge</dt><dd>@Format.Age(project.AgeMinimum)</dd>
+        @if (!string.IsNullOrWhiteSpace(project.Description))
+        {
+            <dt>Description</dt>
+            <dd>@project.Description</dd>
+        }
+    </dl>
+
+    <h2>Créneaux</h2>
+
+    @if (slots.Count == 0)
+    {
+        <p class="muted">Aucun créneau.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Jour</th><th>Horaires</th><th>Lieu</th><th>Animateurs</th>@if (showSubscriptions){<th>Inscription</th>}@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var slot in slots.OrderBy(s => s.DayOfWeek).ThenBy(s => s.StartTime))
+                {
+                    <tr>
+                        <td>@Format.Day(slot.DayOfWeek)</td>
+                        <td>@Format.Time(slot.StartTime) – @Format.Time(slot.EndTime)</td>
+                        <td>@(slot.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</td>
+                        <td><a href="/animations/project/@slot.Id">Voir</a></td>
+                        @if (showSubscriptions)
+                        {
+                            <td>
+                                <SubscribeToggle Kind="SubscriptionKind.Project" TargetId="slot.Id" MemberId="me"
+                                                 SubscriptionId="SubscriptionOf(slot.Id)" BlockReason="@BlockReason" />
+                                @if (canSeeSubscribers)
+                                {
+                                    <a href="/subscriptions/project/@slot.Id">Inscrits</a>
+                                }
+                            </td>
+                        }
+                        @if (canEdit)
+                        {
+                            <td><a href="/project-slots/@slot.Id/edit">Modifier</a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Ct.Project? project;
+    private List<Ct.ProjectSlot> slots = [];
+    private Dictionary<Guid, string> spaces = [];
+    private string? error;
+    private bool canEdit;
+    private bool canSeeSubscribers;
+    private Guid? me;
+    private int? myAge;
+    private Dictionary<Guid, Guid> mySubscriptions = [];
+
+    private bool showSubscriptions => me is not null || canSeeSubscribers;
+
+    private Guid? SubscriptionOf(Guid slotId) => mySubscriptions.TryGetValue(slotId, out var id) ? id : null;
+
+    private string? BlockReason
+        => project is { AgeMinimum: > 0 } && myAge is { } age && age < project.AgeMinimum
+            ? $"Âge minimum : {project.AgeMinimum} ans"
+            : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.ProjectEdit);
+
+        try
+        {
+            project = await Api.GetProjectAsync(Id);
+            slots = await Api.GetProjectSlotsAsync(Id);
+
+            canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
+            me = await Access.MemberIdAsync();
+            myAge = await Access.AgeAsync();
+            if (me is { } memberId)
+            {
+                mySubscriptions = (await Subs.ListAsync(SubscriptionKind.Project, null, memberId)).ToDictionary(item => item.TargetId, item => item.Id);
+            }
+
+            spaces = await Api.GetSpaceNamesAsync();
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/projects/{Id}", forceLoad: true);
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "L'API est injoignable.";
+        }
+    }
+}

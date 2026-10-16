@@ -1,0 +1,96 @@
+@page "/countries"
+@attribute [Authorize(Policy = Permissions.OrganizationRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Pays</PageTitle>
+
+<h1>Pays</h1>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/countries/new">Nouveau pays</a></p>
+}
+
+<form method="get" action="/countries" class="search">
+    <input type="search" name="query" value="@Query" placeholder="Nom du pays" aria-label="Rechercher un pays" />
+    <button type="submit">Rechercher</button>
+</form>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (result is not null)
+{
+    @if (result.Data.Count == 0)
+    {
+        <p class="muted">Aucun pays.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Pays</th><th>Code (2)</th><th>Code (3)</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var country in result.Data)
+                {
+                    <tr>
+                        <td><a href="/countries/@country.Id">@country.Name</a></td>
+                        <td>@country.CodeAlpha2</td>
+                        <td>@country.CodeAlpha3</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p class="pager">
+            @if (CurrentPage > 1)
+            {
+                <a href="@PageUrl(CurrentPage - 1)">← Précédent</a>
+            }
+            <span>Page @CurrentPage / @PageCount · @result.FilteredCount pays</span>
+            @if (CurrentPage < PageCount)
+            {
+                <a href="@PageUrl(CurrentPage + 1)">Suivant →</a>
+            }
+        </p>
+    }
+}
+
+@code {
+    private const int PageSize = 50;
+
+    [SupplyParameterFromQuery] public string? Query { get; set; }
+    [SupplyParameterFromQuery] public int? Page { get; set; }
+
+    private PagedResponse<Ct.Country>? result;
+    private string? error;
+    private bool canEdit;
+
+    private int CurrentPage => Math.Max(Page ?? 1, 1);
+    private int PageCount => result is null ? 1 : Math.Max((int)Math.Ceiling(result.FilteredCount / (double)PageSize), 1);
+
+    private string PageUrl(int page)
+        => string.IsNullOrWhiteSpace(Query) ? $"/countries?page={page}" : $"/countries?page={page}&query={Uri.EscapeDataString(Query)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.OrganizationEdit);
+
+        try
+        {
+            result = await Api.GetPageAsync<Ct.Country>(ApiRoutes.Countries, Query, CurrentPage, PageSize);
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/countries", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

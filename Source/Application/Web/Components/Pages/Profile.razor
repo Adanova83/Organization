@@ -1,0 +1,147 @@
+@page "/me/profile"
+@attribute [Authorize]
+@using Microsoft.Extensions.Caching.Memory
+@using Microsoft.Extensions.Options
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IMemoryCache Cache
+@inject IOptions<SessionSettings> Session
+
+<PageTitle>Mon profil</PageTitle>
+
+<h1>Mon profil</h1>
+
+@if (saved)
+{
+    <p class="notice">Profil enregistré.</p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="profile" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Identité</legend>
+            <label>Nom <InputText @bind-Value="Model.Lastname" autocomplete="family-name" /></label>
+            <label>Prénom <InputText @bind-Value="Model.Firstname" autocomplete="given-name" /></label>
+            <label>Date de naissance <InputDate TValue="DateTime?" @bind-Value="Model.Birthdate" /></label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Contact</legend>
+            <label>E-mail (géré par l'annuaire) <InputText type="email" @bind-Value="Model.Email" readonly /></label>
+            <label>Téléphone <InputText type="tel" @bind-Value="Model.PhoneNumber" autocomplete="tel" /></label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Adresse</legend>
+            <label>Adresse <InputText @bind-Value="Model.Line1" autocomplete="address-line1" /></label>
+            <label>Complément <InputText @bind-Value="Model.Line2" autocomplete="address-line2" /></label>
+            <label>Complément (suite) <InputText @bind-Value="Model.Line3" autocomplete="address-line3" /></label>
+            <label>Code postal <InputText @bind-Value="Model.PostalCode" autocomplete="postal-code" /></label>
+            <label>Ville <InputText @bind-Value="Model.City" autocomplete="address-level2" /></label>
+            <label>
+                Pays
+                <InputSelect @bind-Value="Model.CountryId">
+                    @if (countries.Count == 0)
+                    {
+                        @* Liste des pays inaccessible (organization.read) : on conserve le pays actuel. *@
+                        <option value="@Model.CountryId">Pays actuel</option>
+                    }
+                    else
+                    {
+                        <option value="">— Choisir —</option>
+                        @foreach (var country in countries)
+                        {
+                            <option value="@country.Id">@country.Name</option>
+                        }
+                    }
+                </InputSelect>
+            </label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="/">Annuler</a>
+        </p>
+    </EditForm>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "profile")]
+    private MemberModel? Model { get; set; }
+
+    [SupplyParameterFromQuery] public bool Saved { get; set; }
+
+    private IReadOnlyList<Ct.Country> countries = [];
+    private string? error;
+    private bool saved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        saved = Saved;
+
+        var me = await Api.GetMeAsync();
+        if (me.Status != MeStatus.Ok)
+        {
+            error = me.Status == MeStatus.NoMember
+                ? "Aucun membre n'est rattaché à votre compte."
+                : "L'API est injoignable.";
+            return;
+        }
+
+        try
+        {
+            countries = await Api.GetCountriesAsync();
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            countries = [];
+        }
+
+        // Première visite (GET) : formulaire prérempli. À l'envoi (POST), Model est déjà rempli par le formulaire.
+        Model ??= MemberModel.From(me.Me!.Member);
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            // On repart du profil actuel : image et couleur sont conservées.
+            var current = (await Api.GetMeAsync()).Me?.Member
+                ?? throw new HttpRequestException();
+            var member = Model!.ApplyTo(current);
+
+            await Api.UpdateMeAsync(new ProfileUpdate
+            {
+                Firstname = member.Firstname,
+                Lastname = member.Lastname,
+                Picture = member.Picture,
+                RGBColor = member.RGBColor,
+                Birthdate = member.Birthdate,
+                PhoneNumber = member.PhoneNumber,
+                Addr = member.Addr
+            });
+
+            // Le nom affiché et l'âge viennent de GET /api/me, gardé en cache : on l'invalide.
+            if (HttpContextAccessor.HttpContext?.Request.Cookies[Session.Value.CookieName] is { Length: > 0 } session)
+            {
+                Cache.Remove(ApiSessionAuthenticationHandler.CacheKey(session));
+            }
+
+            Navigation.NavigateTo("/me/profile?saved=true", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

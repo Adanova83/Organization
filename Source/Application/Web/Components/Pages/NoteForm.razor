@@ -1,0 +1,283 @@
+@page "/notes/new"
+@page "/notes/{Id:guid}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject UserAccess Access
+@inject NavigationManager Navigation
+
+@* Note personnelle : l'API ne la montre qu'à son auteur (404 pour les autres). *@
+
+<PageTitle>@(IsNew ? "Nouvelle note" : "Note")</PageTitle>
+
+<h1>@(IsNew ? "Nouvelle note" : "Note")</h1>
+
+<p><a href="/notes">← Retour à mes notes</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="note" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Note</legend>
+            <label>Titre <InputText @bind-Value="Model.Title" /></label>
+            <label>Texte <InputTextArea @bind-Value="Model.Body" rows="8" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="/notes">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <h2>Liens</h2>
+
+        @if (links.Count == 0)
+        {
+            <p class="muted">Cette note n'est liée à rien.</p>
+        }
+        else
+        {
+            <table>
+                <tbody>
+                    @foreach (var link in links)
+                    {
+                        var target = Describe(link);
+                        <tr>
+                            <td>
+                                @if (target.Url is not null)
+                                {
+                                    <a href="@target.Url">@target.Label</a>
+                                }
+                                else
+                                {
+                                    @target.Label
+                                }
+                            </td>
+                            <td>
+                                <form method="post" class="inline" @onsubmit="() => RemoveLinkAsync(link.Id)" @formname="@($"remove-link-{link.Id}")">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="link-button">Retirer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (targets.Count > 0)
+        {
+            <EditForm Model="Link" FormName="add-link" OnValidSubmit="AddLinkAsync" Enhance class="form">
+                <DataAnnotationsValidator />
+                <fieldset>
+                    <legend>Lier la note</legend>
+                    <label>
+                        Élément
+                        <InputSelect @bind-Value="Link!.Target">
+                            <option value="">— Choisir —</option>
+                            @foreach (var group in targets.GroupBy(t => t.Type))
+                            {
+                                <optgroup label="@TypeLabel(group.Key)">
+                                    @foreach (var target in group)
+                                    {
+                                        <option value="@($"{target.Type}:{target.Id}")">@target.Label</option>
+                                    }
+                                </optgroup>
+                            }
+                        </InputSelect>
+                    </label>
+                    <ValidationMessage For="() => Link!.Target" />
+                </fieldset>
+                <p class="actions"><button type="submit">Lier</button></p>
+            </EditForm>
+        }
+
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-note" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette note ?');">Supprimer cette note</button>
+        </form>
+    }
+}
+
+@code {
+    // Types d'éléments auxquels une note peut être liée (NoteLink.LinkedType).
+    private const string ActivityType = "activity";
+    private const string EventType = "event";
+    private const string ProjectType = "project";
+
+    private sealed record Target(string Type, Guid Id, string Label);
+
+    public sealed class LinkModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Choisissez un élément.")]
+        public string? Target { get; set; }
+    }
+
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "note")]
+    private NoteModel? Model { get; set; }
+
+    [SupplyParameterFromForm(FormName = "add-link")]
+    private LinkModel? Link { get; set; }
+
+    private List<Ct.NoteLink> links = [];
+    private List<Target> targets = [];
+    private string? error;
+
+    private bool IsNew => Id is null;
+
+    private static string TypeLabel(string type) => type switch
+    {
+        ActivityType => "Activités",
+        EventType => "Événements",
+        ProjectType => "Projets",
+        _ => type
+    };
+
+    private (string Label, string? Url) Describe(Ct.NoteLink link)
+    {
+        var target = targets.FirstOrDefault(t => t.Type == link.LinkedType && t.Id == link.LinkedId);
+        var url = link.LinkedType switch
+        {
+            ActivityType => $"/activities/{link.LinkedId}",
+            EventType => $"/events/{link.LinkedId}",
+            ProjectType => $"/projects/{link.LinkedId}",
+            _ => null
+        };
+
+        return (target is null ? $"{TypeLabel(link.LinkedType)} (détails indisponibles)" : $"{TypeLabel(link.LinkedType)} : {target.Label}", url);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Link ??= new LinkModel();
+
+        try
+        {
+            if (IsNew)
+            {
+                Model ??= new NoteModel();
+                return;
+            }
+
+            Model ??= NoteModel.From(await Api.GetByIdAsync<Ct.Note>(ApiRoutes.Notes, Id!.Value));
+            links = await Api.ListAllAsync<Ct.NoteLink>(ApiRoutes.NoteLinks, Id!.Value);
+            targets = await TargetsAsync();
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    /// <summary>Éléments que l'utilisateur peut consulter (activity.read, event.read, project.read).</summary>
+    private async Task<List<Target>> TargetsAsync()
+    {
+        var result = new List<Target>();
+
+        if (await Access.CanAsync(Permissions.ActivityRead))
+        {
+            result.AddRange((await Api.ListAllAsync<Ct.Activity>(ApiRoutes.Activities)).OrderBy(a => a.Name).Select(a => new Target(ActivityType, a.Id, a.Name)));
+        }
+
+        if (await Access.CanAsync(Permissions.EventRead))
+        {
+            result.AddRange((await Api.ListAllAsync<Ct.Event>(ApiRoutes.Events)).OrderByDescending(e => e.StartDate).Select(e => new Target(EventType, e.Id, $"{e.Name} ({Format.Date(e.StartDate)})")));
+        }
+
+        if (await Access.CanAsync(Permissions.ProjectRead))
+        {
+            result.AddRange((await Api.ListAllAsync<Ct.Project>(ApiRoutes.Projects)).OrderBy(p => p.Name).Select(p => new Target(ProjectType, p.Id, p.Name)));
+        }
+
+        return result;
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var me = await Access.MemberIdAsync()
+                    ?? throw new InvalidOperationException("Aucun membre n'est rattaché à votre compte.");
+                var created = await Api.CreateAsync(ApiRoutes.Notes, Model!.ApplyTo(new Ct.Note { MemberId = me }));
+                Navigation.NavigateTo($"/notes/{created.Id}");
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.Note>(ApiRoutes.Notes, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.Notes, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo("/notes");
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task AddLinkAsync()
+    {
+        var parts = Link!.Target!.Split(':', 2);
+        if (parts.Length != 2 || !Guid.TryParse(parts[1], out var linkedId))
+        {
+            error = "Élément invalide.";
+            return;
+        }
+
+        try
+        {
+            await Api.CreateAsync(ApiRoutes.NoteLinks, new Ct.NoteLink { NoteId = Id!.Value, LinkedType = parts[0], LinkedId = linkedId });
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task RemoveLinkAsync(Guid linkId)
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.NoteLinks, linkId);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Notes, Id!.Value);
+            Navigation.NavigateTo("/notes");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

@@ -1,0 +1,116 @@
+@page "/events"
+@attribute [Authorize(Policy = Permissions.EventRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Événements</PageTitle>
+
+<h1>Événements</h1>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/events/new">Nouvel événement</a></p>
+}
+
+<form method="get" action="/events" class="search">
+    <input type="search" name="query" value="@Query" placeholder="Nom ou code" aria-label="Rechercher un événement" />
+    <button type="submit">Rechercher</button>
+</form>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (result is not null)
+{
+    @if (result.Data.Count == 0)
+    {
+        <p class="muted">Aucun événement.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Événement</th>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th>Lieu</th>
+                    <th>Âge</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in result.Data.OrderByDescending(e => e.StartDate))
+                {
+                    <tr>
+                        <td>
+                            <a href="/events/@item.Id">@item.Name</a>
+                            @if (item.SeriesId is not null)
+                            {
+                                <span class="muted" title="Fait partie d'une série récurrente">↻ série</span>
+                            }
+                        </td>
+                        <td>@Format.DateTimeLabel(item.StartDate)</td>
+                        <td>@Format.DateTimeLabel(item.EndDate)</td>
+                        <td>@(item.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</td>
+                        <td>@Format.Age(item.AgeMinimum)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p class="pager">
+            @if (CurrentPage > 1)
+            {
+                <a href="@PageUrl(CurrentPage - 1)">← Précédent</a>
+            }
+            <span>Page @CurrentPage / @PageCount · @result.FilteredCount événement(s)</span>
+            @if (CurrentPage < PageCount)
+            {
+                <a href="@PageUrl(CurrentPage + 1)">Suivant →</a>
+            }
+        </p>
+    }
+}
+
+@code {
+    private const int PageSize = 25;
+
+    [SupplyParameterFromQuery] public string? Query { get; set; }
+    [SupplyParameterFromQuery] public int? Page { get; set; }
+
+    private PagedResponse<Ct.Event>? result;
+    private Dictionary<Guid, string> spaces = [];
+    private string? error;
+    private bool canEdit;
+
+    private int CurrentPage => Math.Max(Page ?? 1, 1);
+    private int PageCount => result is null ? 1 : Math.Max((int)Math.Ceiling(result.FilteredCount / (double)PageSize), 1);
+
+    private string PageUrl(int page)
+        => "/events?" + (string.IsNullOrWhiteSpace(Query) ? "" : "query=" + Uri.EscapeDataString(Query) + "&") + "page=" + page;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.EventEdit);
+
+        try
+        {
+            result = await Api.GetEventsAsync(Query, CurrentPage, PageSize);
+            spaces = await Api.GetSpaceNamesAsync();
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/events", forceLoad: true);
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "L'API est injoignable.";
+        }
+    }
+}

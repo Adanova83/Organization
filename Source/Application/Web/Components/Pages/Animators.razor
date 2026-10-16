@@ -1,0 +1,173 @@
+@page "/animations/{Kind}/{TargetId:guid}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject AnimationClient Animations
+@inject SubscriptionClient Subscriptions
+@inject UserAccess Access
+@inject NavigationManager Navigation
+
+@* Lecture : permission *.read du domaine de l'élément (activité, événement ou projet) ; écriture : *.edit du même domaine. *@
+
+<PageTitle>Animateurs</PageTitle>
+
+<h1>Animateurs</h1>
+
+@if (backUrl is not null)
+{
+    <p><a href="@backUrl">← Retour à la fiche</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (kind is not null && canRead)
+{
+    <p class="muted">@title</p>
+
+    @if (items.Count == 0)
+    {
+        <p class="muted">Aucun animateur.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Animateur</th>@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td>@MemberName(item.MemberId)</td>
+                        @if (canEdit)
+                        {
+                            <td>
+                                <form method="post" class="inline" @onsubmit="() => RemoveAsync(item.Id)" @formname="@($"remove-{item.Id}")">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="link-button">Retirer</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (canEdit)
+    {
+        @if (candidates.Count == 0 && memberNames.Count == 0)
+        {
+            <p class="muted">La liste des membres est inaccessible (permission member.read) : impossible d'ajouter un animateur.</p>
+        }
+        else
+        {
+            <EditForm Model="Add" FormName="add-animator" OnValidSubmit="AddAsync" Enhance class="form">
+                <DataAnnotationsValidator />
+                <fieldset>
+                    <legend>Ajouter un animateur</legend>
+                    <label>
+                        Membre
+                        <InputSelect @bind-Value="Add!.MemberId">
+                            <option value="">— Choisir —</option>
+                            @foreach (var member in candidates)
+                            {
+                                <option value="@member.Id">@member.Lastname @member.Firstname</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <ValidationMessage For="() => Add!.MemberId" />
+                </fieldset>
+                <p class="actions"><button type="submit">Ajouter</button></p>
+            </EditForm>
+        }
+    }
+}
+
+@code {
+    [Parameter] public string Kind { get; set; } = "";
+    [Parameter] public Guid TargetId { get; set; }
+
+    [SupplyParameterFromForm(FormName = "add-animator")]
+    private MemberChoiceModel? Add { get; set; }
+
+    private SubscriptionKind? kind;
+    private List<AnimationItem> items = [];
+    private Dictionary<Guid, string> memberNames = [];
+    private List<Ct.Member> candidates = [];
+    private string title = "";
+    private string? backUrl;
+    private string? error;
+    private bool canRead;
+    private bool canEdit;
+
+    private string MemberName(Guid id) => memberNames.TryGetValue(id, out var name) ? name : "Membre (détails indisponibles)";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Add ??= new MemberChoiceModel();
+
+        kind = SubscriptionClient.Parse(Kind);
+        if (kind is not { } k)
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+
+        canRead = await Access.CanAsync(AnimationClient.ReadPermission(k));
+        if (!canRead)
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        canEdit = await Access.CanAsync(AnimationClient.EditPermission(k));
+
+        try
+        {
+            (title, backUrl) = await Subscriptions.DescribeAsync(k, TargetId);
+            items = await Animations.ListAsync(k, TargetId);
+
+            // Noms des membres : demande member.read ; sans elle, on affiche un libellé neutre.
+            var members = await Api.GetMembersOrEmptyAsync();
+            memberNames = members.ToDictionary(m => m.Id, m => $"{m.Lastname} {m.Firstname}".Trim());
+
+            var animators = items.Select(i => i.MemberId).ToHashSet();
+            candidates = members.Where(m => !animators.Contains(m.Id)).ToList();
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task AddAsync()
+    {
+        try
+        {
+            // Ordre d'affichage : à la suite des animateurs existants.
+            var order = items.Count == 0 ? 0 : items.Max(i => i.Order) + 1;
+            await Animations.CreateAsync(kind!.Value, TargetId, Add!.MemberId!.Value, order);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task RemoveAsync(Guid animationId)
+    {
+        try
+        {
+            await Animations.DeleteAsync(kind!.Value, animationId);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

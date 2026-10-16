@@ -1,0 +1,32 @@
+@page "/"
+
+<PageTitle>Accueil</PageTitle>
+
+<h1>Accueil</h1>
+
+<AuthorizeView>
+    <Authorized>
+        @if (context.User.HasClaim("member_linked", "false"))
+        {
+            <p class="notice">
+                Votre compte est connecté, mais aucun membre ne lui est rattaché. Demandez à un administrateur de créer
+                un membre avec l'adresse e-mail de votre compte.
+            </p>
+        }
+        else
+        {
+            var groups = context.User.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToList();
+
+            <p>Bonjour <strong>@context.User.Identity?.Name</strong>.</p>
+
+            if (groups.Count > 0)
+            {
+                <p class="muted">Groupes : @string.Join(", ", groups)</p>
+            }
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>Vous n'êtes pas connecté.</p>
+        <p><a class="button" href="/api/auth/login?returnUrl=/" data-enhance-nav="false">Se connecter</a></p>
+    </NotAuthorized>
+</AuthorizeView>

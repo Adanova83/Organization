@@ -1,0 +1,142 @@
+@page "/me/subscriptions"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject SubscriptionClient Subscriptions
+@inject UserAccess Access
+
+<PageTitle>Mes inscriptions</PageTitle>
+
+<h1>Mes inscriptions</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (me is null)
+{
+    <p class="notice">Aucun membre n'est rattaché à votre compte.</p>
+}
+else
+{
+    <section class="card">
+        <h2>Ateliers, événements et projets</h2>
+
+        @if (rows.Count == 0)
+        {
+            <p class="muted">Vous n'êtes inscrit à rien pour le moment. Rendez-vous sur la fiche d'une activité, d'un événement ou d'un projet pour vous inscrire.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr><th>Type</th><th>Inscription</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in rows)
+                    {
+                        <tr>
+                            <td>@KindLabel(row.Kind)</td>
+                            <td>
+                                @if (row.Url is not null)
+                                {
+                                    <a href="@row.Url">@row.Title</a>
+                                }
+                                else
+                                {
+                                    @row.Title
+                                }
+                            </td>
+                            <td><SubscribeToggle Kind="row.Kind" TargetId="row.TargetId" MemberId="me" SubscriptionId="row.SubscriptionId" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section class="card">
+        <h2>Cotisations</h2>
+
+        @if (contributions.Count == 0)
+        {
+            <p class="muted">Aucune cotisation enregistrée.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr><th>Saison</th><th>Payée le</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in contributions)
+                    {
+                        <tr>
+                            <td>@item.Season</td>
+                            <td>@Format.Date(item.PayedDate)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    private sealed record Row(SubscriptionKind Kind, Guid TargetId, Guid SubscriptionId, string Title, string? Url);
+    private sealed record ContributionRow(string Season, DateOnly PayedDate);
+
+    private Guid? me;
+    private List<Row> rows = [];
+    private List<ContributionRow> contributions = [];
+    private string? error;
+
+    private static string KindLabel(SubscriptionKind kind) => kind switch
+    {
+        SubscriptionKind.Slot => "Atelier",
+        SubscriptionKind.Event => "Événement",
+        _ => "Projet"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        me = await Access.MemberIdAsync();
+        if (me is not { } memberId)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var kind in Enum.GetValues<SubscriptionKind>())
+            {
+                foreach (var item in await Subscriptions.ListAsync(kind, null, memberId))
+                {
+                    var (title, url) = await Subscriptions.DescribeAsync(kind, item.TargetId);
+                    rows.Add(new Row(kind, item.TargetId, item.Id, title, url));
+                }
+            }
+
+            foreach (var item in (await Api.ListAllAsync<Ct.Contribution>(ApiRoutes.Contributions, null, memberId)).OrderByDescending(c => c.PayedDate))
+            {
+                contributions.Add(new ContributionRow(await SeasonLabelAsync(item.OrganizationSessionId), item.PayedDate));
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task<string> SeasonLabelAsync(Guid organizationSessionId)
+    {
+        try
+        {
+            var season = await Api.GetByIdAsync<Ct.OrganizationSession>(ApiRoutes.OrganizationSessions, organizationSessionId);
+            return $"Année {season.SchoolYearCode}";
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            return "Saison";
+        }
+    }
+}

@@ -1,0 +1,106 @@
+@page "/organizations/new"
+@page "/organizations/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.OrganizationEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouvelle organisation" : "Modifier l'organisation")</PageTitle>
+
+<h1>@(IsNew ? "Nouvelle organisation" : "Modifier l'organisation")</h1>
+
+<p><a href="@BackUrl">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="organization" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Organisation</legend>
+            <label>Nom <InputText @bind-Value="Model.Name" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-organization" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette organisation ?');">Supprimer cette organisation</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "organization")]
+    private OrganizationModel? Model { get; set; }
+
+    private string? error;
+
+    private bool IsNew => Id is null;
+    private string BackUrl => IsNew ? "/organizations" : $"/organizations/{Id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model ??= IsNew ? new OrganizationModel() : OrganizationModel.From(await Api.GetByIdAsync<Ct.Organization>(ApiRoutes.Organizations, Id!.Value));
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var created = await Api.CreateAsync(ApiRoutes.Organizations, Model!.ApplyTo(new Ct.Organization()));
+                Navigation.NavigateTo($"/organizations/{created.Id}");
+            }
+            else
+            {
+                // On repart de l'organisation actuelle : image, couleur et période de validité sont conservées.
+                var existing = await Api.GetByIdAsync<Ct.Organization>(ApiRoutes.Organizations, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.Organizations, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/organizations/{Id}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Organizations, Id!.Value);
+            Navigation.NavigateTo("/organizations");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

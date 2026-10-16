@@ -1,0 +1,123 @@
+@page "/school-years/new"
+@page "/school-years/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.OrganizationEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Nouvelle année scolaire" : "Modifier l'année scolaire")</PageTitle>
+
+<h1>@(IsNew ? "Nouvelle année scolaire" : "Modifier l'année scolaire")</h1>
+
+<p><a href="@BackUrl">← Retour</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="school-year" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Année scolaire</legend>
+            <label>Code (ex. 2026-2027) <InputText @bind-Value="Model.Code" /></label>
+            <label>Rentrée <InputDate TValue="DateTime?" @bind-Value="Model.StartDate" /></label>
+            <label>Fin des cours <InputDate TValue="DateTime?" @bind-Value="Model.EndDate" /></label>
+            <label>
+                Zone de vacances scolaires
+                <InputSelect @bind-Value="Model.Zone">
+                    <option value="A">Zone A</option>
+                    <option value="B">Zone B (dont le Var)</option>
+                    <option value="C">Zone C</option>
+                </InputSelect>
+            </label>
+            @if (IsNew)
+            {
+                <p class="muted">Les vacances scolaires officielles de la zone sont importées automatiquement à la création (si le calendrier de l'année est publié).</p>
+            }
+            <p class="muted">Modifier ces dates change aussi celles des saisons, sessions et projets qui n'ont pas de dates propres.</p>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-school-year" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette année scolaire ?');">Supprimer cette année scolaire</button>
+            <p class="muted">Impossible tant que des saisons, sessions, événements, projets ou vacances y sont rattachés.</p>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "school-year")]
+    private SchoolYearModel? Model { get; set; }
+
+    private string? error;
+
+    private bool IsNew => Id is null;
+    private string BackUrl => IsNew ? "/school-years" : $"/school-years/{Id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model ??= IsNew
+                ? SchoolYearModel.Next(await Api.GetSchoolYearsAsync())
+                : SchoolYearModel.From(await Api.GetByIdAsync<Ct.SchoolYear>(ApiRoutes.SchoolYears, Id!.Value));
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var created = await Api.CreateAsync(ApiRoutes.SchoolYears, Model!.ApplyTo(new Ct.SchoolYear()));
+                Navigation.NavigateTo($"/school-years/{created.Id}");
+            }
+            else
+            {
+                var existing = await Api.GetByIdAsync<Ct.SchoolYear>(ApiRoutes.SchoolYears, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.SchoolYears, Id.Value, Model!.ApplyTo(existing));
+                Navigation.NavigateTo($"/school-years/{Id}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.SchoolYears, Id!.Value);
+            Navigation.NavigateTo("/school-years");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

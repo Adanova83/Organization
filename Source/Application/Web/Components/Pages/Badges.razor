@@ -1,0 +1,95 @@
+@page "/badges"
+@attribute [Authorize(Policy = Permissions.AccessRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+@inject UserAccess Access
+
+<PageTitle>Badges</PageTitle>
+
+<h1>Badges</h1>
+
+@if (canEdit)
+{
+    <p><a class="button" href="/badges/new">Nouveau badge</a></p>
+}
+
+<form method="get" action="/badges" class="search">
+    <input type="search" name="query" value="@Query" placeholder="Identifiant" aria-label="Rechercher un badge" />
+    <button type="submit">Rechercher</button>
+</form>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (result is not null)
+{
+    @if (result.Data.Count == 0)
+    {
+        <p class="muted">Aucun badge.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Identifiant</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var badge in result.Data)
+                {
+                    <tr>
+                        <td><a href="/badges/@badge.Id">@badge.Identifier</a></td>
+                        <td>@(badge.Active?.IsActive == false ? "Inactif" : "Actif")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p class="pager">
+            @if (CurrentPage > 1)
+            {
+                <a href="@PageUrl(CurrentPage - 1)">← Précédent</a>
+            }
+            <span>Page @CurrentPage / @PageCount · @result.FilteredCount badge(s)</span>
+            @if (CurrentPage < PageCount)
+            {
+                <a href="@PageUrl(CurrentPage + 1)">Suivant →</a>
+            }
+        </p>
+    }
+}
+
+@code {
+    private const int PageSize = 25;
+
+    [SupplyParameterFromQuery] public string? Query { get; set; }
+    [SupplyParameterFromQuery] public int? Page { get; set; }
+
+    private PagedResponse<Ct.Badge>? result;
+    private string? error;
+    private bool canEdit;
+
+    private int CurrentPage => Math.Max(Page ?? 1, 1);
+    private int PageCount => result is null ? 1 : Math.Max((int)Math.Ceiling(result.FilteredCount / (double)PageSize), 1);
+
+    private string PageUrl(int page)
+        => string.IsNullOrWhiteSpace(Query) ? $"/badges?page={page}" : $"/badges?page={page}&query={Uri.EscapeDataString(Query)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.AccessEdit);
+
+        try
+        {
+            result = await Api.GetPageAsync<Ct.Badge>(ApiRoutes.Badges, Query, CurrentPage, PageSize);
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/badges", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

@@ -1,0 +1,174 @@
+@page "/subscriptions/{Kind}/{TargetId:guid}"
+@attribute [Authorize(Policy = Permissions.SubscriptionRead)]
+@inject ApiClient Api
+@inject SubscriptionClient Subscriptions
+@inject UserAccess Access
+@inject NavigationManager Navigation
+
+<PageTitle>Inscrits</PageTitle>
+
+<h1>Inscrits</h1>
+
+@if (backUrl is not null)
+{
+    <p><a href="@backUrl">← Retour à la fiche</a></p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (kind is not null)
+{
+    <p class="muted">@title</p>
+
+    @if (items.Count == 0)
+    {
+        <p class="muted">Aucun inscrit.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Membre</th>@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td>@MemberName(item.MemberId)</td>
+                        @if (canEdit)
+                        {
+                            <td>
+                                <form method="post" class="inline" @onsubmit="() => RemoveAsync(item.Id)" @formname="@RemoveForm(item.Id)">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="link-button">Retirer</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="muted">@items.Count inscrit(s)</p>
+    }
+
+    @if (canEdit)
+    {
+        <EditForm Model="Add" FormName="add-subscriber" OnValidSubmit="AddAsync" Enhance class="form">
+            <DataAnnotationsValidator />
+            <fieldset>
+                <legend>Inscrire un membre</legend>
+                <label>
+                    Membre
+                    <InputSelect @bind-Value="Add!.MemberId">
+                        <option value="">— Choisir —</option>
+                        @foreach (var member in candidates)
+                        {
+                            <option value="@member.Id">@member.Lastname @member.Firstname</option>
+                        }
+                    </InputSelect>
+                </label>
+                <ValidationMessage For="() => Add!.MemberId" />
+            </fieldset>
+            <p class="actions"><button type="submit">Inscrire</button></p>
+        </EditForm>
+    }
+}
+
+@code {
+    public sealed class AddModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Choisissez un membre.")]
+        public Guid? MemberId { get; set; }
+    }
+
+    [Parameter] public string Kind { get; set; } = "";
+    [Parameter] public Guid TargetId { get; set; }
+
+    [SupplyParameterFromForm(FormName = "add-subscriber")]
+    private AddModel? Add { get; set; }
+
+    private SubscriptionKind? kind;
+    private List<SubscriptionItem> items = [];
+    private Dictionary<Guid, string> memberNames = [];
+    private List<Ct.Member> candidates = [];
+    private string title = "";
+    private string? backUrl;
+    private string? error;
+    private bool canEdit;
+
+    private string MemberName(Guid id) => memberNames.TryGetValue(id, out var name) ? name : "Membre (détails indisponibles)";
+
+    private string RemoveForm(Guid id) => $"remove-{id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Add ??= new AddModel();
+        kind = SubscriptionClient.Parse(Kind);
+        if (kind is not { } k)
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+
+        canEdit = await Access.CanAsync(Permissions.SubscriptionEdit);
+
+        try
+        {
+            (title, backUrl) = await Subscriptions.DescribeAsync(k, TargetId);
+            await LoadAsync(k);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task LoadAsync(SubscriptionKind k)
+    {
+        items = await Subscriptions.ListAsync(k, TargetId);
+
+        // Noms des membres : demande member.read ; sans elle, on affiche un libellé neutre.
+        try
+        {
+            var members = await Api.ListAllAsync<Ct.Member>(ApiRoutes.Members);
+            memberNames = members.ToDictionary(m => m.Id, m => $"{m.Lastname} {m.Firstname}".Trim());
+
+            var subscribed = items.Select(i => i.MemberId).ToHashSet();
+            candidates = members.Where(m => !subscribed.Contains(m.Id)).OrderBy(m => m.Lastname).ThenBy(m => m.Firstname).ToList();
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            memberNames = [];
+            candidates = [];
+        }
+    }
+
+    private async Task AddAsync()
+    {
+        try
+        {
+            await Subscriptions.CreateAsync(kind!.Value, TargetId, Add!.MemberId!.Value);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task RemoveAsync(Guid subscriptionId)
+    {
+        try
+        {
+            await Subscriptions.DeleteAsync(kind!.Value, subscriptionId);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}
