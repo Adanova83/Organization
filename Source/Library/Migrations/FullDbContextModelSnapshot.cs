@@ -139,6 +139,9 @@ namespace Library.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("Capacity")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DayOfWeek")
                         .HasColumnType("integer");
 
@@ -341,6 +344,9 @@ namespace Library.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<int?>("AgeMinimum")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Capacity")
                         .HasColumnType("integer");
 
                     b.Property<string>("Code")
@@ -688,6 +694,9 @@ namespace Library.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<int?>("Capacity")
+                        .HasColumnType("integer");
 
                     b.Property<int>("DayOfWeek")
                         .HasColumnType("integer");

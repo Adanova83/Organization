@@ -35,6 +35,7 @@
             <label>Début <InputText type="time" @bind-Value="Model.StartTime" /></label>
             <label>Fin <InputText type="time" @bind-Value="Model.EndTime" /></label>
             <label>Fréquence (en semaines : 1 = chaque semaine) <InputNumber @bind-Value="Model.Frequency" /></label>
+            <label>Capacité (places ; vide = illimitée) <InputNumber TValue="int?" @bind-Value="Model.Capacity" min="1" /></label>
             <label>
                 Lieu
                 <InputSelect @bind-Value="Model.SpaceId">

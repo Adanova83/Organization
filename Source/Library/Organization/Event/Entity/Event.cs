@@ -22,6 +22,7 @@ internal class Event : PrimaryKey
     [Required] public Guid SchoolYearId { get; set; }
     [ForeignKey(nameof(SchoolYearId))] public SchoolYear SchoolYear { get; set; } = default!;
     public Guid? SpaceId { get; set; }
+    public int? Capacity { get; set; }
     public Guid? SeriesId { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
 }

@@ -119,13 +119,18 @@ public sealed class SlotModel : IValidatableObject
 
     public Guid? SpaceId { get; set; }
 
+    /// <summary>Nombre maximal d'inscrits ; vide = illimité.</summary>
+    [Range(1, 10000, ErrorMessage = "La capacité est d'au moins 1 place (vide = illimitée).")]
+    public int? Capacity { get; set; }
+
     public static SlotModel From(Ct.ActivitySessionSlot source) => new()
     {
         DayOfWeek = source.DayOfWeek,
         StartTime = source.StartTime.ToString("HH:mm"),
         EndTime = source.EndTime.ToString("HH:mm"),
         Frequency = source.Frequency,
-        SpaceId = source.SpaceId
+        SpaceId = source.SpaceId,
+        Capacity = source.Capacity
     };
 
     public static SlotModel From(Ct.ProjectSlot source) => new()
@@ -133,7 +138,8 @@ public sealed class SlotModel : IValidatableObject
         DayOfWeek = source.DayOfWeek,
         StartTime = source.StartTime.ToString("HH:mm"),
         EndTime = source.EndTime.ToString("HH:mm"),
-        SpaceId = source.SpaceId
+        SpaceId = source.SpaceId,
+        Capacity = source.Capacity
     };
 
     public Ct.ActivitySessionSlot ApplyTo(Ct.ActivitySessionSlot target)
@@ -143,6 +149,7 @@ public sealed class SlotModel : IValidatableObject
         target.EndTime = End;
         target.Frequency = Frequency;
         target.SpaceId = SpaceId;
+        target.Capacity = Capacity;
         return target;
     }
 
@@ -152,6 +159,7 @@ public sealed class SlotModel : IValidatableObject
         target.StartTime = Start;
         target.EndTime = End;
         target.SpaceId = SpaceId;
+        target.Capacity = Capacity;
         return target;
     }
 
@@ -210,6 +218,10 @@ public sealed class EventModel : IValidatableObject
 
     public Guid? SpaceId { get; set; }
 
+    /// <summary>Nombre maximal d'inscrits (par date pour une série) ; vide = illimité.</summary>
+    [Range(1, 10000, ErrorMessage = "La capacité est d'au moins 1 place (vide = illimitée).")]
+    public int? Capacity { get; set; }
+
     /// <summary>Couleur au format du champ de formulaire (#rrggbb), pour le calendrier.</summary>
     public string Color { get; set; } = "#ffffff";
 
@@ -254,7 +266,8 @@ public sealed class EventModel : IValidatableObject
         AgeMinimum = source.AgeMinimum,
         OrganizationId = source.OrganizationId == Guid.Empty ? null : source.OrganizationId,
         SchoolYearId = source.SchoolYearId == Guid.Empty ? null : source.SchoolYearId,
-        SpaceId = source.SpaceId
+        SpaceId = source.SpaceId,
+        Capacity = source.Capacity
     };
 
     /// <summary>Événement unique : champs communs et dates.</summary>
@@ -296,6 +309,7 @@ public sealed class EventModel : IValidatableObject
         target.OrganizationId = OrganizationId!.Value;
         target.SchoolYearId = SchoolYearId!.Value;
         target.SpaceId = SpaceId;
+        target.Capacity = Capacity;
         return target;
     }
 

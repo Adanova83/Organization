@@ -29,6 +29,12 @@ public sealed class DomainExceptionHandler : IExceptionHandler
                 title = "Invalid request.";
                 detail = argument.Message;
                 break;
+            case Library.Domain.SubscriptionRefusedException refused:
+                status = StatusCodes.Status409Conflict;
+                // Message destiné aux membres (affiché tel quel par le site) : en français.
+                title = "Inscription refusée.";
+                detail = refused.Message;
+                break;
             case Library.Repository.InUseException inUse:
                 status = StatusCodes.Status409Conflict;
                 title = "The item is still in use.";

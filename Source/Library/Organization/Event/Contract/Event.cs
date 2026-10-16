@@ -14,6 +14,9 @@ public class Event : PrimaryKey
     public Guid SchoolYearId { get; set; }
     public Guid? SpaceId { get; set; }
 
+    /// <summary>Nombre maximal d'inscrits ; vide = illimité.</summary>
+    public int? Capacity { get; set; }
+
     // Série d'événements récurrents : même identifiant pour toutes les occurrences (null : événement isolé).
     public Guid? SeriesId { get; set; }
 

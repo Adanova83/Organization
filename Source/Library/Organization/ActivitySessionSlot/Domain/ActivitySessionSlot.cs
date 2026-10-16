@@ -9,4 +9,5 @@ public class ActivitySessionSlot : PrimaryKey
     public int Frequency { get; set; } = 1;
     public Guid SessionId { get; set; }
     public Guid? SpaceId { get; set; }
+    public int? Capacity { get; set; }
 }

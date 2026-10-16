@@ -34,6 +34,7 @@
             </label>
             <label>Début <InputText type="time" @bind-Value="Model.StartTime" /></label>
             <label>Fin <InputText type="time" @bind-Value="Model.EndTime" /></label>
+            <label>Capacité (places ; vide = illimitée) <InputNumber TValue="int?" @bind-Value="Model.Capacity" min="1" /></label>
             <label>
                 Lieu
                 <InputSelect @bind-Value="Model.SpaceId">

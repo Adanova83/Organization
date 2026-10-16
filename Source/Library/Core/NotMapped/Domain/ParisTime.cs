@@ -1,4 +1,4 @@
-﻿namespace Api.Calendar;
+﻿namespace Library.Domain;
 
 /// <summary>
 /// Conversions UTC / heure de Paris sans dépendre de la base de fuseaux horaires du système

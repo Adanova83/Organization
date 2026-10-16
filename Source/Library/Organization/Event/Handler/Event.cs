@@ -140,6 +140,10 @@ public sealed class Event : ICrudHandler<Domain.Event>
 
     private void ValidateDomainRules(Domain.Event domain)
     {
+        if (domain.Capacity is < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(domain.Capacity), "Capacity must be at least 1, or empty for no limit.");
+        }
         if (string.IsNullOrWhiteSpace(domain.Code))
         {
             throw new ArgumentException("Code is required.", nameof(domain.Code));

@@ -30,6 +30,15 @@ public sealed class UserAccess
             : null;
     }
 
+    /// <summary>Date de naissance du membre connecté (jour, heure de Paris), ou null si elle est inconnue.</summary>
+    public async Task<DateOnly?> BirthdateAsync()
+    {
+        var user = (await _state.GetAuthenticationStateAsync()).User;
+        return DateTime.TryParse(user.FindFirst("birthdate")?.Value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var birthdate)
+            ? DateOnly.FromDateTime(Models.Format.ParisLocal(birthdate.ToUniversalTime()))
+            : null;
+    }
+
     /// <summary>Identifiant du membre connecté (claim member_id), ou null s'il n'a pas de membre.</summary>
     public async Task<Guid?> MemberIdAsync()
     {

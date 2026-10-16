@@ -68,7 +68,7 @@ else if (activity is not null)
             {
                 <table>
                     <thead>
-                        <tr><th>Jour</th><th>Horaires</th><th>Fréquence</th><th>Lieu</th><th>Animateurs</th>@if (showSubscriptions){<th>Inscription</th>}@if (canEdit){<th></th>}</tr>
+                        <tr><th>Jour</th><th>Horaires</th><th>Fréquence</th><th>Lieu</th><th>Places</th><th>Animateurs</th>@if (showSubscriptions){<th>Inscription</th>}@if (canEdit){<th></th>}</tr>
                     </thead>
                     <tbody>
                         @foreach (var slot in item.Slots.OrderBy(s => s.DayOfWeek).ThenBy(s => s.StartTime))
@@ -78,12 +78,13 @@ else if (activity is not null)
                                 <td>@Format.Time(slot.StartTime) – @Format.Time(slot.EndTime)</td>
                                 <td>@Format.Frequency(slot.Frequency)</td>
                                 <td>@SpaceName(slot.SpaceId)</td>
+                                <td>@(slot.Capacity?.ToString() ?? "Illimitées")</td>
                                 <td><a href="/animations/slot/@slot.Id">Voir</a></td>
                                 @if (showSubscriptions)
                                 {
                                     <td>
                                         <SubscribeToggle Kind="SubscriptionKind.Slot" TargetId="slot.Id" MemberId="me"
-                                                         SubscriptionId="SubscriptionOf(slot.Id)" BlockReason="@BlockReason" />
+                                                         SubscriptionId="SubscriptionOf(slot.Id)" BlockReason="@BlockReasonFor(item.Session)" />
                                         @if (canSeeSubscribers)
                                         {
                                             <a href="/subscriptions/slot/@slot.Id">Inscrits</a>
@@ -115,17 +116,16 @@ else if (activity is not null)
     private bool canEdit;
     private bool canSeeSubscribers;
     private Guid? me;
-    private int? myAge;
+    private DateOnly? myBirthdate;
     private Dictionary<Guid, Guid> mySubscriptions = [];
 
     private bool showSubscriptions => me is not null || canSeeSubscribers;
 
     private Guid? SubscriptionOf(Guid slotId) => mySubscriptions.TryGetValue(slotId, out var id) ? id : null;
 
-    private string? BlockReason
-        => activity is { AgeMinimum: > 0 } && myAge is { } age && age < activity.AgeMinimum
-            ? $"Âge minimum : {activity.AgeMinimum} ans"
-            : null;
+    // Âge apprécié au début de la session (règle de l'API).
+    private string? BlockReasonFor(Ct.ActivitySession session)
+        => SubscriptionHints.AgeBlock(activity?.AgeMinimum, myBirthdate, session.EffectiveStartDate);
 
     private string SpaceName(Guid? id) => id is { } key && spaces.TryGetValue(key, out var name) ? name : "—";
 
@@ -139,7 +139,7 @@ else if (activity is not null)
 
             canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
             me = await Access.MemberIdAsync();
-            myAge = await Access.AgeAsync();
+            myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)
             {
                 mySubscriptions = (await Subs.ListAsync(SubscriptionKind.Slot, null, memberId)).ToDictionary(item => item.TargetId, item => item.Id);

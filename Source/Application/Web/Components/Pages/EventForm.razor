@@ -27,6 +27,7 @@
             <label>Code <InputText @bind-Value="Model.Code" /></label>
             <label>Description <InputTextArea @bind-Value="Model.Description" rows="4" /></label>
             <label>Âge minimum (vide = tout âge) <InputNumber TValue="int?" @bind-Value="Model.AgeMinimum" /></label>
+            <label>Capacité (places, par date pour une série ; vide = illimitée) <InputNumber TValue="int?" @bind-Value="Model.Capacity" min="1" /></label>
             <label>Couleur (calendrier) <InputText type="color" @bind-Value="Model.Color" class="color" /></label>
             <label>
                 Organisation

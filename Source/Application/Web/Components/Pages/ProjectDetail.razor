@@ -48,7 +48,7 @@ else if (project is not null)
     {
         <table>
             <thead>
-                <tr><th>Jour</th><th>Horaires</th><th>Lieu</th><th>Animateurs</th>@if (showSubscriptions){<th>Inscription</th>}@if (canEdit){<th></th>}</tr>
+                <tr><th>Jour</th><th>Horaires</th><th>Lieu</th><th>Places</th><th>Animateurs</th>@if (showSubscriptions){<th>Inscription</th>}@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var slot in slots.OrderBy(s => s.DayOfWeek).ThenBy(s => s.StartTime))
@@ -57,6 +57,7 @@ else if (project is not null)
                         <td>@Format.Day(slot.DayOfWeek)</td>
                         <td>@Format.Time(slot.StartTime) – @Format.Time(slot.EndTime)</td>
                         <td>@(slot.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</td>
+                        <td>@(slot.Capacity?.ToString() ?? "Illimitées")</td>
                         <td><a href="/animations/project/@slot.Id">Voir</a></td>
                         @if (showSubscriptions)
                         {
@@ -90,17 +91,15 @@ else if (project is not null)
     private bool canEdit;
     private bool canSeeSubscribers;
     private Guid? me;
-    private int? myAge;
+    private DateOnly? myBirthdate;
     private Dictionary<Guid, Guid> mySubscriptions = [];
 
     private bool showSubscriptions => me is not null || canSeeSubscribers;
 
     private Guid? SubscriptionOf(Guid slotId) => mySubscriptions.TryGetValue(slotId, out var id) ? id : null;
 
-    private string? BlockReason
-        => project is { AgeMinimum: > 0 } && myAge is { } age && age < project.AgeMinimum
-            ? $"Âge minimum : {project.AgeMinimum} ans"
-            : null;
+    // Âge apprécié au début du projet (règle de l'API).
+    private string? BlockReason => SubscriptionHints.AgeBlock(project?.AgeMinimum, myBirthdate, project?.EffectiveStartDate);
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,7 +112,7 @@ else if (project is not null)
 
             canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
             me = await Access.MemberIdAsync();
-            myAge = await Access.AgeAsync();
+            myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)
             {
                 mySubscriptions = (await Subs.ListAsync(SubscriptionKind.Project, null, memberId)).ToDictionary(item => item.TargetId, item => item.Id);

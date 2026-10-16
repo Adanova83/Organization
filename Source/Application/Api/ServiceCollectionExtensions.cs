@@ -64,6 +64,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<H.ProjectSlotSubscription>();
         services.AddScoped<H.Role>();
         services.AddScoped<H.SchoolYear>();
+        services.AddScoped<H.SubscriptionGuard>();
         services.AddScoped<H.Space>();
 
         return services;

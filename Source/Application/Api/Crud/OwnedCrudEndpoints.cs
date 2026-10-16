@@ -24,7 +24,8 @@ public static class OwnedCrudEndpoints
         Func<TDomain, TContract> toContract,
         Func<TDomain, IServiceProvider, CancellationToken, Task<Guid?>> ownerOf,
         Func<THandler, Guid?, Guid?, int, int, CancellationToken, Task<RepositoryResponseRange<TDomain>>> list,
-        Func<Guid, IServiceProvider, CancellationToken, Task<Guid?>>? ownerOfTarget = null)
+        Func<Guid, IServiceProvider, CancellationToken, Task<Guid?>>? ownerOfTarget = null,
+        Func<TDomain, bool, IServiceProvider, CancellationToken, Task>? beforeWrite = null)
         where TContract : Ct.PrimaryKey
         where TDomain : Do.PrimaryKey
         where THandler : class, ICrudHandler<TDomain>
@@ -106,6 +107,12 @@ public static class OwnedCrudEndpoints
                 return Forbidden();
             }
 
+            // Règles métier (inscriptions : doublons, capacité, âge) ; accès complet = dérogation possible.
+            if (beforeWrite is not null)
+            {
+                await beforeWrite(domain, access.Full, http.RequestServices, ct);
+            }
+
             var created = await handler.CreateAsync(domain, ct);
             var contract = toContract(created.Data!);
             return Results.Created($"{route}/{contract.Id}", contract);
@@ -136,6 +143,11 @@ public static class OwnedCrudEndpoints
             if (body.Active is null)
             {
                 domain.Active = existing.Data.Active;
+            }
+
+            if (beforeWrite is not null)
+            {
+                await beforeWrite(domain, access.Full, http.RequestServices, ct);
             }
 
             await handler.EditAsync(domain, ct);

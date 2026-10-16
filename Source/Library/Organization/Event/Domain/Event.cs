@@ -13,6 +13,7 @@ public class Event : PrimaryKey
     public Guid OrganizationId { get; set; }
     public Guid SchoolYearId { get; set; }
     public Guid? SpaceId { get; set; }
+    public int? Capacity { get; set; }
 
     // Série d'événements récurrents : même identifiant pour toutes les occurrences (null : événement isolé).
     public Guid? SeriesId { get; set; }
