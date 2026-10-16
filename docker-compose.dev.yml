@@ -1,0 +1,31 @@
+# Développement local sans Authentik : un faux serveur OIDC (mock-oauth2-server) remplace l'annuaire.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Le compte de test est défini dans dev/oidc-config.json (e-mail = ADMIN_EMAIL, groupe « authentik Admins » = toutes les permissions).
+# Ne jamais utiliser en production.
+#
+# L'adresse de l'annuaire doit être la même pour le navigateur et pour le conteneur de l'API (sinon l'émetteur du jeton
+# ne correspond pas) : host.docker.internal, résolu par Docker Desktop (Windows/Mac) et par extra_hosts (Linux).
+services:
+  oidc:
+    image: ghcr.io/navikt/mock-oauth2-server:latest
+    restart: unless-stopped
+    environment:
+      JSON_CONFIG_PATH: /config/oidc-config.json
+    volumes:
+      - ./dev/oidc-config.json:/config/oidc-config.json:ro
+    ports:
+      - "8081:8080"
+
+  api:
+    depends_on:
+      oidc:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      Oidc__Authority: http://host.docker.internal:8081/adanova
+      Oidc__RequireHttpsMetadata: "false"
+      # Le faux serveur accepte n'importe quel client ; ces valeurs ne servent qu'à activer la connexion web.
+      Oidc__ClientId: organizations-web
+      Oidc__ClientSecret: dev-secret

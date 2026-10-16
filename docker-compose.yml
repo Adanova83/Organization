@@ -1,0 +1,115 @@
+# Démarrage : copier .env.example en .env, renseigner les valeurs, puis
+#   docker compose up --build
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-adanova}
+      POSTGRES_USER: ${DB_USER:-adanova}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Exposé uniquement en local, pour dotnet ef et les outils SQL
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: Source/Application/Api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-adanova}
+      DB_USER: ${DB_USER:-adanova}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+      API_KEY: ${API_KEY:?API_KEY must be set in .env}
+      Api__UseHttpsRedirection: "false"
+      # true : la clé d'API (X-Api-Key) est acceptée sur les endpoints métier (développement). À mettre à false en production.
+      Api__AllowKeyOnBusinessEndpoints: ${API_ALLOW_KEY_ON_BUSINESS:-true}
+      # true : documentation Swagger sur /swagger (développement). À mettre à false en production.
+      Api__EnableSwagger: ${API_ENABLE_SWAGGER:-true}
+      # true : applique les migrations en attente au démarrage du conteneur
+      Migrations__ApplyAtStartup: ${MIGRATIONS_APPLY_AT_STARTUP:-false}
+      # Authentification OIDC (annuaire du domaine). Vide = jetons non acceptés, /api/me désactivé.
+      Oidc__Authority: ${OIDC_AUTHORITY:-}
+      Oidc__Audience: ${OIDC_AUDIENCE:-}
+      # Connexion du site web : l'API mène le flux OIDC (code + PKCE) et remet un cookie de session. Vide = connexion web désactivée.
+      Oidc__ClientId: ${OIDC_CLIENT_ID:-}
+      Oidc__ClientSecret: ${OIDC_CLIENT_SECRET:-}
+      # true : la déconnexion ferme aussi la session de l'annuaire (SSO)
+      Session__CookieName: ${SESSION_COOKIE_NAME:-adanova.session}
+      Session__EndProviderSessionOnLogout: ${SESSION_END_PROVIDER_ON_LOGOUT:-false}
+      # Clés de chiffrement du cookie (volume api-keys)
+      DataProtection__KeysPath: /keys
+      # Derrière Traefik : prend en compte X-Forwarded-Proto / -Host (adresse de retour OIDC, cookie Secure).
+      # Ne publier le port de l'API qu'en local si ce réglage est actif.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      # Premier administrateur : membre créé au démarrage s'il n'existe pas (le mot de passe est dans l'annuaire, pas ici).
+      Admin__Email: ${ADMIN_EMAIL:-}
+      Admin__Firstname: ${ADMIN_FIRSTNAME:-}
+      Admin__Lastname: ${ADMIN_LASTNAME:-}
+      Admin__Group: ${ADMIN_GROUP:-authentik Admins}
+      # Flux ICS du planning (abonnement depuis l'Agenda Nextcloud). Vide = flux désactivés.
+      Calendar__FeedToken: ${CALENDAR_FEED_TOKEN:-}
+    volumes:
+      - api-keys:/keys
+    ports:
+      - "${API_PORT:-5180}:8080"
+    healthcheck:
+      # L'image aspnet n'a ni curl ni wget : requête HTTP via bash
+      test:
+        - CMD-SHELL
+        - >-
+          bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 &&
+          printf "GET /health HTTP/1.0\r\n\r\n" >&3 &&
+          head -n 1 <&3 | grep -q " 200"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  web:
+    build:
+      context: .
+      dockerfile: Source/Application/Web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      # L'API est jointe par le réseau interne ; le navigateur n'a qu'une origine : le site (qui transmet /api/* à l'API).
+      Api__BaseUrl: http://api:8080/
+      Session__CookieName: ${SESSION_COOKIE_NAME:-adanova.session}
+      # Derrière Traefik : prend en compte X-Forwarded-Proto / -Host.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    ports:
+      - "${WEB_PORT:-5200}:8080"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 &&
+          printf "GET /health HTTP/1.0\r\n\r\n" >&3 &&
+          head -n 1 <&3 | grep -q " 200"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  db-data:
+  api-keys:
