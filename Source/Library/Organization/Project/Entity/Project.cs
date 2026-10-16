@@ -14,8 +14,10 @@ internal class Project : PrimaryKey
     public string? Picture { get; set; }
     [Required, MaxLength(8)] public string RGBColor { get; set; } = "FFFFFFFF";
     [Required] public int AgeMinimum { get; set; } = 0;
-    [Required] public DateTime StartDate { get; set; }
-    [Required] public DateTime EndDate { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    [Required] public Guid SchoolYearId { get; set; }
+    [ForeignKey(nameof(SchoolYearId))] public SchoolYear SchoolYear { get; set; } = default!;
     [Required] public Guid OrganizationId { get; set; }
     [ForeignKey(nameof(OrganizationId))] public Organization Organization { get; set; } = default!;
 }

@@ -40,7 +40,7 @@ public sealed class Space : ISpace
         var entity = await _dbContext.Spaces.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,13 +60,15 @@ public sealed class Space : ISpace
         IQueryable<Entity.Space> q = _dbContext.Spaces;
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{query}%";
             q = q.Where(item =>
                 EF.Functions.ILike(item.Name, pattern)
             );
         }
 
         q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -81,7 +83,7 @@ public sealed class Space : ISpace
             Data = entities
              .Select(Mapper.Space.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Spaces.CountAsync(ct)
         };
     }

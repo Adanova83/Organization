@@ -40,7 +40,7 @@ public sealed class NoteLink : INoteLink
         var entity = await _dbContext.NoteLinks.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -52,6 +52,31 @@ public sealed class NoteLink : INoteLink
         return new RepositoryResponse<Domain.NoteLink>()
         {
             Data = entity?.EntityToDomain()
+        };
+    }
+
+    public async Task<RepositoryResponseRange<Domain.NoteLink>> SearchAsync(Guid noteId, int page, int pageSize, CancellationToken ct)
+    {
+        IQueryable<Entity.NoteLink> q = _dbContext.NoteLinks
+            .Where(item => item.NoteId == noteId)
+            .OrderByDescending(item => item.Audit.LastUpdatedAt);
+
+        var filteredCount = await q.CountAsync(ct);
+
+        if (page > 0 && pageSize > 0)
+        {
+            q = q.Skip((page - 1) * pageSize).Take(pageSize);
+        }
+
+        var entities = await q.ToListAsync(ct);
+
+        return new RepositoryResponseRange<Domain.NoteLink>()
+        {
+            Data = entities
+             .Select(Mapper.NoteLink.EntityToDomain)
+             .ToList(),
+            FilteredCount = filteredCount,
+            TotalCount = await _dbContext.NoteLinks.CountAsync(ct)
         };
     }
 }

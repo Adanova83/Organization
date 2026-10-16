@@ -38,7 +38,22 @@ public static class Space
             Name = source.Name,
             Picture = source.Picture,
             RGBColor = source.RGBColor,
-            Active = source.Active.EntityToDomain()
+            Active = source.Active.EntityToDomain(),
+            Audit = source.Audit.EntityToDomain()
+        };
+    }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Space ContractToDomain(this Ct.Space source, Guid id)
+    {
+        return new Do.Space
+        {
+            Id = id,
+            Name = source.Name,
+            Picture = source.Picture,
+            RGBColor = source.RGBColor,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
         };
     }
 }

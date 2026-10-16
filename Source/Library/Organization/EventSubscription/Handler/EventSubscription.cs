@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class EventSubscription
+public sealed class EventSubscription : ICrudHandler<Domain.EventSubscription>
 {
     private readonly IEventSubscription _repository;
 
@@ -11,7 +11,7 @@ public sealed class EventSubscription
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.EventSubscription domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.EventSubscription>> CreateAsync(Domain.EventSubscription domain, CancellationToken ct)
     {
         if (domain == null)
         {

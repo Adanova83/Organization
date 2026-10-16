@@ -40,7 +40,7 @@ public sealed class Holiday : IHoliday
         var entity = await _dbContext.Holidays.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,15 +60,17 @@ public sealed class Holiday : IHoliday
         IQueryable<Entity.Holiday> q = _dbContext.Holidays;
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{query}%";
             q = q.Where(item =>
                 EF.Functions.ILike(item.Name, pattern)
             );
         }
 
-        q = q.OrderBy(item => EF.Functions.Collate(item.StartDate, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.EndDate, "C"))
+        q = q.OrderBy(item => item.StartDate)
+            .ThenBy(item => item.EndDate)
             .ThenBy(item => EF.Functions.Collate(item.Name, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -83,7 +85,30 @@ public sealed class Holiday : IHoliday
             Data = entities
              .Select(Mapper.Holiday.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
+            TotalCount = await _dbContext.Holidays.CountAsync(ct)
+        };
+    }
+
+    public async Task<RepositoryResponseRange<Domain.Holiday>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+    {
+        IQueryable<Entity.Holiday> q = _dbContext.Holidays
+            .Where(item => item.SchoolYearId == schoolYearId)
+            .OrderBy(item => item.StartDate);
+
+        var filteredCount = await q.CountAsync(ct);
+
+        if (page > 0 && pageSize > 0)
+        {
+            q = q.Skip((page - 1) * pageSize).Take(pageSize);
+        }
+
+        var entities = await q.ToListAsync(ct);
+
+        return new RepositoryResponseRange<Domain.Holiday>()
+        {
+            Data = entities.Select(Mapper.Holiday.EntityToDomain).ToList(),
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Holidays.CountAsync(ct)
         };
     }

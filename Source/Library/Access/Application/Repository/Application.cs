@@ -54,13 +54,15 @@ public sealed class Application : IApplication
         IQueryable<Entity.Application> q = _dbContext.Applications;
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var pattern = $"%{query}";
+            var pattern = $"%{query}%";
             q = q.Where(item =>
                 EF.Functions.ILike(item.Name, pattern)
             );
         }
 
         q = q.OrderBy(item => EF.Functions.Collate(item.Name, "C"));
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -75,7 +77,7 @@ public sealed class Application : IApplication
             Data = entities
              .Select(Mapper.Application.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Applications.CountAsync(ct)
         };
     }

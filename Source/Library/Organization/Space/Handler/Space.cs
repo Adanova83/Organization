@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Space
+public sealed class Space : ICrudHandler<Domain.Space>
 {
     private readonly ISpace _repository;
 
@@ -11,7 +11,7 @@ public sealed class Space
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Space domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Space>> CreateAsync(Domain.Space domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -87,7 +87,7 @@ public sealed class Space
 
     private void ValidateDomainRules(Domain.Space domain)
     {
-        if (!string.IsNullOrWhiteSpace(domain.Name))
+        if (string.IsNullOrWhiteSpace(domain.Name))
         {
             throw new ArgumentException("Name is required.", nameof(domain.Name));
         }

@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class EventAnimation
+public sealed class EventAnimation : ICrudHandler<Domain.EventAnimation>
 {
     private readonly IEventAnimation _repository;
 
@@ -11,7 +11,7 @@ public sealed class EventAnimation
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.EventAnimation domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.EventAnimation>> CreateAsync(Domain.EventAnimation domain, CancellationToken ct)
     {
         if (domain == null)
         {

@@ -2,7 +2,7 @@ using Library.Repository;
 
 namespace Library.Handler;
 
-public sealed class Note
+public sealed class Note : ICrudHandler<Domain.Note>
 {
     private readonly INote _repository;
 
@@ -11,7 +11,7 @@ public sealed class Note
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Note domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Note>> CreateAsync(Domain.Note domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -88,5 +88,25 @@ public sealed class Note
         {
             throw new ArgumentException("Member ID must not be empty.", nameof(domain.MemberId));
         }
+    }
+
+    public Task<RepositoryResponseRange<Domain.Note>> SearchAsync(Guid memberId, int page, int pageSize, CancellationToken ct)
+    {
+        if (memberId == Guid.Empty)
+        {
+            throw new ArgumentException("ID must not be empty for search.", nameof(memberId));
+        }
+
+        if (page < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page must be greater or equal than 0.");
+        }
+
+        if (pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchAsync(memberId, page, pageSize, ct);
     }
 }

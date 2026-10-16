@@ -41,4 +41,18 @@ public static class Contribution
             Active = source.Active.EntityToDomain()
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Contribution ContractToDomain(this Ct.Contribution source, Guid id)
+    {
+        return new Do.Contribution
+        {
+            Id = id,
+            MemberId = source.MemberId,
+            OrganizationSessionId = source.OrganizationSessionId,
+            PayedDate = source.PayedDate,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

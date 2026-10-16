@@ -62,8 +62,10 @@ public sealed class BadgeAssignation : IBadgeAssignation
             q = q.Where(item => item.MemberId.Equals(memberId.Value));
         }
 
-        q = q.OrderBy(item => EF.Functions.Collate(item.BadgeId, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.MemberId, "C"));
+        q = q.OrderBy(item => item.BadgeId)
+            .ThenBy(item => item.MemberId);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -78,7 +80,7 @@ public sealed class BadgeAssignation : IBadgeAssignation
             Data = entities
              .Select(Mapper.BadgeAssignation.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.BadgeAssignations.CountAsync(ct)
         };
     }

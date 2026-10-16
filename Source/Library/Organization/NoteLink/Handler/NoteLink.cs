@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class NoteLink
+public sealed class NoteLink : ICrudHandler<Domain.NoteLink>
 {
     private readonly INoteLink _repository;
 
@@ -11,7 +11,7 @@ public sealed class NoteLink
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.NoteLink domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.NoteLink>> CreateAsync(Domain.NoteLink domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -84,5 +84,25 @@ public sealed class NoteLink
         {
             throw new ArgumentException("Note ID must not be empty.", nameof(domain.NoteId));
         }
+    }
+
+    public Task<RepositoryResponseRange<Domain.NoteLink>> SearchAsync(Guid noteId, int page, int pageSize, CancellationToken ct)
+    {
+        if (noteId == Guid.Empty)
+        {
+            throw new ArgumentException("ID must not be empty for search.", nameof(noteId));
+        }
+
+        if (page < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page must be greater or equal than 0.");
+        }
+
+        if (pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchAsync(noteId, page, pageSize, ct);
     }
 }

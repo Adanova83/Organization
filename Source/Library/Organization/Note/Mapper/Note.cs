@@ -41,4 +41,19 @@ public static class Note
             MemberId = source.MemberId
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Note ContractToDomain(this Ct.Note source, Guid id)
+    {
+        return new Do.Note
+        {
+            Id = id,
+            Title = source.Title,
+            Body = source.Body,
+            RGBBackgroundColor = source.RGBBackgroundColor,
+            MemberId = source.MemberId,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

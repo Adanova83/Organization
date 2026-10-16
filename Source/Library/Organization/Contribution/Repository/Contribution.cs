@@ -40,7 +40,7 @@ public sealed class Contribution : IContribution
         var entity = await _dbContext.Contributions.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,7 +60,9 @@ public sealed class Contribution : IContribution
         IQueryable<Entity.Contribution> q = _dbContext.Contributions;
 
         q = q.Where(item => item.MemberId == memberId)
-            .OrderBy(item => EF.Functions.Collate(item.OrganizationSessionId, "C"));
+            .OrderBy(item => item.PayedDate);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if(page > 0 && pageSize > 0)
         {
@@ -68,7 +70,6 @@ public sealed class Contribution : IContribution
         }
 
         var entities = await q
-            .OrderBy(item => item.PayedDate)
             .ToListAsync(ct);
 
         return new RepositoryResponseRange<Domain.Contribution>()
@@ -76,7 +77,7 @@ public sealed class Contribution : IContribution
             Data = entities
              .Select(Mapper.Contribution.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.Contributions.CountAsync(ct)
         };
     }

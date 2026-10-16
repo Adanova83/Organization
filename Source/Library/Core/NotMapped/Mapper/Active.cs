@@ -15,6 +15,12 @@ public static class Active
         };
     }
 
+    /// <summary>Null si le client n'a pas fourni de période de validité.</summary>
+    public static Do.Active? ContractToDomain(this Ct.Active? source)
+    {
+        return source is null ? null : new Do.Active(source.From, source.Until);
+    }
+
     public static En.Active DomainToEntity(this Do.Active source)
     {
         return new En.Active

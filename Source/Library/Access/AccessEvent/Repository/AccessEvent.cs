@@ -54,7 +54,9 @@ public sealed class AccessEvent : IAccessEvent
         IQueryable<Entity.AccessEvent> q = _dbContext.AccessEvents;
 
         q = q.Where(item => item.BadgeId == badgeId)
-            .OrderBy(item => EF.Functions.Collate(item.AccessedAt, "C"));
+            .OrderBy(item => item.AccessedAt);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -70,7 +72,7 @@ public sealed class AccessEvent : IAccessEvent
             Data = entities
              .Select(Mapper.AccessEvent.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.AccessEvents.CountAsync(ct)
         };
     }

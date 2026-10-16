@@ -18,8 +18,11 @@ public static class Event
             RGBColor = source.RGBColor,
             EndDate = source.EndDate,
             Name = source.Name,
-            OrganizationSessionId = source.OrganizationSessionId,
+            OrganizationId = source.OrganizationId,
+            SchoolYearId = source.SchoolYearId,
+            SchoolYearCode = source.SchoolYearCode,
             SpaceId = source.SpaceId,
+            SeriesId = source.SeriesId,
             StartDate = source.StartDate,
             Active = source.Active.DomainToContract()
         };
@@ -37,8 +40,10 @@ public static class Event
             RGBColor = source.RGBColor,
             EndDate = source.EndDate,
             Name = source.Name,
-            OrganizationSessionId = source.OrganizationSessionId,
+            OrganizationId = source.OrganizationId,
+            SchoolYearId = source.SchoolYearId,
             SpaceId = source.SpaceId,
+            SeriesId = source.SeriesId,
             StartDate = source.StartDate,
             Active = source.Active.DomainToEntity()
         };
@@ -56,10 +61,37 @@ public static class Event
             RGBColor = source.RGBColor,
             EndDate = source.EndDate,
             Name = source.Name,
-            OrganizationSessionId = source.OrganizationSessionId,
+            OrganizationId = source.OrganizationId,
+            SchoolYearId = source.SchoolYearId,
+            SchoolYearCode = source.SchoolYear?.Code,
             SpaceId = source.SpaceId,
+            SeriesId = source.SeriesId,
             StartDate = source.StartDate,
-            Active = source.Active.EntityToDomain()
+            Active = source.Active.EntityToDomain(),
+            Audit = source.Audit.EntityToDomain()
+        };
+    }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Event ContractToDomain(this Ct.Event source, Guid id)
+    {
+        return new Do.Event
+        {
+            Id = id,
+            Code = source.Code,
+            Name = source.Name,
+            Description = source.Description,
+            Picture = source.Picture,
+            RGBColor = source.RGBColor,
+            StartDate = source.StartDate,
+            EndDate = source.EndDate,
+            AgeMinimum = source.AgeMinimum,
+            OrganizationId = source.OrganizationId,
+            SchoolYearId = source.SchoolYearId,
+            SpaceId = source.SpaceId,
+            SeriesId = source.SeriesId,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
         };
     }
 }

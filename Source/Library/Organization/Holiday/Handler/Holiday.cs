@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Holiday
+public sealed class Holiday : ICrudHandler<Domain.Holiday>
 {
     private readonly IHoliday _repository;
 
@@ -11,7 +11,7 @@ public sealed class Holiday
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Holiday domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Holiday>> CreateAsync(Domain.Holiday domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -83,6 +83,21 @@ public sealed class Holiday
         }
 
         return _repository.SearchAsync(query, page, pageSize, ct);
+    }
+
+    public Task<RepositoryResponseRange<Domain.Holiday>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+    {
+        if (schoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID must not be empty for search.", nameof(schoolYearId));
+        }
+
+        if (page < 0 || pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page and page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchBySchoolYearAsync(schoolYearId, page, pageSize, ct);
     }
 
     private void ValidateDomainRules(Domain.Holiday domain)

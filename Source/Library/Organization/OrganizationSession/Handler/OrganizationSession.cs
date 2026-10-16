@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class OrganizationSession
+public sealed class OrganizationSession : ICrudHandler<Domain.OrganizationSession>
 {
     private readonly IOrganizationSession _repository;
 
@@ -11,7 +11,7 @@ public sealed class OrganizationSession
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.OrganizationSession domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.OrganizationSession>> CreateAsync(Domain.OrganizationSession domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -85,11 +85,26 @@ public sealed class OrganizationSession
         return _repository.SearchAsync(OrganizationId, page, pageSize, ct);
     }
 
+    public Task<RepositoryResponseRange<Domain.OrganizationSession>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+    {
+        if (schoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID must not be empty for search.", nameof(schoolYearId));
+        }
+
+        if (page < 0 || pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page and page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchBySchoolYearAsync(schoolYearId, page, pageSize, ct);
+    }
+
     private void ValidateDomainRules(Domain.OrganizationSession domain)
     {
-        if (domain.EndDate < domain.StartDate)
+        if (domain.SchoolYearId == Guid.Empty)
         {
-            throw new ArgumentOutOfRangeException(nameof(domain.EndDate), "End date must be greater than or equal to start date.");
+            throw new ArgumentException("School year ID must not be empty.", nameof(domain.SchoolYearId));
         }
         if (domain.Price < 0)
         {

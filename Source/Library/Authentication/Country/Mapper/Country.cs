@@ -44,4 +44,18 @@ public static class Country
             Active = source.Active.EntityToDomain()
         };
     }
+
+    /// <summary>Modèle reçu de l'API vers le domaine. L'audit est géré par la base, jamais fourni par le client.</summary>
+    public static Do.Country ContractToDomain(this Ct.Country source, Guid id)
+    {
+        return new Do.Country
+        {
+            Id = id,
+            CodeAlpha2 = source.CodeAlpha2,
+            CodeAlpha3 = source.CodeAlpha3,
+            Name = source.Name,
+            Active = source.Active.ContractToDomain() ?? new Do.Active(),
+            Audit = new Do.Audit()
+        };
+    }
 }

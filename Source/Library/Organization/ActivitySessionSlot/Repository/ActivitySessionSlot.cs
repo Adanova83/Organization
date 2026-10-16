@@ -40,7 +40,7 @@ public sealed class ActivitySessionSlot : IActivitySessionSlot
         var entity = await _dbContext.ActivitySessionSlots.FindAsync(domain.Id);
         if (entity != null)
         {
-            _dbContext.Entry(entity).CurrentValues.SetValues(domain.DomainToEntity());
+            _dbContext.UpdateFrom(entity, domain.DomainToEntity());
             await _dbContext.SaveChangesAsync(ct);
         }
     }
@@ -60,9 +60,11 @@ public sealed class ActivitySessionSlot : IActivitySessionSlot
         IQueryable<Entity.ActivitySessionSlot> q = _dbContext.ActivitySessionSlots;
 
         q = q.Where(item => item.SessionId.Equals(sessionId))
-            .OrderBy(item => EF.Functions.Collate(item.DayOfWeek, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.StartTime, "C"))
-            .ThenBy(item => EF.Functions.Collate(item.EndTime, "C"));
+            .OrderBy(item => item.DayOfWeek)
+            .ThenBy(item => item.StartTime)
+            .ThenBy(item => item.EndTime);
+
+        var filteredCount = await q.CountAsync(ct);
 
         if (page > 0 && pageSize > 0)
         {
@@ -77,7 +79,7 @@ public sealed class ActivitySessionSlot : IActivitySessionSlot
             Data = entities
              .Select(Mapper.ActivitySessionSlot.EntityToDomain)
              .ToList(),
-            FilteredCount = entities.Count,
+            FilteredCount = filteredCount,
             TotalCount = await _dbContext.ActivitySessionSlots.CountAsync(ct)
         };
     }

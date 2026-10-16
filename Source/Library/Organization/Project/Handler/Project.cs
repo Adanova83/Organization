@@ -2,7 +2,7 @@
 
 namespace Library.Handler;
 
-public sealed class Project
+public sealed class Project : ICrudHandler<Domain.Project>
 {
     private readonly IProject _repository;
 
@@ -11,7 +11,7 @@ public sealed class Project
         _repository = repository;
     }
 
-    public Task CreateAsync(Domain.Project domain, CancellationToken ct)
+    public Task<RepositoryResponse<Domain.Project>> CreateAsync(Domain.Project domain, CancellationToken ct)
     {
         if (domain == null)
         {
@@ -85,6 +85,21 @@ public sealed class Project
         return _repository.SearchAsync(query, page, pageSize, ct);
     }
 
+    public Task<RepositoryResponseRange<Domain.Project>> SearchBySchoolYearAsync(Guid schoolYearId, int page, int pageSize, CancellationToken ct)
+    {
+        if (schoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID must not be empty for search.", nameof(schoolYearId));
+        }
+
+        if (page < 0 || pageSize < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), "Page and page size must be greater or equal than 0.");
+        }
+
+        return _repository.SearchBySchoolYearAsync(schoolYearId, page, pageSize, ct);
+    }
+
     private void ValidateDomainRules(Domain.Project domain)
     {
         if (string.IsNullOrWhiteSpace(domain.Code))
@@ -102,6 +117,15 @@ public sealed class Project
         if (domain.OrganizationId == Guid.Empty)
         {
             throw new ArgumentException("Organization ID must not be empty.", nameof(domain.OrganizationId));
+        }
+        if (domain.SchoolYearId == Guid.Empty)
+        {
+            throw new ArgumentException("School year ID must not be empty.", nameof(domain.SchoolYearId));
+        }
+        // Dates facultatives (sinon celles de l'année scolaire) ; si les deux sont données, la fin suit le début.
+        if (domain.EndDate < domain.StartDate)
+        {
+            throw new ArgumentOutOfRangeException(nameof(domain.EndDate), "End date must be greater than or equal to start date.");
         }
     }
 }
