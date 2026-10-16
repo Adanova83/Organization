@@ -361,6 +361,9 @@ public sealed class ProjectModel : IValidatableObject
 
     public string? Description { get; set; }
 
+    /// <summary>Couleur au format du champ de formulaire (#rrggbb), pour le calendrier.</summary>
+    public string Color { get; set; } = "#ffffff";
+
     [Range(0, 120, ErrorMessage = "L'âge minimum doit être compris entre 0 et 120.")]
     public int AgeMinimum { get; set; }
 
@@ -375,8 +378,14 @@ public sealed class ProjectModel : IValidatableObject
     [Required(ErrorMessage = "L'année scolaire est obligatoire.")]
     public Guid? SchoolYearId { get; set; }
 
+    /// <summary>Rythme des créneaux. Pas de valeur par défaut : une case décochée n'est pas envoyée ; « hors vacances » est cochée à la création.</summary>
+    public bool DuringTermTime { get; set; }
+
+    public bool DuringSchoolHolidays { get; set; }
+
     public static ProjectModel From(Ct.Project source) => new()
     {
+        Color = Colors.ToInput(source.RGBColor),
         Code = source.Code,
         Name = source.Name,
         Description = source.Description,
@@ -384,11 +393,16 @@ public sealed class ProjectModel : IValidatableObject
         StartDate = Format.ParisDay(source.StartDate),
         EndDate = Format.ParisDay(source.EndDate),
         OrganizationId = source.OrganizationId == Guid.Empty ? null : source.OrganizationId,
-        SchoolYearId = source.SchoolYearId == Guid.Empty ? null : source.SchoolYearId
+        SchoolYearId = source.SchoolYearId == Guid.Empty ? null : source.SchoolYearId,
+        DuringTermTime = source.DuringTermTime,
+        DuringSchoolHolidays = source.DuringSchoolHolidays
     };
 
     public Ct.Project ApplyTo(Ct.Project target)
     {
+        target.RGBColor = Colors.FromInput(Color);
+        target.DuringTermTime = DuringTermTime;
+        target.DuringSchoolHolidays = DuringSchoolHolidays;
         target.Code = Code!.Trim();
         target.Name = Name!.Trim();
         target.Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim();
@@ -405,6 +419,11 @@ public sealed class ProjectModel : IValidatableObject
         if (StartDate is { } start && EndDate is { } end && end < start)
         {
             yield return new ValidationResult("La date de fin doit suivre la date de début.", [nameof(EndDate)]);
+        }
+
+        if (!DuringTermTime && !DuringSchoolHolidays)
+        {
+            yield return new ValidationResult("Cochez au moins « hors vacances scolaires » ou « pendant les vacances scolaires ».", [nameof(DuringTermTime)]);
         }
     }
 }

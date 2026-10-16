@@ -19,6 +19,8 @@ public static class Project
             RGBColor = source.RGBColor,
             OrganizationId = source.OrganizationId,
             SchoolYearId = source.SchoolYearId,
+            DuringTermTime = source.DuringTermTime,
+            DuringSchoolHolidays = source.DuringSchoolHolidays,
             SchoolYearCode = source.SchoolYearCode,
             EffectiveStartDate = source.EffectiveStartDate,
             EffectiveEndDate = source.EffectiveEndDate,
@@ -41,6 +43,8 @@ public static class Project
             RGBColor = source.RGBColor,
             OrganizationId = source.OrganizationId,
             SchoolYearId = source.SchoolYearId,
+            DuringTermTime = source.DuringTermTime,
+            DuringSchoolHolidays = source.DuringSchoolHolidays,
             StartDate = source.StartDate,
             EndDate = source.EndDate,
             Active = source.Active.DomainToEntity()
@@ -60,6 +64,8 @@ public static class Project
             RGBColor = source.RGBColor,
             OrganizationId = source.OrganizationId,
             SchoolYearId = source.SchoolYearId,
+            DuringTermTime = source.DuringTermTime,
+            DuringSchoolHolidays = source.DuringSchoolHolidays,
             SchoolYearCode = source.SchoolYear?.Code,
             EffectiveStartDate = source.StartDate ?? source.SchoolYear?.StartDate,
             EffectiveEndDate = source.EndDate ?? source.SchoolYear?.EndDate,
@@ -86,6 +92,8 @@ public static class Project
             EndDate = source.EndDate,
             OrganizationId = source.OrganizationId,
             SchoolYearId = source.SchoolYearId,
+            DuringTermTime = source.DuringTermTime,
+            DuringSchoolHolidays = source.DuringSchoolHolidays,
             Active = source.Active.ContractToDomain() ?? new Do.Active(),
             Audit = new Do.Audit()
         };

@@ -5,7 +5,7 @@
 @inject UserAccess Access
 
 @*
-    Calendrier hebdomadaire : créneaux d'activités (activity.read) et événements (event.read).
+    Calendrier hebdomadaire : créneaux d'activités (activity.read), événements (event.read) et créneaux de projets (project.read).
     Chaque bloc est hachuré : moitié couleur de l'activité ou de l'événement, moitié couleur de la salle
     (gris si la salle n'est pas précisée ou si l'utilisateur n'a pas space.read).
 *@
@@ -69,7 +69,7 @@ else if (loaded)
                        title="@item.Tooltip"
                        style="@BlockStyle(item)">
                         <span class="calendar-event-label">
-                            <span class="calendar-kind">@(item.Kind == ItemKind.Event ? "Événement" : "Atelier")</span>
+                            <span class="calendar-kind">@KindLabel(item.Kind)</span>
                             <strong>@item.Title</strong>
                             <span>@TimeLabel(item.StartMinute)–@TimeLabel(item.EndMinute)</span>
                             <span>@(item.Space?.Name ?? "Lieu non précisé")</span>
@@ -83,13 +83,13 @@ else if (loaded)
     @if (items.Count > 0)
     {
         <div class="calendar-legend">
-            @foreach (var kind in new[] { ItemKind.Activity, ItemKind.Event })
+            @foreach (var kind in Enum.GetValues<ItemKind>())
             {
                 var colored = items.Where(i => i.Kind == kind).DistinctBy(i => i.Title).OrderBy(i => i.Title).ToList();
                 @if (colored.Count > 0)
                 {
                     <div>
-                        <h2>@(kind == ItemKind.Activity ? "Activités" : "Événements")</h2>
+                        <h2>@KindTitle(kind)</h2>
                         @foreach (var item in colored)
                         {
                             <span><span class="swatch" style="background: @Colors.Css(item.Color, NoColor)"></span>@item.Title</span>
@@ -112,7 +112,21 @@ else if (loaded)
     private const int HourHeight = 48;
     private const string NoColor = "#c4ced3";
 
-    private enum ItemKind { Activity, Event }
+    private enum ItemKind { Activity, Event, Project }
+
+    private static string KindLabel(ItemKind kind) => kind switch
+    {
+        ItemKind.Activity => "Atelier",
+        ItemKind.Event => "Événement",
+        _ => "Projet"
+    };
+
+    private static string KindTitle(ItemKind kind) => kind switch
+    {
+        ItemKind.Activity => "Activités",
+        ItemKind.Event => "Événements",
+        _ => "Projets"
+    };
 
     /// <summary>Bloc d'une journée : créneau d'activité, ou partie d'un événement sur ce jour (minutes depuis minuit, heure de Paris).</summary>
     private sealed record CalendarItem(
@@ -176,7 +190,8 @@ else if (loaded)
 
         var canActivities = await Access.CanAsync(Permissions.ActivityRead);
         var canEvents = await Access.CanAsync(Permissions.EventRead);
-        if (!canActivities && !canEvents)
+        var canProjects = await Access.CanAsync(Permissions.ProjectRead);
+        if (!canActivities && !canEvents && !canProjects)
         {
             Navigation.NavigateTo("/access-denied");
             return;
@@ -198,6 +213,11 @@ else if (loaded)
             if (canEvents)
             {
                 await LoadEventsAsync();
+            }
+
+            if (canProjects)
+            {
+                await LoadProjectsAsync();
             }
 
             LayOut();
@@ -266,6 +286,41 @@ else if (loaded)
                 ItemKind.Activity, activity.Name, $"/activities/{activity.Id}", activity.RGBColor, space, day,
                 MinutesOf(slot.StartTime), MinutesOf(slot.EndTime),
                 $"{activity.Name} · {Format.Time(slot.StartTime)}–{Format.Time(slot.EndTime)} · {space?.Name ?? "Lieu non précisé"}"));
+        }
+    }
+
+    /// <summary>Créneaux hebdomadaires des projets, sur la période du projet (sinon celle de son année) et selon son rythme.</summary>
+    private async Task LoadProjectsAsync()
+    {
+        foreach (var project in await Api.ListAllAsync<Ct.Project>(ApiRoutes.Projects))
+        {
+            if (project.EffectiveStartDate is not { } start || project.EffectiveEndDate is not { } end)
+            {
+                continue;
+            }
+
+            var first = ParisDate(start);
+            var last = ParisDate(end);
+            var slots = await Api.GetProjectSlotsAsync(project.Id);
+
+            for (var day = 0; day < 7; day++)
+            {
+                var date = weekStart.AddDays(day);
+                if (date < first || date > last
+                    || !Library.Domain.SessionSchedule.IsActiveOn(date, project.DuringTermTime, project.DuringSchoolHolidays, closedPeriods))
+                {
+                    continue;
+                }
+
+                foreach (var slot in slots.Where(s => s.DayOfWeek == (int)date.DayOfWeek))
+                {
+                    var space = SpaceOf(slot.SpaceId);
+                    items.Add(new CalendarItem(
+                        ItemKind.Project, project.Name, $"/projects/{project.Id}", project.RGBColor, space, day,
+                        MinutesOf(slot.StartTime), MinutesOf(slot.EndTime),
+                        $"{project.Name} · {Format.Time(slot.StartTime)}–{Format.Time(slot.EndTime)} · {space?.Name ?? "Lieu non précisé"}"));
+                }
+            }
         }
     }
 

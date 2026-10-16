@@ -120,13 +120,7 @@ public sealed class CalendarFeedService
         var items = new List<IcsEvent>();
         var activities = await _activities.SearchAsync(null, 0, 0, ct);
 
-        // Vacances scolaires (rattachées à une année) et jours fériés : appliqués selon le rythme de chaque session.
-        var closedPeriods = (await _holidays.SearchAsync(null, 0, 0, ct)).Data
-            .Select(h => new D.ClosedPeriod(
-                DateOnly.FromDateTime(ParisTime.ToLocal(h.StartDate)),
-                DateOnly.FromDateTime(ParisTime.ToLocal(h.EndDate)),
-                h.SchoolYearId.HasValue))
-            .ToList();
+        var closedPeriods = await LoadClosedPeriodsAsync(ct);
 
         foreach (var activity in activities.Data)
         {
@@ -172,6 +166,7 @@ public sealed class CalendarFeedService
     {
         var items = new List<IcsEvent>();
         var projects = await _projects.SearchAsync(null, 0, 0, ct);
+        var closedPeriods = await LoadClosedPeriodsAsync(ct);
 
         foreach (var project in projects.Data)
         {
@@ -195,7 +190,8 @@ public sealed class CalendarFeedService
                     Uid(nameof(D.ProjectSlot), slot.Id), changed, project.Name,
                     Describe(project.Description, project.AgeMinimum), space?.Name,
                     slot.DayOfWeek, _options.DayOfWeekStartsOnMonday, projectStart, projectEnd,
-                    slot.StartTime, slot.EndTime, 1, "Projet");
+                    slot.StartTime, slot.EndTime, 1, "Projet",
+                    day => D.SessionSchedule.IsActiveOn(day, project.DuringTermTime, project.DuringSchoolHolidays, closedPeriods));
 
                 if (ics is not null)
                 {
@@ -206,6 +202,15 @@ public sealed class CalendarFeedService
 
         return items;
     }
+
+    /// <summary>Vacances scolaires (rattachées à une année) et jours fériés, appliqués selon le rythme des sessions et des projets.</summary>
+    private async Task<List<D.ClosedPeriod>> LoadClosedPeriodsAsync(CancellationToken ct)
+        => (await _holidays.SearchAsync(null, 0, 0, ct)).Data
+            .Select(h => new D.ClosedPeriod(
+                DateOnly.FromDateTime(ParisTime.ToLocal(h.StartDate)),
+                DateOnly.FromDateTime(ParisTime.ToLocal(h.EndDate)),
+                h.SchoolYearId.HasValue))
+            .ToList();
 
     private async Task<List<IcsEvent>> LoadHolidaysAsync(CancellationToken ct)
     {
