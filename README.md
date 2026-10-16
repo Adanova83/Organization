@@ -34,6 +34,7 @@ Source/
 │   ├──                     Repository  Requêtes
 │   ├── Data/             DbContext (audit, suppression logique)
 │   └── Migrations/       Migrations Entity Framework
+├── Tests/                Tests automatiques (xUnit)
 └── Application/
     ├── Api/              API minimale : endpoints, OIDC, permissions, flux ICS (voir son README)
     └── Web/              Site web Blazor : appelle uniquement l'API
@@ -83,6 +84,18 @@ Ajouter une migration après une modification du modèle (aucune connexion à la
 cd Source/Library
 ADANOVA_CONNECTION_STRING="Host=localhost;Database=dummy;Username=dummy;Password=dummy" dotnet ef migrations add NomDeLaMigration
 ```
+
+## Tests
+
+```bash
+dotnet test Source/Tests/Organizations.Tests
+```
+
+Les tests couvrent les règles métier délicates : récurrence des événements, rythme vacances / jours fériés, jours
+fériés légaux, dates des vacances importées, heure de Paris et exclusions du flux ICS.
+
+Sous VS Code, la configuration « API + site web » lance les deux applications en débogage (voir `.vscode/launch.json` :
+la base et le faux serveur OIDC doivent tourner dans Docker, sans les conteneurs `api` et `web`).
 
 ## Production
 

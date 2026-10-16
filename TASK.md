@@ -7,12 +7,11 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 - [ ] **Tester le site connecté** : parcourir toutes les pages (profil, années scolaires, ateliers, sessions,
       événements et répétitions, calendrier, notes, badges, cotisations…) avec un compte administrateur, puis avec
       un compte aux droits limités (`*.read` seulement) pour vérifier les droits.
-- [ ] **Tests automatiques** : créer un projet de tests et couvrir en priorité les règles délicates :
-      récurrence des séries (`EventRecurrence` : dernier vendredi, mois courts), rythme vacances / jours fériés
-      (`SessionSchedule`), calcul de Pâques et des jours fériés (`FrenchPublicHolidays`), conversion des dates de
-      vacances (`SchoolHolidayImporter`).
-- [ ] **`.vscode/launch.json`** : il lance encore l'ancienne application Intranet, supprimée ; le faire pointer sur
-      l'API et le site web.
+- [x] **Tests automatiques** : projet `Source/Tests/Organizations.Tests` (xUnit) : récurrence des séries, rythme
+      vacances / jours fériés, Pâques et jours fériés, dates des vacances importées, heure de Paris, exclusions ICS.
+- [ ] **Tests à compléter** : handlers (validations), endpoints de l'API (droits `*.read` / `*.edit`, données d'un
+      membre), import des vacances avec une réponse simulée du calendrier national.
+- [x] **`.vscode/launch.json`** : débogage de l'API, du site web, ou des deux ensemble.
 
 ## Fonctionnalités incomplètes
 
