@@ -89,7 +89,7 @@ public sealed class SchoolHolidayImporter
     /// le dernier jour est la veille de la reprise. Pont d'un jour (début = fin) : ce jour seul. « Début des vacances d'été »
     /// sans fin connue : jusqu'au 31 août.
     /// </summary>
-    private static (DateOnly First, DateOnly Last) Days(DateTime startUtc, DateTime? endUtc, string description)
+    internal static (DateOnly First, DateOnly Last) Days(DateTime startUtc, DateTime? endUtc, string description)
     {
         var first = DateOnly.FromDateTime(ParisTime.ToLocal(startUtc));
 

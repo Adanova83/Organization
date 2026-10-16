@@ -20,4 +20,9 @@
     <ProjectReference Include="../../Library/Library.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Les tests accèdent aux méthodes internes (calcul des dates de vacances...). -->
+    <InternalsVisibleTo Include="Organizations.Tests" />
+  </ItemGroup>
+
 </Project>

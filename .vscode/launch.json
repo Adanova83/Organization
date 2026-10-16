@@ -1,28 +1,53 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // Débogage local de l'API et du site web.
+    // Prérequis : la base et le faux serveur OIDC tournent dans Docker, mais pas les conteneurs api et web (mêmes ports) :
+    //   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db oidc
+    // Les autres variables (DB_PASSWORD, API_KEY, ADMIN_EMAIL...) viennent du fichier .env à la racine.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (web)",
+            "name": "API",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/Source/Application/Intranet/bin/Debug/net8.0/Intranet.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Source/Application/Intranet/",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Source/Application/Api/bin/Debug/net10.0/Api.dll",
+            "cwd": "${workspaceFolder}/Source/Application/Api/",
             "stopAtEntry": false,
             "justMyCode": false,
-            "logging": {
-                "moduleLoad": false
-            },
-            "launchSettingsFilePath": "${workspaceFolder}/Source/Application/Intranet/Properties/launchSettings.json",
-            "launchSettingsProfile": "http",
             "suppressJITOptimizations": true,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_CONTENTROOT": "${workspaceFolder}/Source/Application/Intranet/"
+                "ASPNETCORE_URLS": "http://localhost:5180",
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "Migrations__ApplyAtStartup": "true",
+                "Oidc__Authority": "http://host.docker.internal:8081/adanova",
+                "Oidc__RequireHttpsMetadata": "false",
+                "Oidc__ClientId": "organizations-web",
+                "Oidc__ClientSecret": "dev-secret"
             }
+        },
+        {
+            "name": "Site web",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Source/Application/Web/bin/Debug/net10.0/Web.dll",
+            "cwd": "${workspaceFolder}/Source/Application/Web/",
+            "stopAtEntry": false,
+            "justMyCode": false,
+            "suppressJITOptimizations": true,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:5200"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "API + site web",
+            "configurations": ["API", "Site web"],
+            "stopAll": true
         }
     ]
 }
