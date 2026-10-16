@@ -1,4 +1,5 @@
 using Api.Calendar;
+using Library.Domain;
 
 namespace Organizations.Tests;
 

@@ -22,6 +22,7 @@ public static class Event
             SchoolYearId = source.SchoolYearId,
             SchoolYearCode = source.SchoolYearCode,
             SpaceId = source.SpaceId,
+            Capacity = source.Capacity,
             SeriesId = source.SeriesId,
             StartDate = source.StartDate,
             Active = source.Active.DomainToContract()
@@ -43,6 +44,7 @@ public static class Event
             OrganizationId = source.OrganizationId,
             SchoolYearId = source.SchoolYearId,
             SpaceId = source.SpaceId,
+            Capacity = source.Capacity,
             SeriesId = source.SeriesId,
             StartDate = source.StartDate,
             Active = source.Active.DomainToEntity()
@@ -65,6 +67,7 @@ public static class Event
             SchoolYearId = source.SchoolYearId,
             SchoolYearCode = source.SchoolYear?.Code,
             SpaceId = source.SpaceId,
+            Capacity = source.Capacity,
             SeriesId = source.SeriesId,
             StartDate = source.StartDate,
             Active = source.Active.EntityToDomain(),
@@ -89,6 +92,7 @@ public static class Event
             OrganizationId = source.OrganizationId,
             SchoolYearId = source.SchoolYearId,
             SpaceId = source.SpaceId,
+            Capacity = source.Capacity,
             SeriesId = source.SeriesId,
             Active = source.Active.ContractToDomain() ?? new Do.Active(),
             Audit = new Do.Audit()

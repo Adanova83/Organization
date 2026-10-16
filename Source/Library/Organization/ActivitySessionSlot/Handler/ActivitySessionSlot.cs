@@ -87,6 +87,10 @@ public sealed class ActivitySessionSlot : ICrudHandler<Domain.ActivitySessionSlo
 
     private void ValidateDomainRules(Domain.ActivitySessionSlot domain)
     {
+        if (domain.Capacity is < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(domain.Capacity), "Capacity must be at least 1, or empty for no limit.");
+        }
         if (domain.DayOfWeek < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(domain.DayOfWeek), "Day of week must be greater or equal than 0.");

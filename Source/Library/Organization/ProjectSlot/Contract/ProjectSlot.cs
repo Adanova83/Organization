@@ -7,4 +7,7 @@ public class ProjectSlot : PrimaryKey
     public TimeOnly EndTime { get; set; }
     public Guid ProjectId { get; set; }
     public Guid? SpaceId { get; set; }
+
+    /// <summary>Nombre maximal d'inscrits ; vide = illimité.</summary>
+    public int? Capacity { get; set; }
 }

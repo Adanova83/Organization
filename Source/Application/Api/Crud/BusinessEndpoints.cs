@@ -161,26 +161,30 @@ public static class BusinessEndpoints
                 M.ProjectSlotAnimation.DomainToContract);
 
         // ---- Inscriptions : un membre gère les siennes ; subscription.edit permet de gérer celles de tous ----
+        // Règles (SubscriptionGuard) : jamais deux fois le même membre ; capacité et âge minimum, sauf pour subscription.edit.
         app.MapOwnedCrud<Ct.ActivitySessionSlotSubscription, Do.ActivitySessionSlotSubscription, H.ActivitySessionSlotSubscription>(
             "/api/activity-session-slot-subscriptions", "ActivitySessionSlotSubscriptions",
             Permissions.SubscriptionEdit, ownerCanWrite: true,
             M.ActivitySessionSlotSubscription.ContractToDomain, M.ActivitySessionSlotSubscription.DomainToContract,
             OwnedCrudEndpoints.OwnerField<Do.ActivitySessionSlotSubscription>(item => item.MemberId),
-            (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct));
+            (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
+            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct));
 
         app.MapOwnedCrud<Ct.EventSubscription, Do.EventSubscription, H.EventSubscription>(
             "/api/event-subscriptions", "EventSubscriptions",
             Permissions.SubscriptionEdit, ownerCanWrite: true,
             M.EventSubscription.ContractToDomain, M.EventSubscription.DomainToContract,
             OwnedCrudEndpoints.OwnerField<Do.EventSubscription>(item => item.MemberId),
-            (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct));
+            (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
+            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct));
 
         app.MapOwnedCrud<Ct.ProjectSlotSubscription, Do.ProjectSlotSubscription, H.ProjectSlotSubscription>(
             "/api/project-slot-subscriptions", "ProjectSlotSubscriptions",
             Permissions.SubscriptionEdit, ownerCanWrite: true,
             M.ProjectSlotSubscription.ContractToDomain, M.ProjectSlotSubscription.DomainToContract,
             OwnedCrudEndpoints.OwnerField<Do.ProjectSlotSubscription>(item => item.MemberId),
-            (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct));
+            (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
+            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct));
 
         // ---- Cotisations : un membre lit les siennes ; seul contribution.edit les écrit ----
         // La liste exige memberId (automatique pour un membre ordinaire).

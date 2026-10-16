@@ -17,8 +17,10 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 
 - [x] **Projets** : rythme « hors vacances / pendant les vacances » (jamais les jours fériés), couleur, et affichage
       dans le calendrier et le flux ICS.
-- [ ] **Inscriptions** : appliquer les règles côté API (âge minimum, capacité maximale, doublons). Aujourd'hui,
-      seul le site contrôle l'âge, et la capacité n'existe pas dans le modèle.
+- [x] **Inscriptions** : règles côté API (doublons, capacité, âge minimum au début de l'activité, date de naissance
+      requise), dérogation des responsables (`subscription.edit`) pour la capacité et l'âge.
+- [ ] **Places restantes** : afficher aux membres le nombre de places restantes (aujourd'hui, seuls ceux qui ont
+      `subscription.read` voient les inscrits) ; liste d'attente quand c'est complet.
 - [ ] **Suppression en cascade** : supprimer une activité laisse ses sessions, créneaux, inscriptions et animateurs ;
       décider ce qui doit suivre (suppression, blocage ou avertissement).
 - [ ] **Cotisations** : vue « qui n'a pas payé cette saison », et enregistrement du montant payé.

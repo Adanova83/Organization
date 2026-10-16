@@ -28,6 +28,7 @@ else if (item is not null)
         <dt>Début</dt><dd>@Format.DateTimeLabel(item.StartDate)</dd>
         <dt>Fin</dt><dd>@Format.DateTimeLabel(item.EndDate)</dd>
         <dt>Lieu</dt><dd>@(item.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</dd>
+        <dt>Places</dt><dd>@(item.Capacity?.ToString() ?? "Illimitées")</dd>
         <dt>Âge</dt><dd>@Format.Age(item.AgeMinimum)</dd>
         @if (!string.IsNullOrWhiteSpace(item.Description))
         {
@@ -86,17 +87,15 @@ else if (item is not null)
     private bool canEdit;
     private bool canSeeSubscribers;
     private Guid? me;
-    private int? myAge;
+    private DateOnly? myBirthdate;
     private Guid? mySubscription;
     private List<Ct.Event> series = [];
 
     // Jour de cette occurrence (heure de Paris), pour « cette date et les suivantes ».
     private string OccurrenceDay => DateOnly.FromDateTime(Format.ParisLocal(item!.StartDate)).ToString("yyyy-MM-dd");
 
-    private string? BlockReason
-        => item is { AgeMinimum: > 0 } && myAge is { } age && age < item.AgeMinimum
-            ? $"Âge minimum : {item.AgeMinimum} ans"
-            : null;
+    // Âge apprécié à la date de l'événement (règle de l'API).
+    private string? BlockReason => SubscriptionHints.AgeBlock(item?.AgeMinimum, myBirthdate, item?.StartDate);
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,7 +113,7 @@ else if (item is not null)
 
             canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
             me = await Access.MemberIdAsync();
-            myAge = await Access.AgeAsync();
+            myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)
             {
                 mySubscription = (await Subs.ListAsync(SubscriptionKind.Event, Id, memberId)).FirstOrDefault()?.Id;

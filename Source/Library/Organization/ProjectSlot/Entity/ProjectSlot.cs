@@ -12,5 +12,6 @@ internal class ProjectSlot : PrimaryKey
     [Required] public Guid ProjectId { get; set; }
     [ForeignKey(nameof(ProjectId))] public Project Project { get; set; } = default!;
     public Guid? SpaceId { get; set; }
+    public int? Capacity { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
 }
