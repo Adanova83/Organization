@@ -13,6 +13,8 @@ public static class EventSubscription
             Id = source.Id,
             EventId = source.EventId,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
+            WaitingRank = source.WaitingRank,
             Active = source.Active.DomainToContract()
         };
     }
@@ -24,6 +26,7 @@ public static class EventSubscription
             Id = source.Id,
             EventId = source.EventId,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
             Active = source.Active.DomainToEntity()
         };
     }
@@ -35,6 +38,7 @@ public static class EventSubscription
             Id = source.Id,
             EventId = source.EventId,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
             Active = source.Active.EntityToDomain()
         };
     }

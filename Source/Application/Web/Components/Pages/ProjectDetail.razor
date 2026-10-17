@@ -57,14 +57,14 @@ else if (project is not null)
                         <td>@Format.Day(slot.DayOfWeek)</td>
                         <td>@Format.Time(slot.StartTime) – @Format.Time(slot.EndTime)</td>
                         <td>@(slot.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</td>
-                        <td>@(slot.Capacity?.ToString() ?? "Illimitées")</td>
+                        <td>@Format.Places(slot.Capacity, AvailabilityOf(slot.Id))</td>
                         <td><a href="/animations/project/@slot.Id">Voir</a></td>
                         @if (showSubscriptions)
                         {
                             <td>
                                 <div class="subscription-cell">
                                 <SubscribeToggle Kind="SubscriptionKind.Project" TargetId="slot.Id" MemberId="me"
-                                                 SubscriptionId="SubscriptionOf(slot.Id)" BlockReason="@BlockReason" />
+                                                 Mine="SubscriptionOf(slot.Id)" IsFull="IsFull(slot.Id)" BlockReason="@BlockReason" />
                                 @if (canSeeSubscribers)
                                 {
                                     <a href="/subscriptions/project/@slot.Id">Inscrits</a>
@@ -96,11 +96,17 @@ else if (project is not null)
     private bool canOverride;
     private Guid? me;
     private DateOnly? myBirthdate;
-    private Dictionary<Guid, Guid> mySubscriptions = [];
+    private Dictionary<Guid, SubscriptionItem> mySubscriptions = [];
+    private Dictionary<Guid, Ct.SubscriptionAvailability> availability = [];
 
     private bool showSubscriptions => me is not null || canSeeSubscribers;
 
-    private Guid? SubscriptionOf(Guid slotId) => mySubscriptions.TryGetValue(slotId, out var id) ? id : null;
+    private SubscriptionItem? SubscriptionOf(Guid slotId) => mySubscriptions.GetValueOrDefault(slotId);
+
+    private Ct.SubscriptionAvailability? AvailabilityOf(Guid slotId) => availability.GetValueOrDefault(slotId);
+
+    // Complet : liste d'attente, sauf pour un responsable (inscription directe).
+    private bool IsFull(Guid slotId) => !canOverride && AvailabilityOf(slotId)?.IsFull == true;
 
     // Âge apprécié au début du projet (règle de l'API).
     private string? BlockReason => canOverride ? null : SubscriptionHints.AgeBlock(project?.AgeMinimum, myBirthdate, project?.EffectiveStartDate);
@@ -120,10 +126,11 @@ else if (project is not null)
             myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)
             {
-                mySubscriptions = (await Subs.ListAsync(SubscriptionKind.Project, null, memberId)).ToDictionary(item => item.TargetId, item => item.Id);
+                mySubscriptions = (await Subs.ListAsync(SubscriptionKind.Project, null, memberId)).ToDictionary(item => item.TargetId);
             }
 
             spaces = await Api.GetSpaceNamesAsync();
+            availability = await Subs.AvailabilityAsync(SubscriptionKind.Project, slots.Select(s => s.Id));
         }
         catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {

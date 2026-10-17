@@ -1,0 +1,230 @@
+@inject ApiClient Api
+@inject SubscriptionClient Subs
+@inject UserAccess Access
+
+@*
+    Tableau de bord de l'accueil. Chaque bloc n'apparaît qu'avec la permission de lecture de son domaine :
+    mes inscriptions (tout membre), prochains événements (event.read), remplissage des créneaux et événements (subscription.read).
+*@
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (loaded)
+{
+    <div class="dashboard">
+        <section class="card">
+            <h2>Mes inscriptions</h2>
+            @if (mine.Count == 0)
+            {
+                <p class="muted">Aucune inscription. Rendez-vous sur la fiche d'un atelier, d'un événement ou d'un projet pour vous inscrire.</p>
+            }
+            else
+            {
+                <p class="dashboard-figures">
+                    <span><strong>@mine.Count(m => !m.Item.IsWaiting)</strong> inscription(s)</span>
+                    @if (mine.Any(m => m.Item.IsWaiting))
+                    {
+                        <span class="waiting"><strong>@mine.Count(m => m.Item.IsWaiting)</strong> en liste d'attente</span>
+                    }
+                </p>
+                <ul class="dashboard-list">
+                    @foreach (var row in mine.OrderBy(m => m.Item.IsWaiting ? 0 : 1).ThenBy(m => m.Title))
+                    {
+                        <li>
+                            <a href="@(row.Url ?? "/me/subscriptions")">@row.Title</a>
+                            @if (row.Item.IsWaiting)
+                            {
+                                <span class="waiting">liste d'attente@(row.Item.WaitingRank is { } rank ? $", {Rank(rank)}" : "")</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            <p><a href="/me/subscriptions">Toutes mes inscriptions</a></p>
+        </section>
+
+        @if (upcomingEvents is not null)
+        {
+            <section class="card">
+                <h2>Prochains événements</h2>
+                @if (upcomingEvents.Count == 0)
+                {
+                    <p class="muted">Aucun événement à venir.</p>
+                }
+                else
+                {
+                    <table>
+                        <thead><tr><th>Événement</th><th>Date</th><th>Places</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in upcomingEvents)
+                            {
+                                <tr>
+                                    <td><a href="/events/@item.Id">@item.Name</a></td>
+                                    <td>@Format.DateTimeLabel(item.StartDate)</td>
+                                    <td>@Format.Places(item.Capacity, eventAvailability.GetValueOrDefault(item.Id))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                <p><a href="/calendar">Calendrier</a></p>
+            </section>
+        }
+
+        @if (filling is not null)
+        {
+            <section class="card dashboard-wide">
+                <h2>Remplissage</h2>
+                <p class="muted">Créneaux et événements à venir qui ont une capacité ou une liste d'attente, les plus remplis d'abord.</p>
+                @if (filling.Count == 0)
+                {
+                    <p class="muted">Aucun créneau ni événement avec une capacité.</p>
+                }
+                else
+                {
+                    <p class="dashboard-figures">
+                        <span><strong>@filling.Count(f => f.Availability.IsFull)</strong> complet(s)</span>
+                        <span class="waiting"><strong>@filling.Sum(f => f.Availability.Waiting)</strong> personne(s) en liste d'attente</span>
+                    </p>
+                    <table>
+                        <thead><tr><th>Élément</th><th>Quand</th><th>Places</th><th>Remplissage</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var row in filling)
+                            {
+                                <tr>
+                                    <td><a href="@row.Url">@row.Title</a></td>
+                                    <td>@row.When</td>
+                                    <td>@Format.Places(row.Availability.Capacity, row.Availability)</td>
+                                    <td>
+                                        @if (row.Ratio is { } ratio)
+                                        {
+                                            <span class="gauge @(row.Availability.IsFull ? "full" : "")" title="@($"{ratio:P0}")"><span style="width: @(Math.Min(ratio, 1).ToString("P0", System.Globalization.CultureInfo.InvariantCulture).Replace(" ", ""))"></span></span>
+                                        }
+                                    </td>
+                                    <td><a href="@row.SubscribersUrl">Inscrits</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+        }
+    </div>
+}
+
+@code {
+    private sealed record MineRow(SubscriptionKind Kind, SubscriptionItem Item, string Title, string? Url);
+
+    private sealed record FillingRow(string Title, string Url, string When, string SubscribersUrl, Ct.SubscriptionAvailability Availability)
+    {
+        public double? Ratio => Availability.Capacity is { } places and > 0 ? Availability.Subscribed / (double)places : null;
+    }
+
+    private List<MineRow> mine = [];
+    private List<Ct.Event>? upcomingEvents;
+    private Dictionary<Guid, Ct.SubscriptionAvailability> eventAvailability = [];
+    private List<FillingRow>? filling;
+    private string? error;
+    private bool loaded;
+
+    private static string Rank(int rank) => rank == 1 ? "1re" : $"{rank}e";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (await Access.MemberIdAsync() is { } me)
+            {
+                foreach (var kind in Enum.GetValues<SubscriptionKind>())
+                {
+                    foreach (var item in await Subs.ListAsync(kind, null, me))
+                    {
+                        var (title, url) = await Subs.DescribeAsync(kind, item.TargetId);
+                        mine.Add(new MineRow(kind, item, title, url));
+                    }
+                }
+            }
+
+            var canEvents = await Access.CanAsync(Permissions.EventRead);
+            var events = canEvents
+                ? (await Api.ListAllAsync<Ct.Event>(ApiRoutes.Events)).Where(e => e.EndDate >= DateTime.UtcNow).OrderBy(e => e.StartDate).ToList()
+                : [];
+
+            if (canEvents)
+            {
+                upcomingEvents = events.Take(5).ToList();
+                eventAvailability = await Subs.AvailabilityAsync(SubscriptionKind.Event, events.Select(e => e.Id));
+            }
+
+            if (await Access.CanAsync(Permissions.SubscriptionRead))
+            {
+                filling = await LoadFillingAsync(events);
+            }
+
+            loaded = true;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    /// <summary>Créneaux (ateliers, projets) des périodes en cours ou à venir et événements à venir, avec capacité ou liste d'attente.</summary>
+    private async Task<List<FillingRow>> LoadFillingAsync(List<Ct.Event> events)
+    {
+        var rows = new List<FillingRow>();
+        var now = DateTime.UtcNow;
+
+        if (await Access.CanAsync(Permissions.ActivityRead))
+        {
+            var slots = new List<(Ct.Activity Activity, Ct.ActivitySessionSlot Slot)>();
+            foreach (var activity in await Api.ListAllAsync<Ct.Activity>(ApiRoutes.Activities))
+            {
+                foreach (var session in (await Api.GetActivitySessionsAsync(activity.Id)).Where(s => s.EffectiveEndDate >= now))
+                {
+                    slots.AddRange((await Api.GetActivitySessionSlotsAsync(session.Id)).Select(slot => (activity, slot)));
+                }
+            }
+
+            var availability = await Subs.AvailabilityAsync(SubscriptionKind.Slot, slots.Select(s => s.Slot.Id));
+            rows.AddRange(slots
+                .Where(s => availability.ContainsKey(s.Slot.Id))
+                .Select(s => new FillingRow(
+                    s.Activity.Name, $"/activities/{s.Activity.Id}",
+                    $"{Format.Day(s.Slot.DayOfWeek)} {Format.Time(s.Slot.StartTime)}", $"/subscriptions/slot/{s.Slot.Id}",
+                    availability[s.Slot.Id])));
+        }
+
+        if (await Access.CanAsync(Permissions.ProjectRead))
+        {
+            var slots = new List<(Ct.Project Project, Ct.ProjectSlot Slot)>();
+            foreach (var project in (await Api.ListAllAsync<Ct.Project>(ApiRoutes.Projects)).Where(p => p.EffectiveEndDate >= now))
+            {
+                slots.AddRange((await Api.GetProjectSlotsAsync(project.Id)).Select(slot => (project, slot)));
+            }
+
+            var availability = await Subs.AvailabilityAsync(SubscriptionKind.Project, slots.Select(s => s.Slot.Id));
+            rows.AddRange(slots
+                .Where(s => availability.ContainsKey(s.Slot.Id))
+                .Select(s => new FillingRow(
+                    s.Project.Name, $"/projects/{s.Project.Id}",
+                    $"{Format.Day(s.Slot.DayOfWeek)} {Format.Time(s.Slot.StartTime)}", $"/subscriptions/project/{s.Slot.Id}",
+                    availability[s.Slot.Id])));
+        }
+
+        rows.AddRange(events
+            .Where(e => eventAvailability.ContainsKey(e.Id))
+            .Select(e => new FillingRow(
+                e.Name, $"/events/{e.Id}", Format.DateTimeLabel(e.StartDate), $"/subscriptions/event/{e.Id}",
+                eventAvailability[e.Id])));
+
+        return rows
+            .Where(r => r.Availability.Capacity is not null || r.Availability.Waiting > 0)
+            .OrderByDescending(r => r.Availability.Waiting)
+            .ThenByDescending(r => r.Ratio ?? 0)
+            .ThenBy(r => r.Title)
+            .ToList();
+    }
+}

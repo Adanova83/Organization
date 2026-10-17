@@ -63,6 +63,10 @@ public sealed class ApiClient
     public Task<T> GetByIdAsync<T>(string route, Guid id, CancellationToken ct = default)
         => GetAsync<T>($"{route}/{id}", ct);
 
+    /// <summary>Liste simple (non paginée) renvoyée par une route.</summary>
+    public Task<List<T>> GetListAsync<T>(string url, CancellationToken ct = default)
+        => GetAsync<List<T>>(url, ct);
+
     public Task<T> CreateAsync<T>(string route, T body, CancellationToken ct = default) where T : notnull
         => SendAsync<T>(HttpMethod.Post, route, body, ct);
 

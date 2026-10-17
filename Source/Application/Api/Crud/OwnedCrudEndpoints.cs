@@ -25,7 +25,8 @@ public static class OwnedCrudEndpoints
         Func<TDomain, IServiceProvider, CancellationToken, Task<Guid?>> ownerOf,
         Func<THandler, Guid?, Guid?, int, int, CancellationToken, Task<RepositoryResponseRange<TDomain>>> list,
         Func<Guid, IServiceProvider, CancellationToken, Task<Guid?>>? ownerOfTarget = null,
-        Func<TDomain, bool, IServiceProvider, CancellationToken, Task>? beforeWrite = null)
+        Func<TDomain, bool, IServiceProvider, CancellationToken, Task>? beforeWrite = null,
+        Func<TDomain, IServiceProvider, CancellationToken, Task>? afterDelete = null)
         where TContract : Ct.PrimaryKey
         where TDomain : Do.PrimaryKey
         where THandler : class, ICrudHandler<TDomain>
@@ -177,6 +178,12 @@ public static class OwnedCrudEndpoints
             }
 
             await handler.DeleteAsync(existing.Data, ct);
+
+            // Suites d'une suppression (inscriptions : la liste d'attente prend la place libérée).
+            if (afterDelete is not null)
+            {
+                await afterDelete(existing.Data, http.RequestServices, ct);
+            }
             return Results.NoContent();
         });
 

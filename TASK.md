@@ -7,9 +7,9 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 - [x] **Tester le site connecté (administrateur)** : 57 pages parcourues sans erreur ; création d'une série et
       inscription par les formulaires ; corrigé : script Blazor absent de l'image Docker, pré-contrôle d'âge des
       responsables, mise en page de la colonne « Inscription ».
-- [ ] **Tester avec un compte aux droits limités** : la page de connexion du faux serveur OIDC accepte des claims
-      personnalisés (autre e-mail, autres groupes) ; définir `Authorization:RolePermissions` (ex. groupe « membres »
-      en `*.read`) dans `docker-compose.dev.yml`, puis vérifier menus, pages refusées et boutons masqués.
+- [ ] **Tester avec un compte aux droits limités** : côté API, vérifié avec le profil « membre-test »
+      (groupe « membres », lecture seule, `docker-compose.dev.yml`) ; reste à parcourir le site connecté avec ce profil
+      (menus, pages refusées, boutons masqués) — membre `membre.test.org` à créer dans la base.
 - [x] **Tests automatiques** : projet `Source/Tests/Organizations.Tests` (xUnit) : récurrence des séries, rythme
       vacances / jours fériés, Pâques et jours fériés, dates des vacances importées, heure de Paris, exclusions ICS.
 - [ ] **Tests à compléter** : handlers (validations), endpoints de l'API (droits `*.read` / `*.edit`, données d'un
@@ -22,8 +22,11 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       dans le calendrier et le flux ICS.
 - [x] **Inscriptions** : règles côté API (doublons, capacité, âge minimum au début de l'activité, date de naissance
       requise), dérogation des responsables (`subscription.edit`) pour la capacité et l'âge.
-- [ ] **Places restantes** : afficher aux membres le nombre de places restantes (aujourd'hui, seuls ceux qui ont
-      `subscription.read` voient les inscrits) ; liste d'attente quand c'est complet.
+- [x] **Places restantes et liste d'attente** : places visibles par tous (sans les noms), liste d'attente automatique
+      quand c'est complet, promotion automatique à chaque désinscription ; tableau de bord sur l'accueil (mes
+      inscriptions, prochains événements, remplissage pour `subscription.read`).
+- [ ] **Liste d'attente et capacité augmentée** : augmenter la capacité d'un créneau ou d'un événement ne fait pas encore
+      passer les personnes en attente (seule une désinscription le fait).
 - [ ] **Suppression en cascade** : supprimer une activité laisse ses sessions, créneaux, inscriptions et animateurs ;
       décider ce qui doit suivre (suppression, blocage ou avertissement).
 - [ ] **Cotisations** : vue « qui n'a pas payé cette saison », et enregistrement du montant payé.

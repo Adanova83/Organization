@@ -199,6 +199,9 @@ namespace Library.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsWaiting")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");
 
@@ -437,6 +440,9 @@ namespace Library.Migrations
 
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsWaiting")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");
@@ -751,6 +757,9 @@ namespace Library.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsWaiting")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");

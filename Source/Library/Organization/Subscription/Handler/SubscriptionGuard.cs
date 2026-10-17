@@ -4,8 +4,9 @@ using Library.Repository;
 namespace Library.Handler;
 
 /// <summary>
-/// Contrôle d'une inscription avant son enregistrement (création ou modification) : rassemble l'élément visé, ses inscrits,
-/// sa capacité, son âge minimum et sa date de début, puis applique <see cref="SubscriptionRules"/>.
+/// Inscriptions aux créneaux d'ateliers, événements et créneaux de projets :
+/// avant l'enregistrement, applique <see cref="SubscriptionRules"/> et décide « inscrit » ou « liste d'attente » ;
+/// après une désinscription, fait passer les suivants de la liste d'attente ; donne les places occupées par élément.
 /// </summary>
 public sealed class SubscriptionGuard
 {
@@ -38,26 +39,30 @@ public sealed class SubscriptionGuard
         _projectSubscriptions = projectSubscriptions;
     }
 
+    // ---- Avant l'enregistrement : règles et liste d'attente ----
+
     /// <summary>Créneau d'atelier : âge minimum de l'activité, début de la session.</summary>
     public async Task EnsureAsync(Domain.ActivitySessionSlotSubscription subscription, bool canOverride, CancellationToken ct)
     {
         var slot = Required((await _slots.SearchAsync(subscription.SessionSlotId, ct)).Data, "session slot");
         var session = Required((await _sessions.SearchAsync(slot.SessionId, ct)).Data, "session");
         var activity = Required((await _activities.SearchAsync(session.ActivityId, ct)).Data, "activity");
-        var others = (await _slotSubscriptions.SearchAsync(slot.Id, null, 0, 0, ct)).Data
-            .Where(item => item.Id != subscription.Id).Select(item => item.MemberId).ToList();
+        var current = (await _slotSubscriptions.SearchAsync(slot.Id, null, 0, 0, ct)).Data
+            .Select(item => (item.Id, item.MemberId, item.IsWaiting)).ToList();
 
-        await CheckAsync(subscription.MemberId, others, slot.Capacity, activity.AgeMinimum, session.EffectiveStartDate, canOverride, ct);
+        subscription.IsWaiting = await DecideAsync(subscription.Id, subscription.MemberId, current,
+            slot.Capacity, activity.AgeMinimum, session.EffectiveStartDate, canOverride, ct);
     }
 
     /// <summary>Événement : son âge minimum et sa date.</summary>
     public async Task EnsureAsync(Domain.EventSubscription subscription, bool canOverride, CancellationToken ct)
     {
         var item = Required((await _events.SearchAsync(subscription.EventId, ct)).Data, "event");
-        var others = (await _eventSubscriptions.SearchAsync(item.Id, null, 0, 0, ct)).Data
-            .Where(other => other.Id != subscription.Id).Select(other => other.MemberId).ToList();
+        var current = (await _eventSubscriptions.SearchAsync(item.Id, null, 0, 0, ct)).Data
+            .Select(other => (other.Id, other.MemberId, other.IsWaiting)).ToList();
 
-        await CheckAsync(subscription.MemberId, others, item.Capacity, item.AgeMinimum ?? 0, item.StartDate, canOverride, ct);
+        subscription.IsWaiting = await DecideAsync(subscription.Id, subscription.MemberId, current,
+            item.Capacity, item.AgeMinimum ?? 0, item.StartDate, canOverride, ct);
     }
 
     /// <summary>Créneau de projet : âge minimum du projet, début du projet (sinon de son année).</summary>
@@ -65,15 +70,27 @@ public sealed class SubscriptionGuard
     {
         var slot = Required((await _projectSlots.SearchAsync(subscription.ProjectSlotId, ct)).Data, "project slot");
         var project = Required((await _projects.SearchAsync(slot.ProjectId, ct)).Data, "project");
-        var others = (await _projectSubscriptions.SearchAsync(slot.Id, null, 0, 0, ct)).Data
-            .Where(item => item.Id != subscription.Id).Select(item => item.MemberId).ToList();
+        var current = (await _projectSubscriptions.SearchAsync(slot.Id, null, 0, 0, ct)).Data
+            .Select(item => (item.Id, item.MemberId, item.IsWaiting)).ToList();
 
-        await CheckAsync(subscription.MemberId, others, slot.Capacity, project.AgeMinimum, project.EffectiveStartDate, canOverride, ct);
+        subscription.IsWaiting = await DecideAsync(subscription.Id, subscription.MemberId, current,
+            slot.Capacity, project.AgeMinimum, project.EffectiveStartDate, canOverride, ct);
     }
 
-    private async Task CheckAsync(
-        Guid memberId, IReadOnlyCollection<Guid> others, int? capacity, int ageMinimum, DateTime? startUtc, bool canOverride, CancellationToken ct)
+    /// <returns>Vrai : liste d'attente.</returns>
+    private async Task<bool> DecideAsync(
+        Guid subscriptionId, Guid memberId, List<(Guid Id, Guid MemberId, bool IsWaiting)> current,
+        int? capacity, int ageMinimum, DateTime? startUtc, bool canOverride, CancellationToken ct)
     {
+        // Modification sans changement de membre ni d'élément : l'état (inscrit ou en attente) est conservé.
+        var existing = current.FindIndex(item => item.Id == subscriptionId);
+        if (subscriptionId != Guid.Empty && existing >= 0 && current[existing].MemberId == memberId)
+        {
+            return current[existing].IsWaiting;
+        }
+
+        var others = current.Where(item => item.Id != subscriptionId).ToList();
+
         DateOnly? birthdate = null;
         if (ageMinimum > 0 && !canOverride)
         {
@@ -84,7 +101,94 @@ public sealed class SubscriptionGuard
         var today = DateOnly.FromDateTime(ParisTime.ToLocal(DateTime.UtcNow));
         var start = startUtc is { } value ? DateOnly.FromDateTime(ParisTime.ToLocal(value)) : (DateOnly?)null;
 
-        SubscriptionRules.Check(memberId, others, capacity, ageMinimum, birthdate, SubscriptionRules.AgeReference(start, today), canOverride);
+        return SubscriptionRules.Check(
+            memberId,
+            others.Where(item => !item.IsWaiting).Select(item => item.MemberId).ToList(),
+            others.Where(item => item.IsWaiting).Select(item => item.MemberId).ToList(),
+            capacity, ageMinimum, birthdate, SubscriptionRules.AgeReference(start, today), canOverride);
+    }
+
+    // ---- Après une désinscription : les suivants de la liste d'attente prennent les places libérées ----
+
+    public async Task AfterDeleteAsync(Domain.ActivitySessionSlotSubscription subscription, CancellationToken ct)
+    {
+        var slot = (await _slots.SearchAsync(subscription.SessionSlotId, ct)).Data;
+        if (slot is not null)
+        {
+            await FillAsync(slot.Id, slot.Capacity, _slotSubscriptions.CountByTargetAsync,
+                async (target, token) => await _slotSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+        }
+    }
+
+    public async Task AfterDeleteAsync(Domain.EventSubscription subscription, CancellationToken ct)
+    {
+        var item = (await _events.SearchAsync(subscription.EventId, ct)).Data;
+        if (item is not null)
+        {
+            await FillAsync(item.Id, item.Capacity, _eventSubscriptions.CountByTargetAsync,
+                async (target, token) => await _eventSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+        }
+    }
+
+    public async Task AfterDeleteAsync(Domain.ProjectSlotSubscription subscription, CancellationToken ct)
+    {
+        var slot = (await _projectSlots.SearchAsync(subscription.ProjectSlotId, ct)).Data;
+        if (slot is not null)
+        {
+            await FillAsync(slot.Id, slot.Capacity, _projectSubscriptions.CountByTargetAsync,
+                async (target, token) => await _projectSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+        }
+    }
+
+    /// <summary>Fait passer les premiers de la liste d'attente tant qu'il reste des places (toutes si la capacité est illimitée).</summary>
+    private static async Task FillAsync(
+        Guid target, int? capacity,
+        Func<IReadOnlyCollection<Guid>, CancellationToken, Task<IReadOnlyDictionary<Guid, (int Confirmed, int Waiting)>>> count,
+        Func<Guid, CancellationToken, Task<bool>> promoteNext, CancellationToken ct)
+    {
+        while (true)
+        {
+            var (confirmed, waiting) = (await count([target], ct)).GetValueOrDefault(target);
+            if (waiting == 0 || (capacity is { } places && confirmed >= places) || !await promoteNext(target, ct))
+            {
+                return;
+            }
+        }
+    }
+
+    // ---- Places occupées (sans les noms) ----
+
+    public async Task<IReadOnlyList<Contract.SubscriptionAvailability>> AvailabilityAsync(
+        Contract.SubscriptionTargetKind kind, IReadOnlyCollection<Guid> targetIds, CancellationToken ct)
+    {
+        var counts = kind switch
+        {
+            Contract.SubscriptionTargetKind.ActivitySlot => await _slotSubscriptions.CountByTargetAsync(targetIds, ct),
+            Contract.SubscriptionTargetKind.Event => await _eventSubscriptions.CountByTargetAsync(targetIds, ct),
+            _ => await _projectSubscriptions.CountByTargetAsync(targetIds, ct)
+        };
+
+        var result = new List<Contract.SubscriptionAvailability>();
+        foreach (var id in targetIds.Distinct())
+        {
+            int? capacity = kind switch
+            {
+                Contract.SubscriptionTargetKind.ActivitySlot => (await _slots.SearchAsync(id, ct)).Data?.Capacity,
+                Contract.SubscriptionTargetKind.Event => (await _events.SearchAsync(id, ct)).Data?.Capacity,
+                _ => (await _projectSlots.SearchAsync(id, ct)).Data?.Capacity
+            };
+
+            var (confirmed, waiting) = counts.GetValueOrDefault(id);
+            result.Add(new Contract.SubscriptionAvailability
+            {
+                TargetId = id,
+                Capacity = capacity,
+                Subscribed = confirmed,
+                Waiting = waiting
+            });
+        }
+
+        return result;
     }
 
     private static T Required<T>(T? value, string what) where T : class

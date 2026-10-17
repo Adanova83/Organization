@@ -12,6 +12,8 @@ public static class ProjectSlotSubscription
         {
             Id = source.Id,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
+            WaitingRank = source.WaitingRank,
             ProjectSlotId = source.ProjectSlotId,
             Active = source.Active.DomainToContract()
         };
@@ -23,6 +25,7 @@ public static class ProjectSlotSubscription
         {
             Id = source.Id,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
             ProjectSlotId = source.ProjectSlotId,
             Active = source.Active.DomainToEntity()
         };
@@ -34,6 +37,7 @@ public static class ProjectSlotSubscription
         {
             Id = source.Id,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
             ProjectSlotId = source.ProjectSlotId,
             Active = source.Active.EntityToDomain()
         };

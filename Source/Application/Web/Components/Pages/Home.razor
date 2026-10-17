@@ -15,14 +15,8 @@
         }
         else
         {
-            var groups = context.User.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToList();
-
             <p>Bonjour <strong>@context.User.Identity?.Name</strong>.</p>
-
-            if (groups.Count > 0)
-            {
-                <p class="muted">Groupes : @string.Join(", ", groups)</p>
-            }
+            <Dashboard />
         }
     </Authorized>
     <NotAuthorized>

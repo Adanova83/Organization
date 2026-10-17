@@ -10,8 +10,11 @@ public enum SubscriptionKind
     Project
 }
 
-/// <summary>Inscription, quelle que soit sa sorte : identifiant, élément auquel on s'inscrit (créneau ou événement) et membre.</summary>
-public sealed record SubscriptionItem(Guid Id, Guid TargetId, Guid MemberId);
+/// <summary>
+/// Inscription, quelle que soit sa sorte : identifiant, élément auquel on s'inscrit (créneau ou événement), membre,
+/// et, s'il est complet, place dans la liste d'attente (rang 1 = le prochain à passer).
+/// </summary>
+public sealed record SubscriptionItem(Guid Id, Guid TargetId, Guid MemberId, bool IsWaiting = false, int? WaitingRank = null);
 
 /// <summary>Regroupe les trois routes d'inscription de l'API derrière une même interface.</summary>
 public sealed class SubscriptionClient
@@ -50,13 +53,13 @@ public sealed class SubscriptionClient
         {
             case SubscriptionKind.Slot:
                 return (await _api.ListAllAsync<Ct.ActivitySessionSlotSubscription>(route, targetId, memberId, ct))
-                    .Select(item => new SubscriptionItem(item.Id, item.SessionSlotId, item.MemberId)).ToList();
+                    .Select(item => new SubscriptionItem(item.Id, item.SessionSlotId, item.MemberId, item.IsWaiting, item.WaitingRank)).ToList();
             case SubscriptionKind.Event:
                 return (await _api.ListAllAsync<Ct.EventSubscription>(route, targetId, memberId, ct))
-                    .Select(item => new SubscriptionItem(item.Id, item.EventId, item.MemberId)).ToList();
+                    .Select(item => new SubscriptionItem(item.Id, item.EventId, item.MemberId, item.IsWaiting, item.WaitingRank)).ToList();
             default:
                 return (await _api.ListAllAsync<Ct.ProjectSlotSubscription>(route, targetId, memberId, ct))
-                    .Select(item => new SubscriptionItem(item.Id, item.ProjectSlotId, item.MemberId)).ToList();
+                    .Select(item => new SubscriptionItem(item.Id, item.ProjectSlotId, item.MemberId, item.IsWaiting, item.WaitingRank)).ToList();
         }
     }
 
@@ -111,6 +114,21 @@ public sealed class SubscriptionClient
         {
             return ("Détails indisponibles", null);
         }
+    }
+
+    /// <summary>Places occupées (inscrits, liste d'attente) par élément, sans les noms ; vide si rien à demander.</summary>
+    public async Task<Dictionary<Guid, Ct.SubscriptionAvailability>> AvailabilityAsync(
+        SubscriptionKind kind, IEnumerable<Guid> targetIds, CancellationToken ct = default)
+    {
+        var ids = targetIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var query = string.Join("&", ids.Select(id => $"ids={id}"));
+        var items = await _api.GetListAsync<Ct.SubscriptionAvailability>($"{Route(kind)}/availability?{query}", ct);
+        return items.ToDictionary(item => item.TargetId);
     }
 
     public Task DeleteAsync(SubscriptionKind kind, Guid subscriptionId, CancellationToken ct = default)

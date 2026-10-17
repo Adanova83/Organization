@@ -29,7 +29,7 @@ else
         {
             <table>
                 <thead>
-                    <tr><th>Type</th><th>Inscription</th><th></th></tr>
+                    <tr><th>Type</th><th>Inscription</th><th>État</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var row in rows)
@@ -46,7 +46,7 @@ else
                                     @row.Title
                                 }
                             </td>
-                            <td><SubscribeToggle Kind="row.Kind" TargetId="row.TargetId" MemberId="me" SubscriptionId="row.SubscriptionId" /></td>
+                            <td><div class="subscription-cell">@(row.Item.IsWaiting ? "" : "Inscrit")<SubscribeToggle Kind="row.Kind" TargetId="row.Item.TargetId" MemberId="me" Mine="row.Item" /></div></td>
                         </tr>
                     }
                 </tbody>
@@ -82,7 +82,7 @@ else
 }
 
 @code {
-    private sealed record Row(SubscriptionKind Kind, Guid TargetId, Guid SubscriptionId, string Title, string? Url);
+    private sealed record Row(SubscriptionKind Kind, SubscriptionItem Item, string Title, string? Url);
     private sealed record ContributionRow(string Season, DateOnly PayedDate);
 
     private Guid? me;
@@ -112,7 +112,7 @@ else
                 foreach (var item in await Subscriptions.ListAsync(kind, null, memberId))
                 {
                     var (title, url) = await Subscriptions.DescribeAsync(kind, item.TargetId);
-                    rows.Add(new Row(kind, item.TargetId, item.Id, title, url));
+                    rows.Add(new Row(kind, item, title, url));
                 }
             }
 

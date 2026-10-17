@@ -2,6 +2,8 @@
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 #
 # Le compte de test est défini dans dev/oidc-config.json (e-mail = ADMIN_EMAIL, groupe « authentik Admins » = toutes les permissions).
+# Un second profil, « membre-test » (groupe « membres », lecture seule), sert à tester les droits limités : jeton par
+#   client_credentials avec scope=membre, ou connexion interactive en saisissant ses claims.
 # Ne jamais utiliser en production.
 #
 # L'adresse de l'annuaire doit être la même pour le navigateur et pour le conteneur de l'API (sinon l'émetteur du jeton
@@ -29,3 +31,9 @@ services:
       # Le faux serveur accepte n'importe quel client ; ces valeurs ne servent qu'à activer la connexion web.
       Oidc__ClientId: organizations-web
       Oidc__ClientSecret: dev-secret
+      # Groupe « membres » (profil de test « membre-test » de dev/oidc-config.json) : lecture du planning seulement.
+      Authorization__RolePermissions__membres__0: activity.read
+      Authorization__RolePermissions__membres__1: event.read
+      Authorization__RolePermissions__membres__2: project.read
+      Authorization__RolePermissions__membres__3: space.read
+      Authorization__RolePermissions__membres__4: organization.read

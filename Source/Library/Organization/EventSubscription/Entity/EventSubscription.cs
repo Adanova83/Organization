@@ -9,5 +9,6 @@ internal class EventSubscription : PrimaryKey
     [Required] public Guid EventId { get; set; }
     [ForeignKey(nameof(EventId))] public Event Event { get; set; } = default!;
     [Required] public Guid MemberId{ get; set; }
+    [Required] public bool IsWaiting { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
 }

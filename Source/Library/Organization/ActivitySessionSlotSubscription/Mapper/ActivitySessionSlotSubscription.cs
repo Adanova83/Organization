@@ -12,6 +12,8 @@ public static class ActivitySessionSlotSubscription
         {
             Id = source.Id,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
+            WaitingRank = source.WaitingRank,
             SessionSlotId = source.SessionSlotId,
             Active = source.Active.DomainToContract()
         };
@@ -23,6 +25,7 @@ public static class ActivitySessionSlotSubscription
         {
             Id = source.Id,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
             SessionSlotId = source.SessionSlotId,
             Active = source.Active.DomainToEntity()
         };
@@ -34,6 +37,7 @@ public static class ActivitySessionSlotSubscription
         {
             Id = source.Id,
             MemberId = source.MemberId,
+            IsWaiting = source.IsWaiting,
             SessionSlotId = source.SessionSlotId,
             Active = source.Active.EntityToDomain()
         };
