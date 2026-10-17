@@ -4,9 +4,12 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 
 ## Priorité haute
 
-- [ ] **Tester le site connecté** : parcourir toutes les pages (profil, années scolaires, ateliers, sessions,
-      événements et répétitions, calendrier, notes, badges, cotisations…) avec un compte administrateur, puis avec
-      un compte aux droits limités (`*.read` seulement) pour vérifier les droits.
+- [x] **Tester le site connecté (administrateur)** : 57 pages parcourues sans erreur ; création d'une série et
+      inscription par les formulaires ; corrigé : script Blazor absent de l'image Docker, pré-contrôle d'âge des
+      responsables, mise en page de la colonne « Inscription ».
+- [ ] **Tester avec un compte aux droits limités** : la page de connexion du faux serveur OIDC accepte des claims
+      personnalisés (autre e-mail, autres groupes) ; définir `Authorization:RolePermissions` (ex. groupe « membres »
+      en `*.read`) dans `docker-compose.dev.yml`, puis vérifier menus, pages refusées et boutons masqués.
 - [x] **Tests automatiques** : projet `Source/Tests/Organizations.Tests` (xUnit) : récurrence des séries, rythme
       vacances / jours fériés, Pâques et jours fériés, dates des vacances importées, heure de Paris, exclusions ICS.
 - [ ] **Tests à compléter** : handlers (validations), endpoints de l'API (droits `*.read` / `*.edit`, données d'un

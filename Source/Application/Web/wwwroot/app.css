@@ -286,3 +286,4 @@ form.inline { display: inline; }
 .event-dates:has(#repeat option[value="MonthlyByWeekday"]:checked) .repeat-monthly-weekday { display: grid; }
 .event-dates:has(#repeat option[value^="Monthly"]:checked) .unit-monthly { display: inline; }
 .calendar-kind { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.subscription-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }

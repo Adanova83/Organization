@@ -83,12 +83,14 @@ else if (activity is not null)
                                 @if (showSubscriptions)
                                 {
                                     <td>
+                                        <div class="subscription-cell">
                                         <SubscribeToggle Kind="SubscriptionKind.Slot" TargetId="slot.Id" MemberId="me"
                                                          SubscriptionId="SubscriptionOf(slot.Id)" BlockReason="@BlockReasonFor(item.Session)" />
                                         @if (canSeeSubscribers)
                                         {
                                             <a href="/subscriptions/slot/@slot.Id">Inscrits</a>
                                         }
+                                        </div>
                                     </td>
                                 }
                                 @if (canEdit)
@@ -115,6 +117,8 @@ else if (activity is not null)
     private string? error;
     private bool canEdit;
     private bool canSeeSubscribers;
+    // Responsable : l'API le laisse déroger à l'âge et à la capacité, le bouton n'est donc pas bloqué.
+    private bool canOverride;
     private Guid? me;
     private DateOnly? myBirthdate;
     private Dictionary<Guid, Guid> mySubscriptions = [];
@@ -125,7 +129,7 @@ else if (activity is not null)
 
     // Âge apprécié au début de la session (règle de l'API).
     private string? BlockReasonFor(Ct.ActivitySession session)
-        => SubscriptionHints.AgeBlock(activity?.AgeMinimum, myBirthdate, session.EffectiveStartDate);
+        => canOverride ? null : SubscriptionHints.AgeBlock(activity?.AgeMinimum, myBirthdate, session.EffectiveStartDate);
 
     private string SpaceName(Guid? id) => id is { } key && spaces.TryGetValue(key, out var name) ? name : "—";
 
@@ -138,6 +142,7 @@ else if (activity is not null)
             activity = await Api.GetActivityAsync(Id);
 
             canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
+            canOverride = await Access.CanAsync(Permissions.SubscriptionEdit);
             me = await Access.MemberIdAsync();
             myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)

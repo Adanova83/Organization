@@ -86,6 +86,8 @@ else if (item is not null)
     private string? error;
     private bool canEdit;
     private bool canSeeSubscribers;
+    // Responsable : l'API le laisse déroger à l'âge et à la capacité, le bouton n'est donc pas bloqué.
+    private bool canOverride;
     private Guid? me;
     private DateOnly? myBirthdate;
     private Guid? mySubscription;
@@ -95,7 +97,7 @@ else if (item is not null)
     private string OccurrenceDay => DateOnly.FromDateTime(Format.ParisLocal(item!.StartDate)).ToString("yyyy-MM-dd");
 
     // Âge apprécié à la date de l'événement (règle de l'API).
-    private string? BlockReason => SubscriptionHints.AgeBlock(item?.AgeMinimum, myBirthdate, item?.StartDate);
+    private string? BlockReason => canOverride ? null : SubscriptionHints.AgeBlock(item?.AgeMinimum, myBirthdate, item?.StartDate);
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,6 +114,7 @@ else if (item is not null)
             }
 
             canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
+            canOverride = await Access.CanAsync(Permissions.SubscriptionEdit);
             me = await Access.MemberIdAsync();
             myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)

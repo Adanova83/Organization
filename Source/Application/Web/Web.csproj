@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Web</RootNamespace>
     <AssemblyName>Web</AssemblyName>
+    <!-- Scripts Blazor (_framework/blazor.web.js) : le SDK ne les ajoute que s'il voit des fichiers .razor à la
+         restauration ; or le Dockerfile restaure avec les seuls .csproj. On les demande donc explicitement. -->
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
 
   <ItemGroup>
