@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Library.Data;
 
-public class FullDbContext : DbContext
+public partial class FullDbContext : DbContext
 {
     internal DbSet<AccessEvent> AccessEvents => Set<AccessEvent>();
     internal DbSet<Activity> Activities => Set<Activity>();
@@ -85,12 +85,15 @@ public class FullDbContext : DbContext
 
     public override int SaveChanges()
     {
+        PropagateDeletionsAsync(CancellationToken.None).GetAwaiter().GetResult();
         ApplyAuditInformation();
         return base.SaveChanges();
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        // Politique de suppression (propagation ou refus, voir FullDbContextDeletion.cs), puis suppression logique.
+        await PropagateDeletionsAsync(cancellationToken);
         ApplyAuditInformation();
         return await base.SaveChangesAsync(cancellationToken);
     }

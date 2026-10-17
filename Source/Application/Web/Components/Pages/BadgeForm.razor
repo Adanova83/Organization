@@ -36,7 +36,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-badge" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce badge ?');">Supprimer ce badge</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce badge et ses attributions ? L’historique des passages est conservé.');">Supprimer ce badge</button>
         </form>
     }
 }

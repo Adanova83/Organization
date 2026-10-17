@@ -25,27 +25,13 @@ public sealed class SchoolYear : ISchoolYear
         };
     }
 
-    /// <summary>
-    /// Suppression logique, refusée tant que l'année est utilisée : les saisons, sessions, événements et projets qui s'y rattachent
-    /// prennent leurs dates dans l'année et disparaîtraient avec elle.
-    /// </summary>
+    /// <summary>Suppression logique ; refusée tant que l'année est utilisée (politique de suppression du DbContext).</summary>
     public async Task DeleteAsync(Domain.SchoolYear domain, CancellationToken ct)
     {
         var entity = await _dbContext.SchoolYears.FindAsync(domain.Id);
         if (entity == null)
         {
             return;
-        }
-
-        var inUse = await _dbContext.OrganizationSessions.AnyAsync(item => item.SchoolYearId == domain.Id, ct)
-            || await _dbContext.ActivitySessions.AnyAsync(item => item.SchoolYearId == domain.Id, ct)
-            || await _dbContext.Events.AnyAsync(item => item.SchoolYearId == domain.Id, ct)
-            || await _dbContext.Projects.AnyAsync(item => item.SchoolYearId == domain.Id, ct)
-            || await _dbContext.Holidays.AnyAsync(item => item.SchoolYearId == domain.Id, ct);
-
-        if (inUse)
-        {
-            throw new InUseException("The school year is still used by seasons, sessions, events, projects or holidays.");
         }
 
         _dbContext.SchoolYears.Remove(entity);

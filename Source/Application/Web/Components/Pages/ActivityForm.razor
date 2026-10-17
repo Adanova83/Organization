@@ -50,7 +50,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-activity" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette activité ?');">Supprimer cette activité</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette activité, avec ses sessions, créneaux, inscriptions et animateurs ?');">Supprimer cette activité</button>
         </form>
     }
 }

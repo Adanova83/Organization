@@ -108,35 +108,65 @@ public sealed class SubscriptionGuard
             capacity, ageMinimum, birthdate, SubscriptionRules.AgeReference(start, today), canOverride);
     }
 
-    // ---- Après une désinscription : les suivants de la liste d'attente prennent les places libérées ----
+    // ---- Places libérées (désinscription, capacité augmentée, membre supprimé) : les suivants de la liste d'attente passent ----
 
-    public async Task AfterDeleteAsync(Domain.ActivitySessionSlotSubscription subscription, CancellationToken ct)
+    public Task AfterDeleteAsync(Domain.ActivitySessionSlotSubscription subscription, CancellationToken ct)
+        => FillAsync(Contract.SubscriptionTargetKind.ActivitySlot, subscription.SessionSlotId, ct);
+
+    public Task AfterDeleteAsync(Domain.EventSubscription subscription, CancellationToken ct)
+        => FillAsync(Contract.SubscriptionTargetKind.Event, subscription.EventId, ct);
+
+    public Task AfterDeleteAsync(Domain.ProjectSlotSubscription subscription, CancellationToken ct)
+        => FillAsync(Contract.SubscriptionTargetKind.ProjectSlot, subscription.ProjectSlotId, ct);
+
+    /// <summary>Remplit les places libres d'un élément avec sa liste d'attente (élément supprimé : rien à faire).</summary>
+    public async Task FillAsync(Contract.SubscriptionTargetKind kind, Guid targetId, CancellationToken ct)
     {
-        var slot = (await _slots.SearchAsync(subscription.SessionSlotId, ct)).Data;
-        if (slot is not null)
+        switch (kind)
         {
-            await FillAsync(slot.Id, slot.Capacity, _slotSubscriptions.CountByTargetAsync,
-                async (target, token) => await _slotSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+            case Contract.SubscriptionTargetKind.ActivitySlot:
+                if ((await _slots.SearchAsync(targetId, ct)).Data is { } slot)
+                {
+                    await FillAsync(slot.Id, slot.Capacity, _slotSubscriptions.CountByTargetAsync,
+                        async (target, token) => await _slotSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+                }
+                break;
+            case Contract.SubscriptionTargetKind.Event:
+                if ((await _events.SearchAsync(targetId, ct)).Data is { } item)
+                {
+                    await FillAsync(item.Id, item.Capacity, _eventSubscriptions.CountByTargetAsync,
+                        async (target, token) => await _eventSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+                }
+                break;
+            default:
+                if ((await _projectSlots.SearchAsync(targetId, ct)).Data is { } projectSlot)
+                {
+                    await FillAsync(projectSlot.Id, projectSlot.Capacity, _projectSubscriptions.CountByTargetAsync,
+                        async (target, token) => await _projectSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+                }
+                break;
         }
     }
 
-    public async Task AfterDeleteAsync(Domain.EventSubscription subscription, CancellationToken ct)
+    /// <summary>Remplit tous les éléments qui ont une liste d'attente (après la suppression d'un membre et de ses inscriptions).</summary>
+    public async Task FillAllAsync(CancellationToken ct)
     {
-        var item = (await _events.SearchAsync(subscription.EventId, ct)).Data;
-        if (item is not null)
+        foreach (var target in (await _slotSubscriptions.SearchAsync(null, null, 0, 0, ct)).Data
+                     .Where(item => item.IsWaiting).Select(item => item.SessionSlotId).Distinct())
         {
-            await FillAsync(item.Id, item.Capacity, _eventSubscriptions.CountByTargetAsync,
-                async (target, token) => await _eventSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+            await FillAsync(Contract.SubscriptionTargetKind.ActivitySlot, target, ct);
         }
-    }
 
-    public async Task AfterDeleteAsync(Domain.ProjectSlotSubscription subscription, CancellationToken ct)
-    {
-        var slot = (await _projectSlots.SearchAsync(subscription.ProjectSlotId, ct)).Data;
-        if (slot is not null)
+        foreach (var target in (await _eventSubscriptions.SearchAsync(null, null, 0, 0, ct)).Data
+                     .Where(item => item.IsWaiting).Select(item => item.EventId).Distinct())
         {
-            await FillAsync(slot.Id, slot.Capacity, _projectSubscriptions.CountByTargetAsync,
-                async (target, token) => await _projectSubscriptions.PromoteNextAsync(target, token) is not null, ct);
+            await FillAsync(Contract.SubscriptionTargetKind.Event, target, ct);
+        }
+
+        foreach (var target in (await _projectSubscriptions.SearchAsync(null, null, 0, 0, ct)).Data
+                     .Where(item => item.IsWaiting).Select(item => item.ProjectSlotId).Distinct())
+        {
+            await FillAsync(Contract.SubscriptionTargetKind.ProjectSlot, target, ct);
         }
     }
 

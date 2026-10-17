@@ -60,7 +60,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-session" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette session ?');">Supprimer cette session</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette session, avec ses créneaux, inscriptions et animateurs ?');">Supprimer cette session</button>
         </form>
     }
 }

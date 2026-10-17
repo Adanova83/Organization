@@ -25,10 +25,11 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 - [x] **Places restantes et liste d'attente** : places visibles par tous (sans les noms), liste d'attente automatique
       quand c'est complet, promotion automatique à chaque désinscription ; tableau de bord sur l'accueil (mes
       inscriptions, prochains événements, remplissage pour `subscription.read`).
-- [ ] **Liste d'attente et capacité augmentée** : augmenter la capacité d'un créneau ou d'un événement ne fait pas encore
-      passer les personnes en attente (seule une désinscription le fait).
-- [ ] **Suppression en cascade** : supprimer une activité laisse ses sessions, créneaux, inscriptions et animateurs ;
-      décider ce qui doit suivre (suppression, blocage ou avertissement).
+- [x] **Liste d'attente et capacité augmentée** : augmenter la capacité d'un créneau, d'un événement ou d'un créneau de
+      projet, ou supprimer un membre, fait passer les personnes en attente.
+- [x] **Suppression en cascade** : suppression logique propagée (activité, session, créneau, événement, projet, note,
+      badge, membre) ou refusée avec un message clair (année scolaire, organisation, saison avec cotisations, salle, pays
+      encore utilisés) ; confirmations du site détaillées ; tests `DeletionPolicyTests`.
 - [ ] **Cotisations** : vue « qui n'a pas payé cette saison », et enregistrement du montant payé.
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.
