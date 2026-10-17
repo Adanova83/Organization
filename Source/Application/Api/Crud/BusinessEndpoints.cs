@@ -206,6 +206,9 @@ public static class BusinessEndpoints
             (handler, targetId, memberId, page, size, ct) =>
                 handler.SearchAsync(memberId ?? throw new ArgumentException("memberId is required."), page, size, ct));
 
+        // Cotisations d'une saison par membre (GET /api/contributions/seasons/{id}, contribution.read).
+        app.MapSeasonContributions();
+
         // ---- Notes personnelles : visibles et modifiables par leur seul auteur ----
         app.MapOwnedCrud<Ct.Note, Do.Note, H.Note>(
             "/api/notes", "Notes",

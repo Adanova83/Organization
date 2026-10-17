@@ -9,7 +9,7 @@ pas gérés ici : ils relèvent de l'annuaire (Authentik, OIDC) et de Nextcloud.
 
 ## Fonctionnalités
 
-- **Membres** : fiches, adresse, cotisations par saison, profil modifiable par le membre lui-même.
+- **Membres** : fiches, adresse, cotisations par saison (montant payé, « qui n'a pas payé » par saison), profil modifiable par le membre lui-même.
 - **Années scolaires** (ex. 2026-2027) communes à toutes les organisations, avec leur zone de vacances (A, B ou C) ;
   les vacances scolaires officielles sont importées automatiquement à la création de l'année.
 - **Ateliers** : sessions par année scolaire (période restreinte possible), créneaux hebdomadaires, rythme

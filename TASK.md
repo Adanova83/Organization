@@ -30,7 +30,8 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 - [x] **Suppression en cascade** : suppression logique propagée (activité, session, créneau, événement, projet, note,
       badge, membre) ou refusée avec un message clair (année scolaire, organisation, saison avec cotisations, salle, pays
       encore utilisés) ; confirmations du site détaillées ; tests `DeletionPolicyTests`.
-- [ ] **Cotisations** : vue « qui n'a pas payé cette saison », et enregistrement du montant payé.
+- [x] **Cotisations** : montant payé (paiement en plusieurs fois), page « Cotisations de la saison » (participants non à
+      jour, reste à payer, paiement prérempli), bloc « Cotisations » des saisons en cours sur le tableau de bord.
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.
 - [ ] **Flux ICS** : page indiquant aux membres l'adresse d'abonnement pour l'Agenda Nextcloud.

@@ -127,6 +127,10 @@ public sealed class ApiClient
     public Task<List<Ct.OrganizationSession>> GetOrganizationSessionsAsync(Guid organizationId, CancellationToken ct = default)
         => GetAllAsync<Ct.OrganizationSession>($"{ApiRoutes.Organizations}/{organizationId}/sessions", ct);
 
+    /// <summary>Cotisations d'une saison par membre (contribution.read).</summary>
+    public Task<Ct.SeasonContributions> GetSeasonContributionsAsync(Guid organizationSessionId, CancellationToken ct = default)
+        => GetAsync<Ct.SeasonContributions>($"{ApiRoutes.Contributions}/seasons/{organizationSessionId}", ct);
+
     /// <summary>Espaces. Vide si l'utilisateur n'a pas space.read.</summary>
     public async Task<List<Ct.Space>> GetSpacesAsync(CancellationToken ct = default)
     {

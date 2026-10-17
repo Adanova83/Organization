@@ -300,3 +300,12 @@ form.inline { display: inline; }
 .gauge { display: inline-block; width: 6rem; height: 0.6rem; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; vertical-align: middle; }
 .gauge > span { display: block; height: 100%; background: var(--cyan); }
 .gauge.full > span { background: var(--danger); }
+
+/* Onglets simples (liens), l'onglet courant en gras. */
+.tabs { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0 0.5rem; }
+
+/* État d'une cotisation. */
+.contribution-state { border-radius: 6px; padding: 0 0.4rem; font-size: 0.85rem; white-space: nowrap; }
+.contribution-state.unpaid { color: var(--notice-text); background: var(--notice-bg); }
+.contribution-state.partial { color: var(--notice-text); background: var(--notice-bg); opacity: 0.75; }
+.contribution-state.paid { color: var(--muted); }

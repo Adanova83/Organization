@@ -14,6 +14,7 @@ public static class Contribution
             MemberId = source.MemberId,
             OrganizationSessionId = source.OrganizationSessionId,
             PayedDate = source.PayedDate,
+            Amount = source.Amount,
             Active = source.Active.DomainToContract()
         };
     }
@@ -26,6 +27,7 @@ public static class Contribution
             MemberId = source.MemberId,
             OrganizationSessionId = source.OrganizationSessionId,
             PayedDate = source.PayedDate,
+            Amount = source.Amount,
             Active = source.Active.DomainToEntity()
         };
     }
@@ -38,6 +40,7 @@ public static class Contribution
             MemberId = source.MemberId,
             OrganizationSessionId = source.OrganizationSessionId,
             PayedDate = source.PayedDate,
+            Amount = source.Amount,
             Active = source.Active.EntityToDomain()
         };
     }
@@ -51,6 +54,7 @@ public static class Contribution
             MemberId = source.MemberId,
             OrganizationSessionId = source.OrganizationSessionId,
             PayedDate = source.PayedDate,
+            Amount = source.Amount,
             Active = source.Active.ContractToDomain() ?? new Do.Active(),
             Audit = new Do.Audit()
         };

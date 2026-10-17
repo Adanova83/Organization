@@ -4,7 +4,8 @@
 
 @*
     Tableau de bord de l'accueil. Chaque bloc n'apparaît qu'avec la permission de lecture de son domaine :
-    mes inscriptions (tout membre), prochains événements (event.read), remplissage des créneaux et événements (subscription.read).
+    mes inscriptions (tout membre), prochains événements (event.read), remplissage des créneaux et événements (subscription.read),
+    cotisations des saisons en cours (contribution.read et organization.read).
 *@
 
 @if (error is not null)
@@ -111,11 +112,47 @@ else if (loaded)
                 }
             </section>
         }
+
+        @if (contributions is not null)
+        {
+            <section class="card dashboard-wide">
+                <h2>Cotisations</h2>
+                @if (contributions.Count == 0)
+                {
+                    <p class="muted">Aucune saison en cours.</p>
+                }
+                else
+                {
+                    <table>
+                        <thead><tr><th>Saison</th><th>Participants à jour</th><th>Encaissé</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var row in contributions)
+                            {
+                                <tr>
+                                    <td>@row.Title</td>
+                                    <td>
+                                        @row.Season.ParticipantsUpToDate / @row.Season.Participants
+                                        @if (row.Season.ParticipantsNotUpToDate > 0)
+                                        {
+                                            <span class="waiting">@row.Season.ParticipantsNotUpToDate non à jour</span>
+                                        }
+                                    </td>
+                                    <td>@Format.Money(row.Season.Collected)@(row.Season.Expected > 0 ? $" / {Format.Money(row.Season.Expected)}" : "")</td>
+                                    <td><a href="/organization-sessions/@row.Season.OrganizationSessionId/contributions">Qui n'a pas payé ?</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+        }
     </div>
 }
 
 @code {
     private sealed record MineRow(SubscriptionKind Kind, SubscriptionItem Item, string Title, string? Url);
+
+    private sealed record ContributionRow(string Title, Ct.SeasonContributions Season);
 
     private sealed record FillingRow(string Title, string Url, string When, string SubscribersUrl, Ct.SubscriptionAvailability Availability)
     {
@@ -126,6 +163,7 @@ else if (loaded)
     private List<Ct.Event>? upcomingEvents;
     private Dictionary<Guid, Ct.SubscriptionAvailability> eventAvailability = [];
     private List<FillingRow>? filling;
+    private List<ContributionRow>? contributions;
     private string? error;
     private bool loaded;
 
@@ -163,12 +201,34 @@ else if (loaded)
                 filling = await LoadFillingAsync(events);
             }
 
+            if (await Access.CanAsync(Permissions.ContributionRead) && await Access.CanAsync(Permissions.OrganizationRead))
+            {
+                contributions = await LoadContributionsAsync();
+            }
+
             loaded = true;
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))
         {
             error = ApiErrors.Message(ex);
         }
+    }
+
+    /// <summary>Saisons en cours (année scolaire commencée et non terminée) de chaque organisation, avec leurs cotisations.</summary>
+    private async Task<List<ContributionRow>> LoadContributionsAsync()
+    {
+        var rows = new List<ContributionRow>();
+        var now = DateTime.UtcNow;
+
+        foreach (var organization in await Api.GetOrganizationsAsync())
+        {
+            foreach (var season in (await Api.GetOrganizationSessionsAsync(organization.Id)).Where(s => s.StartDate <= now && s.EndDate >= now))
+            {
+                rows.Add(new ContributionRow($"{organization.Name} {season.SchoolYearCode}", await Api.GetSeasonContributionsAsync(season.Id)));
+            }
+        }
+
+        return rows.OrderBy(r => r.Title).ToList();
     }
 
     /// <summary>Créneaux (ateliers, projets) des périodes en cours ou à venir et événements à venir, avec capacité ou liste d'attente.</summary>

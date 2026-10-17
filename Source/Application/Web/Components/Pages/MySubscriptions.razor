@@ -65,7 +65,7 @@ else
         {
             <table>
                 <thead>
-                    <tr><th>Saison</th><th>Payée le</th></tr>
+                    <tr><th>Saison</th><th>Payée le</th><th>Montant</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var item in contributions)
@@ -73,6 +73,7 @@ else
                         <tr>
                             <td>@item.Season</td>
                             <td>@Format.Date(item.PayedDate)</td>
+                            <td>@Format.Money(item.Amount)</td>
                         </tr>
                     }
                 </tbody>
@@ -83,7 +84,7 @@ else
 
 @code {
     private sealed record Row(SubscriptionKind Kind, SubscriptionItem Item, string Title, string? Url);
-    private sealed record ContributionRow(string Season, DateOnly PayedDate);
+    private sealed record ContributionRow(string Season, DateOnly PayedDate, float Amount);
 
     private Guid? me;
     private List<Row> rows = [];
@@ -118,7 +119,7 @@ else
 
             foreach (var item in (await Api.ListAllAsync<Ct.Contribution>(ApiRoutes.Contributions, null, memberId)).OrderByDescending(c => c.PayedDate))
             {
-                contributions.Add(new ContributionRow(await SeasonLabelAsync(item.OrganizationSessionId), item.PayedDate));
+                contributions.Add(new ContributionRow(await SeasonLabelAsync(item.OrganizationSessionId), item.PayedDate, item.Amount));
             }
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))

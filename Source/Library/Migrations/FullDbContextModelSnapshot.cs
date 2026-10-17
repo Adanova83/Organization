@@ -288,6 +288,9 @@ namespace Library.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
+
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");
 

@@ -85,6 +85,17 @@ public sealed class Contribution : ICrudHandler<Domain.Contribution>
         return _repository.SearchAsync(memberId, page, pageSize, ct);
     }
 
+    /// <summary>Cotisations d'une saison : montant dû, payé et reste par membre, participants et totaux.</summary>
+    public Task<Contract.SeasonContributions?> SeasonAsync(Guid organizationSessionId, CancellationToken ct)
+    {
+        if (organizationSessionId == Guid.Empty)
+        {
+            throw new ArgumentException("Organization session ID must not be empty.", nameof(organizationSessionId));
+        }
+
+        return _repository.SeasonAsync(organizationSessionId, ct);
+    }
+
     private void ValidateDomainRules(Domain.Contribution domain)
     {
         if (domain.MemberId == Guid.Empty)
@@ -94,6 +105,11 @@ public sealed class Contribution : ICrudHandler<Domain.Contribution>
         if (domain.OrganizationSessionId == Guid.Empty)
         {
             throw new ArgumentException("Organization ID must not be empty.", nameof(domain.OrganizationSessionId));
+        }
+
+        if (domain.Amount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(domain.Amount), "Amount must be greater or equal than 0.");
         }
     }
 }
