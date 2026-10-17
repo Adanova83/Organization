@@ -9,7 +9,7 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       responsables, mise en page de la colonne « Inscription ».
 - [ ] **Tester avec un compte aux droits limités** : côté API, vérifié avec le profil « membre-test »
       (groupe « membres », lecture seule, `docker-compose.dev.yml`) ; reste à parcourir le site connecté avec ce profil
-      (menus, pages refusées, boutons masqués) — membre `membre.test.org` à créer dans la base.
+      (menus, pages refusées, boutons masqués) avec le membre `membre.test@adanova83.org` (créé dans la base de dev).
 - [x] **Tests automatiques** : projet `Source/Tests/Organizations.Tests` (xUnit) : récurrence des séries, rythme
       vacances / jours fériés, Pâques et jours fériés, dates des vacances importées, heure de Paris, exclusions ICS.
 - [ ] **Tests à compléter** : handlers (validations), endpoints de l'API (droits `*.read` / `*.edit`, données d'un
