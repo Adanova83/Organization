@@ -103,7 +103,7 @@
 
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-note" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette note ?');">Supprimer cette note</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette note et ses liens ?');">Supprimer cette note</button>
         </form>
     }
 }

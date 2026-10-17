@@ -22,6 +22,7 @@ public static class CrudEndpoints
     /// <paramref name="readOnly"/> : seules les lectures sont déclarées.
     /// <paramref name="keepOnUpdate"/> : (nouveau, existant) recopie les champs non modifiables par le client.
     /// <paramref name="afterCreate"/> : traitement complémentaire après une création (import automatique...).
+    /// <paramref name="afterChange"/> : traitement complémentaire après une modification ou une suppression (liste d'attente...).
     /// Retourne le groupe de routes pour y ajouter des routes enfants.
     /// </summary>
     public static RouteGroupBuilder MapCrud<TContract, TDomain, THandler>(
@@ -35,7 +36,8 @@ public static class CrudEndpoints
         string? readPermission = null,
         Action<TDomain, TDomain>? keepOnUpdate = null,
         bool readOnly = false,
-        Func<TDomain, IServiceProvider, CancellationToken, Task>? afterCreate = null)
+        Func<TDomain, IServiceProvider, CancellationToken, Task>? afterCreate = null,
+        Func<TDomain, IServiceProvider, CancellationToken, Task>? afterChange = null)
         where TContract : Ct.PrimaryKey
         where TDomain : Do.PrimaryKey
         where THandler : class, ICrudHandler<TDomain>
@@ -80,7 +82,7 @@ public static class CrudEndpoints
             return Results.Created($"{route}/{contract.Id}", contract);
         }).RequirePermission(writePermission);
 
-        group.MapPut("/{id:guid}", async (Guid id, TContract body, [FromServices] THandler handler, CancellationToken ct) =>
+        group.MapPut("/{id:guid}", async (Guid id, TContract body, [FromServices] THandler handler, HttpContext http, CancellationToken ct) =>
         {
             var existing = await handler.SearchAsync(id, ct);
             if (existing.Data is null)
@@ -100,12 +102,16 @@ public static class CrudEndpoints
             keepOnUpdate?.Invoke(domain, existing.Data);
 
             await handler.EditAsync(domain, ct);
+            if (afterChange is not null)
+            {
+                await afterChange(domain, http.RequestServices, ct);
+            }
 
             var updated = await handler.SearchAsync(id, ct);
             return updated.Data is null ? Results.NotFound() : Results.Ok(toContract(updated.Data));
         }).RequirePermission(writePermission);
 
-        group.MapDelete("/{id:guid}", async (Guid id, [FromServices] THandler handler, CancellationToken ct) =>
+        group.MapDelete("/{id:guid}", async (Guid id, [FromServices] THandler handler, HttpContext http, CancellationToken ct) =>
         {
             var existing = await handler.SearchAsync(id, ct);
             if (existing.Data is null)
@@ -115,6 +121,11 @@ public static class CrudEndpoints
 
             // Suppression logique (voir FullDbContext) : la ligne est conservée avec Audit.DeletedAt.
             await handler.DeleteAsync(existing.Data, ct);
+            if (afterChange is not null)
+            {
+                await afterChange(existing.Data, http.RequestServices, ct);
+            }
+
             return Results.NoContent();
         }).RequirePermission(writePermission);
 

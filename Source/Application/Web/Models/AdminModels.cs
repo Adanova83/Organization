@@ -207,6 +207,10 @@ public sealed class ContributionModel
 
     [Required(ErrorMessage = "La date de paiement est obligatoire.")]
     public DateOnly? PayedDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    /// <summary>Vide : tarif de la saison.</summary>
+    [Range(0, 100000, ErrorMessage = "Le montant doit être positif.")]
+    public float? Amount { get; set; }
 }
 
 public sealed class NoteModel

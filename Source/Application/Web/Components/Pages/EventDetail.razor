@@ -28,7 +28,7 @@ else if (item is not null)
         <dt>Début</dt><dd>@Format.DateTimeLabel(item.StartDate)</dd>
         <dt>Fin</dt><dd>@Format.DateTimeLabel(item.EndDate)</dd>
         <dt>Lieu</dt><dd>@(item.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</dd>
-        <dt>Places</dt><dd>@(item.Capacity?.ToString() ?? "Illimitées")</dd>
+        <dt>Places</dt><dd>@Format.Places(item.Capacity, availability)</dd>
         <dt>Âge</dt><dd>@Format.Age(item.AgeMinimum)</dd>
         @if (!string.IsNullOrWhiteSpace(item.Description))
         {
@@ -69,7 +69,7 @@ else if (item is not null)
     @if (me is not null || canSeeSubscribers)
     {
         <p class="actions">
-            <SubscribeToggle Kind="SubscriptionKind.Event" TargetId="Id" MemberId="me" SubscriptionId="mySubscription" BlockReason="@BlockReason" />
+            <SubscribeToggle Kind="SubscriptionKind.Event" TargetId="Id" MemberId="me" Mine="mySubscription" IsFull="!canOverride && availability?.IsFull == true" BlockReason="@BlockReason" />
             @if (canSeeSubscribers)
             {
                 <a href="/subscriptions/event/@Id">Voir les inscrits</a>
@@ -86,16 +86,19 @@ else if (item is not null)
     private string? error;
     private bool canEdit;
     private bool canSeeSubscribers;
+    // Responsable : l'API le laisse déroger à l'âge et à la capacité, le bouton n'est donc pas bloqué.
+    private bool canOverride;
     private Guid? me;
     private DateOnly? myBirthdate;
-    private Guid? mySubscription;
+    private SubscriptionItem? mySubscription;
+    private Ct.SubscriptionAvailability? availability;
     private List<Ct.Event> series = [];
 
     // Jour de cette occurrence (heure de Paris), pour « cette date et les suivantes ».
     private string OccurrenceDay => DateOnly.FromDateTime(Format.ParisLocal(item!.StartDate)).ToString("yyyy-MM-dd");
 
     // Âge apprécié à la date de l'événement (règle de l'API).
-    private string? BlockReason => SubscriptionHints.AgeBlock(item?.AgeMinimum, myBirthdate, item?.StartDate);
+    private string? BlockReason => canOverride ? null : SubscriptionHints.AgeBlock(item?.AgeMinimum, myBirthdate, item?.StartDate);
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,14 +115,16 @@ else if (item is not null)
             }
 
             canSeeSubscribers = await Access.CanAsync(Permissions.SubscriptionRead);
+            canOverride = await Access.CanAsync(Permissions.SubscriptionEdit);
             me = await Access.MemberIdAsync();
             myBirthdate = await Access.BirthdateAsync();
             if (me is { } memberId)
             {
-                mySubscription = (await Subs.ListAsync(SubscriptionKind.Event, Id, memberId)).FirstOrDefault()?.Id;
+                mySubscription = (await Subs.ListAsync(SubscriptionKind.Event, Id, memberId)).FirstOrDefault();
             }
 
             spaces = await Api.GetSpaceNamesAsync();
+            availability = (await Subs.AvailabilityAsync(SubscriptionKind.Event, [Id])).GetValueOrDefault(Id);
         }
         catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {

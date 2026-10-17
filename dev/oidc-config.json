@@ -6,6 +6,17 @@
       "tokenExpiry": 3600,
       "requestMappings": [
         {
+          "requestParam": "scope",
+          "match": "membre",
+          "claims": {
+            "sub": "dev-membre",
+            "email": "membre.test@adanova83.org",
+            "email_verified": true,
+            "name": "Membre Test",
+            "groups": ["membres"]
+          }
+        },
+        {
           "requestParam": "grant_type",
           "match": "*",
           "claims": {

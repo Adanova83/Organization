@@ -37,7 +37,8 @@ public sealed class DomainExceptionHandler : IExceptionHandler
                 break;
             case Library.Repository.InUseException inUse:
                 status = StatusCodes.Status409Conflict;
-                title = "The item is still in use.";
+                // Message destiné aux utilisateurs (politique de suppression, FullDbContextDeletion) : en français.
+                title = "Suppression impossible.";
                 detail = inUse.Message;
                 break;
             case DbUpdateException:

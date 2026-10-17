@@ -8,7 +8,14 @@
 
 <h1>Cotisations</h1>
 
-<p><a href="/members/@MemberId">← Retour au membre</a></p>
+@if (Season is { } fromSeason)
+{
+    <p><a href="/organization-sessions/@fromSeason/contributions">← Retour aux cotisations de la saison</a></p>
+}
+else
+{
+    <p><a href="/members/@MemberId">← Retour au membre</a></p>
+}
 
 @if (error is not null)
 {
@@ -27,7 +34,7 @@
     {
         <table>
             <thead>
-                <tr><th>Saison</th><th>Payée le</th>@if (canEdit){<th></th>}</tr>
+                <tr><th>Saison</th><th>Payée le</th><th>Montant</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var item in contributions)
@@ -35,6 +42,7 @@
                     <tr>
                         <td>@SeasonLabel(item.OrganizationSessionId)</td>
                         <td>@Format.Date(item.PayedDate)</td>
+                        <td>@Format.Money(item.Amount)</td>
                         @if (canEdit)
                         {
                             <td>
@@ -74,6 +82,11 @@
                         </InputSelect>
                     </label>
                     <label>Payée le <InputDate TValue="DateOnly?" @bind-Value="Add!.PayedDate" /></label>
+                    <label>
+                        Montant (€)
+                        <InputNumber @bind-Value="Add!.Amount" step="0.01" min="0" placeholder="Tarif de la saison" />
+                        <small class="muted">Vide : tarif de la saison. Plusieurs paiements possibles (paiement en plusieurs fois).</small>
+                    </label>
                 </fieldset>
                 <p class="actions"><button type="submit">Enregistrer</button></p>
             </EditForm>
@@ -84,11 +97,18 @@
 @code {
     [Parameter] public Guid MemberId { get; set; }
 
+    // Venue de la page des cotisations d'une saison : saison présélectionnée et lien de retour.
+    [SupplyParameterFromQuery(Name = "season")] public Guid? Season { get; set; }
+
+    // Reste à payer proposé par la page de la saison.
+    [SupplyParameterFromQuery(Name = "amount")] public float? Amount { get; set; }
+
     [SupplyParameterFromForm(FormName = "add-contribution")]
     private ContributionModel? Add { get; set; }
 
     private List<Ct.Contribution> contributions = [];
     private Dictionary<Guid, string> seasons = [];
+    private Dictionary<Guid, float> prices = [];
     private string memberName = "";
     private string? error;
     private bool canEdit;
@@ -98,7 +118,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Add ??= new ContributionModel();
+        Add ??= new ContributionModel { OrganizationSessionId = Season, Amount = Amount };
         canEdit = await Access.CanAsync(Permissions.ContributionEdit);
 
         try
@@ -146,6 +166,7 @@
                 foreach (var season in await Api.GetOrganizationSessionsAsync(organization.Id))
                 {
                     result[season.Id] = $"{organization.Name} : {season.SchoolYearCode} ({Format.Price(season.Price)})";
+                    prices[season.Id] = season.Price;
                 }
             }
         }
@@ -165,9 +186,11 @@
             {
                 MemberId = MemberId,
                 OrganizationSessionId = Add!.OrganizationSessionId!.Value,
-                PayedDate = Add.PayedDate!.Value
+                PayedDate = Add.PayedDate!.Value,
+                Amount = Add.Amount ?? prices.GetValueOrDefault(Add.OrganizationSessionId!.Value)
             });
-            Navigation.NavigateTo(Navigation.Uri, replace: true);
+            // Sans le montant proposé, déjà enregistré.
+            Navigation.NavigateTo(Season is { } season ? $"/members/{MemberId}/contributions?season={season}" : $"/members/{MemberId}/contributions", replace: true);
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))
         {

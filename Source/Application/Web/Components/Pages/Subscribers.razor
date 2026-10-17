@@ -31,13 +31,14 @@
     {
         <table>
             <thead>
-                <tr><th>Membre</th>@if (canEdit){<th></th>}</tr>
+                <tr><th>Membre</th><th>État</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var item in items)
                 {
                     <tr>
                         <td>@MemberName(item.MemberId)</td>
+                        <td>@(item.IsWaiting ? $"Liste d'attente ({(item.WaitingRank == 1 ? "1re" : $"{item.WaitingRank}e")})" : "Inscrit")</td>
                         @if (canEdit)
                         {
                             <td>
@@ -51,7 +52,7 @@
                 }
             </tbody>
         </table>
-        <p class="muted">@items.Count inscrit(s)</p>
+        <p class="muted">@items.Count(i => !i.IsWaiting) inscrit(s)@(items.Any(i => i.IsWaiting) ? $", {items.Count(i => i.IsWaiting)} en liste d'attente" : "")</p>
     }
 
     @if (canEdit)
@@ -128,7 +129,8 @@
 
     private async Task LoadAsync(SubscriptionKind k)
     {
-        items = await Subscriptions.ListAsync(k, TargetId);
+        // Inscrits d'abord, puis la liste d'attente dans l'ordre.
+        items = (await Subscriptions.ListAsync(k, TargetId)).OrderBy(i => i.IsWaiting).ThenBy(i => i.WaitingRank).ToList();
 
         // Noms des membres : demande member.read ; sans elle, on affiche un libellé neutre.
         try

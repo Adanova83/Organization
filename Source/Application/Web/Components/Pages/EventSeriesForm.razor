@@ -80,7 +80,7 @@
 
     <form method="post" @onsubmit="DeleteAsync" @formname="delete-series" class="danger">
         <AntiforgeryToken />
-        <button type="submit" class="danger-button" onclick="return confirm('Supprimer ces @targets.Count date(s) ?');">
+        <button type="submit" class="danger-button" onclick="return confirm('Supprimer ces @targets.Count date(s), avec leurs inscriptions et animateurs ?');">
             @(FromDate is null ? "Supprimer toute la série" : "Supprimer cette date et les suivantes")
         </button>
     </form>

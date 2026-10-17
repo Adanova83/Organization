@@ -29,7 +29,7 @@ else
         {
             <table>
                 <thead>
-                    <tr><th>Type</th><th>Inscription</th><th></th></tr>
+                    <tr><th>Type</th><th>Inscription</th><th>État</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var row in rows)
@@ -46,7 +46,7 @@ else
                                     @row.Title
                                 }
                             </td>
-                            <td><SubscribeToggle Kind="row.Kind" TargetId="row.TargetId" MemberId="me" SubscriptionId="row.SubscriptionId" /></td>
+                            <td><div class="subscription-cell">@(row.Item.IsWaiting ? "" : "Inscrit")<SubscribeToggle Kind="row.Kind" TargetId="row.Item.TargetId" MemberId="me" Mine="row.Item" /></div></td>
                         </tr>
                     }
                 </tbody>
@@ -65,7 +65,7 @@ else
         {
             <table>
                 <thead>
-                    <tr><th>Saison</th><th>Payée le</th></tr>
+                    <tr><th>Saison</th><th>Payée le</th><th>Montant</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var item in contributions)
@@ -73,6 +73,7 @@ else
                         <tr>
                             <td>@item.Season</td>
                             <td>@Format.Date(item.PayedDate)</td>
+                            <td>@Format.Money(item.Amount)</td>
                         </tr>
                     }
                 </tbody>
@@ -82,8 +83,8 @@ else
 }
 
 @code {
-    private sealed record Row(SubscriptionKind Kind, Guid TargetId, Guid SubscriptionId, string Title, string? Url);
-    private sealed record ContributionRow(string Season, DateOnly PayedDate);
+    private sealed record Row(SubscriptionKind Kind, SubscriptionItem Item, string Title, string? Url);
+    private sealed record ContributionRow(string Season, DateOnly PayedDate, float Amount);
 
     private Guid? me;
     private List<Row> rows = [];
@@ -112,13 +113,13 @@ else
                 foreach (var item in await Subscriptions.ListAsync(kind, null, memberId))
                 {
                     var (title, url) = await Subscriptions.DescribeAsync(kind, item.TargetId);
-                    rows.Add(new Row(kind, item.TargetId, item.Id, title, url));
+                    rows.Add(new Row(kind, item, title, url));
                 }
             }
 
             foreach (var item in (await Api.ListAllAsync<Ct.Contribution>(ApiRoutes.Contributions, null, memberId)).OrderByDescending(c => c.PayedDate))
             {
-                contributions.Add(new ContributionRow(await SeasonLabelAsync(item.OrganizationSessionId), item.PayedDate));
+                contributions.Add(new ContributionRow(await SeasonLabelAsync(item.OrganizationSessionId), item.PayedDate, item.Amount));
             }
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))

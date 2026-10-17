@@ -1,4 +1,5 @@
 using System.Globalization;
+using Ct = Library.Contract;
 
 namespace Web.Models;
 
@@ -17,6 +18,20 @@ public static class Format
 
     public static string Date(DateOnly value) => value.ToString("dd/MM/yyyy", French);
 
+    /// <summary>Places d'un créneau ou d'un événement : « 8 / 12 », « Complet », avec la liste d'attente ; capacité seule si les inscrits sont inconnus.</summary>
+    public static string Places(int? capacity, Ct.SubscriptionAvailability? availability)
+    {
+        if (availability is null)
+        {
+            return capacity is { } total ? $"{total} place(s)" : "Illimitées";
+        }
+
+        var waiting = availability.Waiting > 0 ? $" · {availability.Waiting} en attente" : "";
+        return availability.Capacity is { } places
+            ? (availability.IsFull ? $"Complet ({availability.Subscribed} / {places}){waiting}" : $"{availability.Subscribed} / {places}{waiting}")
+            : $"{availability.Subscribed} inscrit(s){waiting}";
+    }
+
     /// <summary>Période « du … au … » ; « — » si une date manque.</summary>
     public static string Period(DateTime? start, DateTime? end)
         => start is { } s && end is { } e ? $"Du {Date(s)} au {Date(e)}" : "—";
@@ -26,6 +41,9 @@ public static class Format
     public static string Time(TimeOnly value) => value.ToString("HH:mm", French);
 
     public static string Price(float value) => value == 0 ? "Gratuit" : value.ToString("C2", French);
+
+    /// <summary>Montant (payé, reste...) : « 0,00 € » plutôt que « Gratuit ».</summary>
+    public static string Money(float value) => value.ToString("C2", French);
 
     public static string Age(int? minimum) => minimum is null or 0 ? "Tout âge" : $"{minimum} ans et +";
 

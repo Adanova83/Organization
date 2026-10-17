@@ -63,7 +63,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-member" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce membre ?');">Supprimer ce membre</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce membre, avec ses inscriptions, animations, notes et badges ? Ses cotisations sont conservées.');">Supprimer ce membre</button>
         </form>
     }
 }

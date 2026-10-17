@@ -57,7 +57,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-project-slot" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce créneau ?');">Supprimer ce créneau</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce créneau, avec ses inscriptions et animateurs ?');">Supprimer ce créneau</button>
         </form>
     }
 }

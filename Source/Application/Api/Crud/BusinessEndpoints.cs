@@ -36,7 +36,9 @@ public static class BusinessEndpoints
 
         app.MapCrud<Ct.ActivitySessionSlot, Do.ActivitySessionSlot, H.ActivitySessionSlot>(
             "/api/activity-session-slots", "ActivitySessionSlots", Permissions.ActivityEdit,
-            M.ActivitySessionSlot.ContractToDomain, M.ActivitySessionSlot.DomainToContract);
+            M.ActivitySessionSlot.ContractToDomain, M.ActivitySessionSlot.DomainToContract,
+            // Capacité augmentée : la liste d'attente prend les places libérées.
+            afterChange: (slot, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAsync(Ct.SubscriptionTargetKind.ActivitySlot, slot.Id, ct));
 
         // Membres : données personnelles (member.read pour lire, member.edit pour écrire).
         // ExternalId (lien avec le compte de l'annuaire) n'est jamais modifiable par ce biais.
@@ -44,7 +46,9 @@ public static class BusinessEndpoints
             "/api/members", "Members", Permissions.MemberEdit,
             M.Member.ContractToDomain, M.Member.DomainToContract,
             (handler, query, page, size, ct) => handler.SearchAsync(query, page, size, ct),
-            keepOnUpdate: (updated, existing) => updated.ExternalId = existing.ExternalId);
+            keepOnUpdate: (updated, existing) => updated.ExternalId = existing.ExternalId,
+            // Membre supprimé avec ses inscriptions (voir FullDbContextDeletion) : ses places reviennent aux listes d'attente.
+            afterChange: (_, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAllAsync(ct));
 
         // ---- Référentiels et saisons ----
         // Années scolaires (2026-2027...) : communes à toutes les organisations ; saisons, sessions, événements, projets
@@ -118,7 +122,8 @@ public static class BusinessEndpoints
         var events = app.MapCrud<Ct.Event, Do.Event, H.Event>(
             "/api/events", "Events", Permissions.EventEdit,
             M.Event.ContractToDomain, M.Event.DomainToContract,
-            (handler, query, page, size, ct) => handler.SearchAsync(query, page, size, ct));
+            (handler, query, page, size, ct) => handler.SearchAsync(query, page, size, ct),
+            afterChange: (item, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAsync(Ct.SubscriptionTargetKind.Event, item.Id, ct));
 
         // Séries d'événements récurrents (POST /api/events/series...).
         events.MapEventSeries();
@@ -135,7 +140,8 @@ public static class BusinessEndpoints
 
         app.MapCrud<Ct.ProjectSlot, Do.ProjectSlot, H.ProjectSlot>(
             "/api/project-slots", "ProjectSlots", Permissions.ProjectEdit,
-            M.ProjectSlot.ContractToDomain, M.ProjectSlot.DomainToContract);
+            M.ProjectSlot.ContractToDomain, M.ProjectSlot.DomainToContract,
+            afterChange: (slot, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAsync(Ct.SubscriptionTargetKind.ProjectSlot, slot.Id, ct));
 
         // ---- Animateurs : lecture par *.read, écriture par la permission de l'activité concernée ----
         // Liste : ?targetId= (créneau ou événement) et/ou ?memberId= (animateur).
@@ -162,13 +168,15 @@ public static class BusinessEndpoints
 
         // ---- Inscriptions : un membre gère les siennes ; subscription.edit permet de gérer celles de tous ----
         // Règles (SubscriptionGuard) : jamais deux fois le même membre ; capacité et âge minimum, sauf pour subscription.edit.
+        app.MapSubscriptionAvailability();
         app.MapOwnedCrud<Ct.ActivitySessionSlotSubscription, Do.ActivitySessionSlotSubscription, H.ActivitySessionSlotSubscription>(
             "/api/activity-session-slot-subscriptions", "ActivitySessionSlotSubscriptions",
             Permissions.SubscriptionEdit, ownerCanWrite: true,
             M.ActivitySessionSlotSubscription.ContractToDomain, M.ActivitySessionSlotSubscription.DomainToContract,
             OwnedCrudEndpoints.OwnerField<Do.ActivitySessionSlotSubscription>(item => item.MemberId),
             (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
-            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct));
+            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct),
+            afterDelete: (subscription, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().AfterDeleteAsync(subscription, ct));
 
         app.MapOwnedCrud<Ct.EventSubscription, Do.EventSubscription, H.EventSubscription>(
             "/api/event-subscriptions", "EventSubscriptions",
@@ -176,7 +184,8 @@ public static class BusinessEndpoints
             M.EventSubscription.ContractToDomain, M.EventSubscription.DomainToContract,
             OwnedCrudEndpoints.OwnerField<Do.EventSubscription>(item => item.MemberId),
             (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
-            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct));
+            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct),
+            afterDelete: (subscription, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().AfterDeleteAsync(subscription, ct));
 
         app.MapOwnedCrud<Ct.ProjectSlotSubscription, Do.ProjectSlotSubscription, H.ProjectSlotSubscription>(
             "/api/project-slot-subscriptions", "ProjectSlotSubscriptions",
@@ -184,7 +193,8 @@ public static class BusinessEndpoints
             M.ProjectSlotSubscription.ContractToDomain, M.ProjectSlotSubscription.DomainToContract,
             OwnedCrudEndpoints.OwnerField<Do.ProjectSlotSubscription>(item => item.MemberId),
             (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
-            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct));
+            beforeWrite: (subscription, full, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().EnsureAsync(subscription, full, ct),
+            afterDelete: (subscription, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().AfterDeleteAsync(subscription, ct));
 
         // ---- Cotisations : un membre lit les siennes ; seul contribution.edit les écrit ----
         // La liste exige memberId (automatique pour un membre ordinaire).
@@ -195,6 +205,9 @@ public static class BusinessEndpoints
             OwnedCrudEndpoints.OwnerField<Do.Contribution>(item => item.MemberId),
             (handler, targetId, memberId, page, size, ct) =>
                 handler.SearchAsync(memberId ?? throw new ArgumentException("memberId is required."), page, size, ct));
+
+        // Cotisations d'une saison par membre (GET /api/contributions/seasons/{id}, contribution.read).
+        app.MapSeasonContributions();
 
         // ---- Notes personnelles : visibles et modifiables par leur seul auteur ----
         app.MapOwnedCrud<Ct.Note, Do.Note, H.Note>(

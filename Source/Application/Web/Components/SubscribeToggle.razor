@@ -1,14 +1,22 @@
 @inject SubscriptionClient Subscriptions
 @inject NavigationManager Navigation
 
-@* Bouton « S'inscrire » / « Se désinscrire » pour le membre connecté. L'API vérifie que chacun ne gère que ses propres inscriptions. *@
+@*
+    Bouton d'inscription du membre connecté : « S'inscrire », ou « Liste d'attente » si l'élément est complet ;
+    une fois inscrit, « Se désinscrire », ou son rang dans la liste d'attente et « Quitter la liste ».
+    L'API reste seule juge (doublons, âge, capacité) et vérifie que chacun ne gère que ses propres inscriptions.
+*@
 @if (MemberId is not null)
 {
-    @if (SubscriptionId is { } existing)
+    @if (Mine is { } mine)
     {
-        <form method="post" class="inline" @onsubmit="() => RemoveAsync(existing)" @formname="@UnsubscribeForm">
+        @if (mine.IsWaiting)
+        {
+            <span class="waiting">Liste d'attente@(mine.WaitingRank is { } rank ? $" ({Rank(rank)})" : "")</span>
+        }
+        <form method="post" class="inline" @onsubmit="() => RemoveAsync(mine.Id)" @formname="@UnsubscribeForm">
             <AntiforgeryToken />
-            <button type="submit" class="link-button">Se désinscrire</button>
+            <button type="submit" class="link-button">@(mine.IsWaiting ? "Quitter la liste" : "Se désinscrire")</button>
         </form>
     }
     else if (BlockReason is not null)
@@ -19,7 +27,9 @@
     {
         <form method="post" class="inline" @onsubmit="AddAsync" @formname="@SubscribeForm">
             <AntiforgeryToken />
-            <button type="submit" class="link-button">S'inscrire</button>
+            <button type="submit" class="link-button" title="@(IsFull ? "Complet : vous serez inscrit dès qu'une place se libère" : null)">
+                @(IsFull ? "Liste d'attente" : "S'inscrire")
+            </button>
         </form>
     }
 }
@@ -36,8 +46,11 @@
     /// <summary>Membre pour lequel on agit (le membre connecté). Nul : rien n'est affiché.</summary>
     [Parameter] public Guid? MemberId { get; set; }
 
-    /// <summary>Inscription existante du membre à cet élément, s'il y en a une.</summary>
-    [Parameter] public Guid? SubscriptionId { get; set; }
+    /// <summary>Inscription existante du membre à cet élément (éventuellement en liste d'attente), s'il y en a une.</summary>
+    [Parameter] public SubscriptionItem? Mine { get; set; }
+
+    /// <summary>L'élément est complet : une nouvelle inscription ira en liste d'attente.</summary>
+    [Parameter] public bool IsFull { get; set; }
 
     /// <summary>Si renseigné, l'inscription est impossible et ce texte l'explique (âge minimum, par exemple).</summary>
     [Parameter] public string? BlockReason { get; set; }
@@ -46,6 +59,8 @@
 
     private string SubscribeForm => $"subscribe-{Kind}-{TargetId}";
     private string UnsubscribeForm => $"unsubscribe-{Kind}-{TargetId}";
+
+    private static string Rank(int rank) => rank == 1 ? "1re" : $"{rank}e";
 
     private async Task AddAsync()
     {

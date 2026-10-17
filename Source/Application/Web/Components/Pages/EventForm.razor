@@ -186,7 +186,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-event" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cet événement ?');">Supprimer cet événement</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cet événement, avec ses inscriptions et animateurs ?');">Supprimer cet événement</button>
         </form>
     }
 }

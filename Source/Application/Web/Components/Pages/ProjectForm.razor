@@ -74,7 +74,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-project" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce projet ?');">Supprimer ce projet</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce projet, avec ses créneaux, inscriptions et animateurs ?');">Supprimer ce projet</button>
         </form>
     }
 }

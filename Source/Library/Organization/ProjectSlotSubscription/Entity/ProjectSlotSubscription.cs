@@ -9,5 +9,6 @@ internal class ProjectSlotSubscription : PrimaryKey
     [Required] public Guid ProjectSlotId { get; set; }
     [ForeignKey(nameof(ProjectSlotId))] public ProjectSlot ProjectSlot { get; set; } = default!;
     [Required] public Guid MemberId{ get; set; }
+    [Required] public bool IsWaiting { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
 }

@@ -9,5 +9,6 @@ internal class ActivitySessionSlotSubscription : PrimaryKey
     [Required] public Guid SessionSlotId { get; set; }
     [ForeignKey(nameof(SessionSlotId))] public ActivitySessionSlot SessionSlot { get; set; } = default!;
     [Required] public Guid MemberId{ get; set; }
+    [Required] public bool IsWaiting { get; set; }
     [ForeignKey(nameof(MemberId))] public Member Member { get; set; } = default!;
 }

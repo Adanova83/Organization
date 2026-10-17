@@ -1,0 +1,163 @@
+@page "/organization-sessions/{Id:guid}/contributions"
+@attribute [Authorize(Policy = Permissions.ContributionRead)]
+@inject ApiClient Api
+@inject UserAccess Access
+@inject NavigationManager Navigation
+
+<PageTitle>Cotisations de la saison</PageTitle>
+
+@if (season is not null && organizationName is not null)
+{
+    <p><a href="/organizations/@season.OrganizationId">← Retour à l'organisation</a></p>
+}
+
+<h1>Cotisations @(organizationName is null ? "" : $"– {organizationName}") @season?.SchoolYearCode</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (season is not null)
+{
+    <p class="dashboard-figures">
+        <span>Cotisation : <strong>@Format.Price(season.Price)</strong></span>
+        <span><strong>@season.ParticipantsUpToDate</strong> / @season.Participants participant(s) à jour</span>
+        @if (season.ParticipantsNotUpToDate > 0)
+        {
+            <span class="waiting"><strong>@season.ParticipantsNotUpToDate</strong> non à jour</span>
+        }
+        <span>Encaissé : <strong>@Format.Money(season.Collected)</strong>@(season.Expected > 0 ? $" sur {Format.Money(season.Expected)} attendus" : "")</span>
+    </p>
+
+    <p class="muted">
+        Participants : membres inscrits (ou en liste d'attente) à un atelier, un événement ou un projet de l'organisation
+        cette année-là.
+    </p>
+
+    <nav class="tabs">
+        @foreach (var (key, label) in Filters)
+        {
+            @if (key == CurrentFilter)
+            {
+                <strong>@label</strong>
+            }
+            else
+            {
+                <a href="/organization-sessions/@Id/contributions?filter=@key">@label</a>
+            }
+        }
+    </nav>
+
+    @if (Rows.Count == 0)
+    {
+        <p class="muted">@(CurrentFilter == "unpaid" ? "Tous les participants sont à jour." : "Aucun membre.")</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Membre</th><th>Participe</th><th>Payé</th><th>Reste</th><th>Dernier paiement</th><th>État</th>@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Rows)
+                {
+                    <tr>
+                        <td><a href="/members/@row.MemberId/contributions?season=@Id">@($"{row.Lastname} {row.Firstname}".Trim())</a></td>
+                        <td>@(row.Participates ? "Oui" : "—")</td>
+                        <td>@Format.Money(row.Paid)</td>
+                        <td>@(row.Remaining > 0 ? Format.Money(row.Remaining) : "—")</td>
+                        <td>@(row.LastPayedDate is { } last ? Format.Date(last) : "—")</td>
+                        <td><span class="contribution-state @StateClass(row.State)">@StateLabel(row.State)</span></td>
+                        @if (canEdit)
+                        {
+                            <td><a href="@PaymentUrl(row)">@(row.State == Ct.ContributionState.Paid ? "Paiements" : "Enregistrer un paiement")</a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "filter")] public string? Filter { get; set; }
+
+    private static readonly (string Key, string Label)[] Filters =
+    [
+        ("unpaid", "Participants non à jour"),
+        ("participants", "Participants"),
+        ("all", "Tous les membres")
+    ];
+
+    private Ct.SeasonContributions? season;
+    private string? organizationName;
+    private string? error;
+    private bool canEdit;
+
+    private string CurrentFilter => Filters.Any(f => f.Key == Filter) ? Filter! : "unpaid";
+
+    private List<Ct.MemberContribution> Rows => CurrentFilter switch
+    {
+        "all" => season!.Members,
+        "participants" => season!.Members.Where(m => m.Participates).ToList(),
+        _ => season!.Members.Where(m => m.Participates && m.State != Ct.ContributionState.Paid).ToList()
+    };
+
+    // Paiement à enregistrer : saison présélectionnée, montant = reste à payer.
+    private string PaymentUrl(Ct.MemberContribution row)
+        => row.Remaining > 0
+            ? $"/members/{row.MemberId}/contributions?season={Id}&amount={row.Remaining.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+            : $"/members/{row.MemberId}/contributions?season={Id}";
+
+    private static string StateLabel(Ct.ContributionState state) => state switch
+    {
+        Ct.ContributionState.Paid => "À jour",
+        Ct.ContributionState.Partial => "Partiel",
+        _ => "Non payé"
+    };
+
+    private static string StateClass(Ct.ContributionState state) => state switch
+    {
+        Ct.ContributionState.Paid => "paid",
+        Ct.ContributionState.Partial => "partial",
+        _ => "unpaid"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await Access.CanAsync(Permissions.ContributionEdit);
+
+        try
+        {
+            season = await Api.GetSeasonContributionsAsync(Id);
+            organizationName = await OrganizationNameAsync(season.OrganizationId);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/organization-sessions/{Id}/contributions", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    /// <summary>Nom de l'organisation : demande organization.read ; sans elle, rien.</summary>
+    private async Task<string?> OrganizationNameAsync(Guid organizationId)
+    {
+        try
+        {
+            return (await Api.GetByIdAsync<Ct.Organization>(ApiRoutes.Organizations, organizationId)).Name;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex) && !ApiErrors.IsUnauthorized(ex))
+        {
+            return null;
+        }
+    }
+}

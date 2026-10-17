@@ -4,9 +4,12 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 
 ## Priorité haute
 
-- [ ] **Tester le site connecté** : parcourir toutes les pages (profil, années scolaires, ateliers, sessions,
-      événements et répétitions, calendrier, notes, badges, cotisations…) avec un compte administrateur, puis avec
-      un compte aux droits limités (`*.read` seulement) pour vérifier les droits.
+- [x] **Tester le site connecté (administrateur)** : 57 pages parcourues sans erreur ; création d'une série et
+      inscription par les formulaires ; corrigé : script Blazor absent de l'image Docker, pré-contrôle d'âge des
+      responsables, mise en page de la colonne « Inscription ».
+- [ ] **Tester avec un compte aux droits limités** : côté API, vérifié avec le profil « membre-test »
+      (groupe « membres », lecture seule, `docker-compose.dev.yml`) ; reste à parcourir le site connecté avec ce profil
+      (menus, pages refusées, boutons masqués) avec le membre `membre.test@adanova83.org` (créé dans la base de dev).
 - [x] **Tests automatiques** : projet `Source/Tests/Organizations.Tests` (xUnit) : récurrence des séries, rythme
       vacances / jours fériés, Pâques et jours fériés, dates des vacances importées, heure de Paris, exclusions ICS.
 - [ ] **Tests à compléter** : handlers (validations), endpoints de l'API (droits `*.read` / `*.edit`, données d'un
@@ -19,11 +22,16 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       dans le calendrier et le flux ICS.
 - [x] **Inscriptions** : règles côté API (doublons, capacité, âge minimum au début de l'activité, date de naissance
       requise), dérogation des responsables (`subscription.edit`) pour la capacité et l'âge.
-- [ ] **Places restantes** : afficher aux membres le nombre de places restantes (aujourd'hui, seuls ceux qui ont
-      `subscription.read` voient les inscrits) ; liste d'attente quand c'est complet.
-- [ ] **Suppression en cascade** : supprimer une activité laisse ses sessions, créneaux, inscriptions et animateurs ;
-      décider ce qui doit suivre (suppression, blocage ou avertissement).
-- [ ] **Cotisations** : vue « qui n'a pas payé cette saison », et enregistrement du montant payé.
+- [x] **Places restantes et liste d'attente** : places visibles par tous (sans les noms), liste d'attente automatique
+      quand c'est complet, promotion automatique à chaque désinscription ; tableau de bord sur l'accueil (mes
+      inscriptions, prochains événements, remplissage pour `subscription.read`).
+- [x] **Liste d'attente et capacité augmentée** : augmenter la capacité d'un créneau, d'un événement ou d'un créneau de
+      projet, ou supprimer un membre, fait passer les personnes en attente.
+- [x] **Suppression en cascade** : suppression logique propagée (activité, session, créneau, événement, projet, note,
+      badge, membre) ou refusée avec un message clair (année scolaire, organisation, saison avec cotisations, salle, pays
+      encore utilisés) ; confirmations du site détaillées ; tests `DeletionPolicyTests`.
+- [x] **Cotisations** : montant payé (paiement en plusieurs fois), page « Cotisations de la saison » (participants non à
+      jour, reste à payer, paiement prérempli), bloc « Cotisations » des saisons en cours sur le tableau de bord.
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.
 - [ ] **Flux ICS** : page indiquant aux membres l'adresse d'abonnement pour l'Agenda Nextcloud.
