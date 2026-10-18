@@ -104,6 +104,26 @@ la base et le faux serveur OIDC doivent tourner dans Docker, sans les conteneurs
 - Mettre `API_ALLOW_KEY_ON_BUSINESS=false` et `API_ENABLE_SWAGGER=false`.
 - Définir `CALENDAR_FEED_TOKEN` (secret long) pour activer les flux ICS.
 - Placer le site derrière un reverse proxy (Traefik) qui gère le HTTPS.
+- Le serveur ne compile rien : il utilise les images publiées (voir ci-dessous) ; l'installation complète du serveur
+  est décrite dans le dépôt `Adanova83/Infrastructure`.
+
+### Images Docker
+
+Le workflow `.github/workflows/images.yml` lance les tests puis publie les images sur le registre de GitHub :
+`ghcr.io/adanova83/organization-api` et `ghcr.io/adanova83/organization-web`.
+
+| Événement | Étiquettes publiées |
+|---|---|
+| tag `v1.2.3` | `1.2.3`, `1.2`, `latest` |
+| push sur `main` / `develop` | `main` / `develop` |
+| toujours | `sha-<commit>` |
+
+Publier une version (la production utilise un numéro de version précis) :
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 Le détail des endpoints, des permissions, des flux ICS et des réglages est dans
 [Source/Application/Api/README.md](Source/Application/Api/README.md). Les travaux restant à faire sont listés dans
