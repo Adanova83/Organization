@@ -32,6 +32,8 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       encore utilisés) ; confirmations du site détaillées ; tests `DeletionPolicyTests`.
 - [x] **Cotisations** : montant payé (paiement en plusieurs fois), page « Cotisations de la saison » (participants non à
       jour, reste à payer, paiement prérempli), bloc « Cotisations » des saisons en cours sur le tableau de bord.
+- [ ] **Application mobile** (application web installable) : présences par QR code et appel, rappels, agenda
+      personnel ; cahier des charges dans [docs/application-mobile.md](docs/application-mobile.md), en 5 lots.
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.
 - [ ] **Flux ICS** : page indiquant aux membres l'adresse d'abonnement pour l'Agenda Nextcloud.
