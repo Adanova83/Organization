@@ -7,7 +7,7 @@
 
 <PageTitle>@(item?.Name ?? "Événement")</PageTitle>
 
-<p><a href="/events">← Retour aux événements</a></p>
+<p><a href="/events"><Icon Name="arrow-left" /> Retour aux événements</a></p>
 
 @if (error is not null)
 {
@@ -19,7 +19,7 @@ else if (item is not null)
 
     @if (canEdit)
     {
-        <p><a class="button" href="/events/@Id/edit">Modifier l'événement</a></p>
+        <p><a class="button" href="/events/@Id/edit"><Icon Name="pen" /> Modifier l'événement</a></p>
     }
 
     <dl class="meta">
@@ -36,8 +36,6 @@ else if (item is not null)
             <dd>@item.Description</dd>
         }
     </dl>
-
-    <p><a href="/animations/event/@Id">Animateurs</a></p>
 
     @if (series.Count > 1)
     {
@@ -73,7 +71,6 @@ else if (item is not null)
             @if (canSeeSubscribers)
             {
                 <a href="/subscriptions/event/@Id">Voir les inscrits</a>
-                <a href="/attendance/event/@Id">Présences</a>
             }
         </p>
     }

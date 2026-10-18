@@ -6,7 +6,7 @@
 
 <PageTitle>Badge @badge?.Identifier</PageTitle>
 
-<p><a href="/badges">← Retour aux badges</a></p>
+<p><a href="/badges"><Icon Name="arrow-left" /> Retour aux badges</a></p>
 
 @if (error is not null)
 {
@@ -19,7 +19,7 @@
 
     @if (canEdit)
     {
-        <p><a class="button" href="/badges/@Id/edit">Modifier le badge</a></p>
+        <p><a class="button" href="/badges/@Id/edit"><Icon Name="pen" /> Modifier le badge</a></p>
     }
 
     <dl class="meta">

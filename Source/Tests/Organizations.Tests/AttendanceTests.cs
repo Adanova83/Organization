@@ -5,7 +5,7 @@ using Ct = Library.Contract;
 
 namespace Organizations.Tests;
 
-/// <summary>Présences : dates des séances d'un créneau, feuille d'émargement, appel et statistiques.</summary>
+/// <summary>Présences aux ateliers : dates des séances d'un créneau, feuille d'émargement, appel et statistiques.</summary>
 public class AttendanceTests
 {
     // Mercredi 2 septembre 2026 ... mercredi 30 septembre 2026 ; vacances du 16 au 22 septembre (fictives).
@@ -70,7 +70,7 @@ public class AttendanceTests
         var seed = await SeedAsync(db);
         var repository = new Library.Repository.Attendance(db);
 
-        var dates = await repository.OccurrenceDatesAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, mondayFirst: false, CancellationToken.None);
+        var dates = await repository.OccurrenceDatesAsync(seed.Slot.Id, mondayFirst: false, CancellationToken.None);
 
         Assert.Equal([Sep2, Sep9, Sep23, new DateOnly(2026, 9, 30)], dates);
         Assert.DoesNotContain(Sep16, dates!);
@@ -83,18 +83,18 @@ public class AttendanceTests
         var seed = await SeedAsync(db);
         var handler = new Library.Handler.Attendance(new Library.Repository.Attendance(db));
 
-        await handler.RecordAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, Sep9,
+        await handler.RecordAsync(seed.Slot.Id, Sep9,
             [new Ct.AttendanceEntry { MemberId = seed.Alice.Id, Status = Ct.AttendanceStatus.Present },
              new Ct.AttendanceEntry { MemberId = seed.Bruno.Id, Status = Ct.AttendanceStatus.Absent }],
             Ct.AttendanceMethod.RollCall, mondayFirst: false, CancellationToken.None);
 
         // Correction : Bruno est finalement présent.
-        await handler.RecordAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, Sep9,
+        await handler.RecordAsync(seed.Slot.Id, Sep9,
             [new Ct.AttendanceEntry { MemberId = seed.Bruno.Id, Status = Ct.AttendanceStatus.Present }],
             Ct.AttendanceMethod.StaffCorrection, mondayFirst: false, CancellationToken.None);
         db.ChangeTracker.Clear();
 
-        var sheet = await handler.SheetAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, Sep9, mondayFirst: false, CancellationToken.None);
+        var sheet = await handler.SheetAsync(seed.Slot.Id, Sep9, mondayFirst: false, CancellationToken.None);
 
         Assert.Equal(2, sheet!.Rows.Count);
         Assert.Equal(2, sheet.Present);
@@ -111,13 +111,13 @@ public class AttendanceTests
         var present = new Ct.AttendanceEntry { MemberId = seed.Alice.Id, Status = Ct.AttendanceStatus.Present };
 
         // Pendant les vacances, et un jeudi.
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.RecordAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, Sep16,
+        await Assert.ThrowsAsync<ArgumentException>(() => handler.RecordAsync(seed.Slot.Id, Sep16,
             [present], Ct.AttendanceMethod.RollCall, false, CancellationToken.None));
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.RecordAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, Sep9.AddDays(1),
+        await Assert.ThrowsAsync<ArgumentException>(() => handler.RecordAsync(seed.Slot.Id, Sep9.AddDays(1),
             [present], Ct.AttendanceMethod.RollCall, false, CancellationToken.None));
 
         // Un membre qui n'est pas inscrit.
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.RecordAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, Sep9,
+        await Assert.ThrowsAsync<ArgumentException>(() => handler.RecordAsync(seed.Slot.Id, Sep9,
             [new Ct.AttendanceEntry { MemberId = Guid.NewGuid(), Status = Ct.AttendanceStatus.Present }],
             Ct.AttendanceMethod.RollCall, false, CancellationToken.None));
     }
@@ -131,7 +131,7 @@ public class AttendanceTests
 
         foreach (var (day, bruno) in new[] { (Sep2, Ct.AttendanceStatus.Absent), (Sep9, Ct.AttendanceStatus.Present) })
         {
-            await handler.RecordAsync(Ct.SubscriptionTargetKind.ActivitySlot, seed.Slot.Id, day,
+            await handler.RecordAsync(seed.Slot.Id, day,
                 [new Ct.AttendanceEntry { MemberId = seed.Alice.Id, Status = Ct.AttendanceStatus.Present },
                  new Ct.AttendanceEntry { MemberId = seed.Bruno.Id, Status = bruno }],
                 Ct.AttendanceMethod.RollCall, false, CancellationToken.None);
@@ -139,7 +139,7 @@ public class AttendanceTests
 
         var stats = await handler.StatsAsync(new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30), CancellationToken.None);
 
-        var target = Assert.Single(stats.Targets);
+        var target = Assert.Single(stats.Slots);
         Assert.Equal(2, target.Sessions);
         Assert.Equal(0.75, target.Rate);
         Assert.Equal(1.0, stats.Members.Single(m => m.MemberId == seed.Alice.Id).Rate);

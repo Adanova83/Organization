@@ -10,11 +10,11 @@
 
 @if (Season is { } fromSeason)
 {
-    <p><a href="/organization-sessions/@fromSeason/contributions">← Retour aux cotisations de la saison</a></p>
+    <p><a href="/organization-sessions/@fromSeason/contributions"><Icon Name="arrow-left" /> Retour aux cotisations de la saison</a></p>
 }
 else
 {
-    <p><a href="/members/@MemberId">← Retour au membre</a></p>
+    <p><a href="/members/@MemberId"><Icon Name="arrow-left" /> Retour au membre</a></p>
 }
 
 @if (error is not null)
@@ -88,7 +88,7 @@ else
                         <small class="muted">Vide : tarif de la saison. Plusieurs paiements possibles (paiement en plusieurs fois).</small>
                     </label>
                 </fieldset>
-                <p class="actions"><button type="submit">Enregistrer</button></p>
+                <p class="actions"><button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button></p>
             </EditForm>
         }
     }

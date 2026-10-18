@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouveau badge" : "Modifier le badge")</h1>
 
-<p><a href="@BackUrl">← Retour</a></p>
+<p><a href="@BackUrl"><Icon Name="arrow-left" /> Retour</a></p>
 
 @if (error is not null)
 {
@@ -27,7 +27,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@BackUrl">Annuler</a>
         </p>
     </EditForm>
@@ -36,7 +36,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-badge" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce badge et ses attributions ? L’historique des passages est conservé.');">Supprimer ce badge</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce badge et ses attributions ? L’historique des passages est conservé.');"><Icon Name="trash-can" /> Supprimer ce badge</button>
         </form>
     }
 }

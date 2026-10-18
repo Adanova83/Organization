@@ -8,7 +8,7 @@
 
 @if (season is not null && organizationName is not null)
 {
-    <p><a href="/organizations/@season.OrganizationId">← Retour à l'organisation</a></p>
+    <p><a href="/organizations/@season.OrganizationId"><Icon Name="arrow-left" /> Retour à l'organisation</a></p>
 }
 
 <h1>Cotisations @(organizationName is null ? "" : $"– {organizationName}") @season?.SchoolYearCode</h1>

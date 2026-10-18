@@ -39,14 +39,14 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@BackUrl">Annuler</a>
         </p>
     </EditForm>
 
     <form method="post" @onsubmit="DeleteAsync" @formname="delete-contact" class="danger">
         <AntiforgeryToken />
-        <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce contact ? Il sera retiré de tous les membres qu’il suit.');">Supprimer ce contact</button>
+        <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce contact ? Il sera retiré de tous les membres qu’il suit.');"><Icon Name="trash-can" /> Supprimer ce contact</button>
     </form>
 }
 

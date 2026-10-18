@@ -17,7 +17,6 @@ public partial class FullDbContext : DbContext
     internal DbSet<Contribution> Contributions=> Set<Contribution>();
     internal DbSet<Country> Countries => Set<Country>();
     internal DbSet<Event> Events => Set<Event>();
-    internal DbSet<EventAnimation> EventAnimations => Set<EventAnimation>();
     internal DbSet<EventSubscription> EventSubscriptions => Set<EventSubscription>();
     internal DbSet<Holiday> Holidays => Set<Holiday>();
     internal DbSet<Member> Members => Set<Member>();
@@ -59,7 +58,6 @@ public partial class FullDbContext : DbContext
         modelBuilder.Entity<Contribution>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Country>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Event>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        modelBuilder.Entity<EventAnimation>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<EventSubscription>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Holiday>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Member>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
@@ -68,9 +66,6 @@ public partial class FullDbContext : DbContext
         modelBuilder.Entity<Contact>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<MemberContact>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Attendance>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
-        // Une présence porte soit sur un créneau d'atelier (à une date), soit sur un événement.
-        modelBuilder.Entity<Attendance>().ToTable(table => table.HasCheckConstraint(
-            "CK_Attendance_Target", "(\"SessionSlotId\" IS NULL) <> (\"EventId\" IS NULL)"));
         modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<OrganizationSession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Project>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);

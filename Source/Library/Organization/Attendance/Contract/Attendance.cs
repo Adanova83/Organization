@@ -37,11 +37,10 @@ public sealed class AttendanceRow
     public DateTime? RecordedAt { get; set; }
 }
 
-/// <summary>Feuille d'émargement d'une séance (créneau d'atelier à une date, ou événement).</summary>
+/// <summary>Feuille d'émargement d'une séance : un créneau d'atelier à une date.</summary>
 public sealed class AttendanceSheet
 {
-    public SubscriptionTargetKind Kind { get; set; }
-    public Guid TargetId { get; set; }
+    public Guid SlotId { get; set; }
     public DateOnly Date { get; set; }
     public string Title { get; set; } = "";
     /// <summary>Horaires de la séance (heure de Paris).</summary>
@@ -64,7 +63,7 @@ public sealed class AttendanceEntry
     public AttendanceStatus Status { get; set; }
 }
 
-/// <summary>Une séance d'un créneau ou d'un événement, avec le décompte de ses présences.</summary>
+/// <summary>Une séance d'un créneau, avec le décompte de ses présences.</summary>
 public sealed class AttendanceOccurrence
 {
     public DateOnly Date { get; set; }
@@ -75,20 +74,18 @@ public sealed class AttendanceOccurrence
     public bool IsRecorded => Present + Absent + Excused > 0;
 }
 
-/// <summary>Séances d'un créneau ou d'un événement.</summary>
+/// <summary>Séances d'un créneau d'atelier.</summary>
 public sealed class AttendanceOccurrences
 {
-    public SubscriptionTargetKind Kind { get; set; }
-    public Guid TargetId { get; set; }
+    public Guid SlotId { get; set; }
     public string Title { get; set; } = "";
     public List<AttendanceOccurrence> Occurrences { get; set; } = [];
 }
 
-/// <summary>Fréquentation d'un créneau ou d'un événement sur une période.</summary>
-public sealed class AttendanceTargetStats
+/// <summary>Fréquentation d'un créneau d'atelier sur une période.</summary>
+public sealed class AttendanceSlotStats
 {
-    public SubscriptionTargetKind Kind { get; set; }
-    public Guid TargetId { get; set; }
+    public Guid SlotId { get; set; }
     public string Title { get; set; } = "";
     /// <summary>Séances dont l'appel a été fait.</summary>
     public int Sessions { get; set; }
@@ -115,6 +112,6 @@ public sealed class AttendanceStats
 {
     public DateOnly From { get; set; }
     public DateOnly To { get; set; }
-    public List<AttendanceTargetStats> Targets { get; set; } = [];
+    public List<AttendanceSlotStats> Slots { get; set; } = [];
     public List<AttendanceMemberStats> Members { get; set; } = [];
 }

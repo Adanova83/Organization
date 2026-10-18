@@ -6,7 +6,7 @@
 
 <PageTitle>@(holiday?.Name ?? "Période")</PageTitle>
 
-<p><a href="/holidays">← Retour aux jours fériés et vacances</a></p>
+<p><a href="/holidays"><Icon Name="arrow-left" /> Retour aux jours fériés et vacances</a></p>
 
 @if (error is not null)
 {
@@ -18,7 +18,7 @@ else if (holiday is not null)
 
     @if (canEdit)
     {
-        <p><a class="button" href="/holidays/@Id/edit">Modifier la période</a></p>
+        <p><a class="button" href="/holidays/@Id/edit"><Icon Name="pen" /> Modifier la période</a></p>
     }
 
     <dl class="meta">

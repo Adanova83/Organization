@@ -1,4 +1,4 @@
-@page "/attendance/{Kind}/{TargetId:guid}/{Date}"
+@page "/attendance/{SlotId:guid}/{Date}"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject NavigationManager Navigation
@@ -11,7 +11,7 @@
 
 <PageTitle>Appel</PageTitle>
 
-<p><a href="@($"/attendance/{Kind}/{TargetId}")">← Toutes les séances</a></p>
+<p><a href="@AttendanceRoutes.Sessions(SlotId)"><Icon Name="arrow-left" /> Toutes les séances</a></p>
 
 @if (sheet is not null)
 {
@@ -84,16 +84,15 @@
             </table>
 
             <p class="actions">
-                <button type="submit">Enregistrer l'appel</button>
-                <a href="@($"/attendance/{Kind}/{TargetId}/{Date}/print")">Feuille d'émargement</a>
+                <button type="submit"><Icon Name="floppy-disk" /> Enregistrer l'appel</button>
+                <a href="@($"/attendance/{SlotId}/{Date}/print")">Feuille d'émargement</a>
             </p>
         </EditForm>
     }
 }
 
 @code {
-    [Parameter] public string Kind { get; set; } = "";
-    [Parameter] public Guid TargetId { get; set; }
+    [Parameter] public Guid SlotId { get; set; }
     [Parameter] public string Date { get; set; } = "";
 
     [SupplyParameterFromForm(FormName = "roll-call")]
@@ -105,7 +104,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (AttendanceRoutes.Parse(Kind) is not { } kind || AttendanceRoutes.ParseDate(Date) is not { } date)
+        if (AttendanceRoutes.ParseDate(Date) is not { } date)
         {
             Navigation.NavigateTo("/not-found");
             return;
@@ -113,7 +112,7 @@
 
         try
         {
-            sheet = await Api.GetAttendanceSheetAsync(kind, TargetId, date);
+            sheet = await Api.GetAttendanceSheetAsync(SlotId, date);
             Model ??= new RollCallModel
             {
                 Items = sheet.Rows.Select(row => new RollCallItem
@@ -129,7 +128,7 @@
         }
         catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
         {
-            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{Kind}/{TargetId}/{Date}", forceLoad: true);
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{SlotId}/{Date}", forceLoad: true);
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))
         {
@@ -139,14 +138,14 @@
 
     private async Task SaveAsync()
     {
-        if (AttendanceRoutes.Parse(Kind) is not { } kind || AttendanceRoutes.ParseDate(Date) is not { } date)
+        if (AttendanceRoutes.ParseDate(Date) is not { } date)
         {
             return;
         }
 
         try
         {
-            sheet = await Api.RecordAttendanceAsync(kind, TargetId, date, Model!.Items
+            sheet = await Api.RecordAttendanceAsync(SlotId, date, Model!.Items
                 .Select(item => new Ct.AttendanceEntry { MemberId = item.MemberId, Status = item.Status })
                 .ToList());
             saved = true;

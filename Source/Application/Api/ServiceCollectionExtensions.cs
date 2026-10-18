@@ -23,7 +23,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<R.IContribution, R.Contribution>();
         services.AddScoped<R.ICountry, R.Country>();
         services.AddScoped<R.IEvent, R.Event>();
-        services.AddScoped<R.IEventAnimation, R.EventAnimation>();
         services.AddScoped<R.IEventSubscription, R.EventSubscription>();
         services.AddScoped<R.IHoliday, R.Holiday>();
         services.AddScoped<R.IMember, R.Member>();
@@ -56,7 +55,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<H.Contribution>();
         services.AddScoped<H.Country>();
         services.AddScoped<H.Event>();
-        services.AddScoped<H.EventAnimation>();
         services.AddScoped<H.EventSubscription>();
         services.AddScoped<H.Holiday>();
         services.AddScoped<H.Member>();

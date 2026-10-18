@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouvelle activité" : "Modifier l'activité")</h1>
 
-<p><a href="@(IsNew ? "/activities" : $"/activities/{Id}")">← Retour</a></p>
+<p><a href="@(IsNew ? "/activities" : $"/activities/{Id}")"><Icon Name="arrow-left" /> Retour</a></p>
 
 @if (error is not null)
 {
@@ -41,7 +41,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@(IsNew ? "/activities" : $"/activities/{Id}")">Annuler</a>
         </p>
     </EditForm>
@@ -50,7 +50,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-activity" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette activité, avec ses sessions, créneaux, inscriptions et animateurs ?');">Supprimer cette activité</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette activité, avec ses sessions, créneaux, inscriptions et animateurs ?');"><Icon Name="trash-can" /> Supprimer cette activité</button>
         </form>
     }
 }

@@ -69,7 +69,7 @@ public static class BusinessEndpoints
         // Participants d'un créneau ou d'un événement, pour ses animateurs (voir ParticipantEndpoints).
         app.MapParticipants();
 
-        // Présences (feuilles d'émargement) des ateliers et des événements (voir AttendanceEndpoints).
+        // Présences (feuilles d'émargement) des ateliers (voir AttendanceEndpoints).
         app.MapAttendances();
 
         // ---- Référentiels et saisons ----
@@ -168,20 +168,13 @@ public static class BusinessEndpoints
             afterChange: (slot, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAsync(Ct.SubscriptionTargetKind.ProjectSlot, slot.Id, ct));
 
         // ---- Animateurs : lecture par *.read, écriture par la permission de l'activité concernée ----
-        // Liste : ?targetId= (créneau ou événement) et/ou ?memberId= (animateur).
+        // Liste : ?targetId= (créneau) et/ou ?memberId= (animateur). Pas d'animateurs pour les événements.
         app.MapCrud<Ct.ActivitySessionSlotAnimation, Do.ActivitySessionSlotAnimation, H.ActivitySessionSlotAnimation>(
                 "/api/activity-session-slot-animations", "ActivitySessionSlotAnimations", Permissions.ActivityEdit,
                 M.ActivitySessionSlotAnimation.ContractToDomain, M.ActivitySessionSlotAnimation.DomainToContract)
             .MapFilteredList<Ct.ActivitySessionSlotAnimation, Do.ActivitySessionSlotAnimation, H.ActivitySessionSlotAnimation>(
                 (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
                 M.ActivitySessionSlotAnimation.DomainToContract);
-
-        app.MapCrud<Ct.EventAnimation, Do.EventAnimation, H.EventAnimation>(
-                "/api/event-animations", "EventAnimations", Permissions.EventEdit,
-                M.EventAnimation.ContractToDomain, M.EventAnimation.DomainToContract)
-            .MapFilteredList<Ct.EventAnimation, Do.EventAnimation, H.EventAnimation>(
-                (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(targetId, memberId, page, size, ct),
-                M.EventAnimation.DomainToContract);
 
         app.MapCrud<Ct.ProjectSlotAnimation, Do.ProjectSlotAnimation, H.ProjectSlotAnimation>(
                 "/api/project-slot-animations", "ProjectSlotAnimations", Permissions.ProjectEdit,

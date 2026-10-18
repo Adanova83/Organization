@@ -4,8 +4,8 @@ using Ct = Library.Contract;
 namespace Library.Handler;
 
 /// <summary>
-/// Présences aux séances des ateliers (créneau + date) et des événements. Vérifie que la séance existe à cette date
-/// (rythme du créneau, vacances, jours fériés) et que l'appel ne concerne que des participants de la séance.
+/// Présences aux séances des ateliers (créneau + date ; pas d'appel pour les événements). Vérifie que la séance existe
+/// à cette date (rythme du créneau, vacances, jours fériés) et que l'appel ne concerne que des participants de la séance.
 /// </summary>
 public sealed class Attendance
 {
@@ -16,30 +16,25 @@ public sealed class Attendance
         _repository = repository;
     }
 
-    public Task<Ct.AttendanceOccurrences?> OccurrencesAsync(Ct.SubscriptionTargetKind kind, Guid targetId, bool mondayFirst, CancellationToken ct)
-    {
-        EnsureKind(kind);
-        return _repository.OccurrencesAsync(kind, targetId, mondayFirst, ct);
-    }
+    public Task<Ct.AttendanceOccurrences?> OccurrencesAsync(Guid slotId, bool mondayFirst, CancellationToken ct)
+        => _repository.OccurrencesAsync(slotId, mondayFirst, ct);
 
-    /// <summary>Feuille d'émargement ; null si la cible n'existe pas. Refuse une date où il n'y a pas de séance.</summary>
-    public async Task<Ct.AttendanceSheet?> SheetAsync(Ct.SubscriptionTargetKind kind, Guid targetId, DateOnly date, bool mondayFirst, CancellationToken ct)
+    /// <summary>Feuille d'émargement ; null si le créneau n'existe pas. Refuse une date où il n'y a pas de séance.</summary>
+    public async Task<Ct.AttendanceSheet?> SheetAsync(Guid slotId, DateOnly date, bool mondayFirst, CancellationToken ct)
     {
-        EnsureKind(kind);
-        if (!await EnsureDateAsync(kind, targetId, date, mondayFirst, ct))
+        if (!await EnsureDateAsync(slotId, date, mondayFirst, ct))
         {
             return null;
         }
 
-        return await _repository.SheetAsync(kind, targetId, date, ct);
+        return await _repository.SheetAsync(slotId, date, ct);
     }
 
-    /// <summary>Enregistre l'appel ; false si la cible n'existe pas.</summary>
+    /// <summary>Enregistre l'appel ; false si le créneau n'existe pas.</summary>
     public async Task<bool> RecordAsync(
-        Ct.SubscriptionTargetKind kind, Guid targetId, DateOnly date,
-        IReadOnlyCollection<Ct.AttendanceEntry> entries, Ct.AttendanceMethod method, bool mondayFirst, CancellationToken ct)
+        Guid slotId, DateOnly date, IReadOnlyCollection<Ct.AttendanceEntry> entries, Ct.AttendanceMethod method,
+        bool mondayFirst, CancellationToken ct)
     {
-        EnsureKind(kind);
         if (entries.Count == 0)
         {
             throw new ArgumentException("At least one attendance is required.", nameof(entries));
@@ -55,20 +50,20 @@ public sealed class Attendance
             throw new ArgumentException("Unknown attendance status.", nameof(entries));
         }
 
-        if (!await EnsureDateAsync(kind, targetId, date, mondayFirst, ct))
+        if (!await EnsureDateAsync(slotId, date, mondayFirst, ct))
         {
             return false;
         }
 
         // Seuls les participants de la séance (inscrits ce jour-là, ou déjà pointés) figurent sur la feuille.
-        var sheet = await _repository.SheetAsync(kind, targetId, date, ct);
+        var sheet = await _repository.SheetAsync(slotId, date, ct);
         var allowed = sheet!.Rows.Select(row => row.MemberId).ToHashSet();
         if (entries.Any(e => !allowed.Contains(e.MemberId)))
         {
             throw new ArgumentException("Only the participants of this session can be marked.", nameof(entries));
         }
 
-        await _repository.RecordAsync(kind, targetId, date, entries, method, ct);
+        await _repository.RecordAsync(slotId, date, entries, method, ct);
         return true;
     }
 
@@ -87,10 +82,10 @@ public sealed class Attendance
         return _repository.StatsAsync(from, to, ct);
     }
 
-    /// <summary>Vrai si la séance existe à cette date ; false si la cible n'existe pas ; exception si pas de séance ce jour-là.</summary>
-    private async Task<bool> EnsureDateAsync(Ct.SubscriptionTargetKind kind, Guid targetId, DateOnly date, bool mondayFirst, CancellationToken ct)
+    /// <summary>Vrai si la séance existe à cette date ; false si le créneau n'existe pas ; exception si pas de séance ce jour-là.</summary>
+    private async Task<bool> EnsureDateAsync(Guid slotId, DateOnly date, bool mondayFirst, CancellationToken ct)
     {
-        var dates = await _repository.OccurrenceDatesAsync(kind, targetId, mondayFirst, ct);
+        var dates = await _repository.OccurrenceDatesAsync(slotId, mondayFirst, ct);
         if (dates is null)
         {
             return false;
@@ -102,14 +97,5 @@ public sealed class Attendance
         }
 
         return true;
-    }
-
-    /// <summary>Ateliers et événements seulement (pas de feuille d'émargement pour les projets).</summary>
-    private static void EnsureKind(Ct.SubscriptionTargetKind kind)
-    {
-        if (kind is not (Ct.SubscriptionTargetKind.ActivitySlot or Ct.SubscriptionTargetKind.Event))
-        {
-            throw new ArgumentException("Attendance is recorded for activity slots and events only.", nameof(kind));
-        }
     }
 }

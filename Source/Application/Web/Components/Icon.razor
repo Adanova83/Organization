@@ -1,0 +1,14 @@
+@*
+    Icône Font Awesome Free (CC BY 4.0), servie par le site lui-même depuis wwwroot/icons.svg (aucun service tiers),
+    à une adresse versionnée (Assets) : une icône ajoutée est vue tout de suite, sans cache périmé.
+    Décorative : masquée aux lecteurs d'écran, le texte qui l'accompagne porte le sens.
+    Usage : <Icon Name="house" />
+*@
+<svg class="icon @Class" aria-hidden="true" focusable="false"><use href="@($"{Assets["icons.svg"]}#{Name}")"></use></svg>
+
+@code {
+    /// <summary>Nom de l'icône (identifiant du symbole dans icons.svg, par exemple « house »).</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+
+    [Parameter] public string? Class { get; set; }
+}

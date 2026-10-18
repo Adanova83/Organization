@@ -6,7 +6,7 @@
 
 <PageTitle>@(member is null ? "Membre" : FullName)</PageTitle>
 
-<p><a href="/members">← Retour aux membres</a></p>
+<p><a href="/members"><Icon Name="arrow-left" /> Retour aux membres</a></p>
 
 @if (error is not null)
 {
@@ -21,7 +21,7 @@ else if (member is not null)
         <p class="actions">
             @if (canEdit)
             {
-                <a class="button" href="/members/@Id/edit">Modifier le membre</a>
+                <a class="button" href="/members/@Id/edit"><Icon Name="pen" /> Modifier le membre</a>
             }
             @if (canReadContributions)
             {
@@ -59,7 +59,7 @@ else if (member is not null)
 
     @if (canEdit)
     {
-        <p><a class="button" href="/members/@Id/contacts/new">Ajouter un contact</a></p>
+        <p><a class="button" href="/members/@Id/contacts/new"><Icon Name="plus" /> Ajouter un contact</a></p>
     }
 
     @if (contacts.Count == 0)
@@ -84,7 +84,7 @@ else if (member is not null)
                         <td>@(contact.CanPickUp ? "Oui" : "—")</td>
                         @if (canEdit)
                         {
-                            <td><a href="/member-contacts/@contact.Id/edit">Modifier</a></td>
+                            <td><RowActions EditUrl="@($"/member-contacts/{contact.Id}/edit")" DeleteRoute="@ApiRoutes.MemberContacts" Id="contact.Id" Confirm="Retirer ce contact du membre ? La fiche du contact est conservée pour les autres membres." /></td>
                         }
                     </tr>
                 }

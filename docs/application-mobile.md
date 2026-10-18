@@ -60,7 +60,8 @@ l'ordre de développement.
 
 En plus des fonctionnalités du membre :
 
-1. **Ce que j'anime** : prochaines séances des créneaux et événements dont il est animateur.
+1. **Ce que j'anime** : prochaines séances des créneaux d'ateliers dont il est animateur (les événements n'ont pas
+   d'animateurs).
 2. **Participants** d'une séance : inscrits, liste d'attente, âge, absences signalées, et **contacts des familles** en un
    geste (appeler le contact à prévenir en urgence, voir qui est autorisé à venir chercher l'enfant).
 3. **QR code de la séance** à afficher sur son téléphone (voir § 5) ; les présences validées s'affichent en direct.
@@ -97,11 +98,12 @@ En plus des fonctionnalités du membre :
 ### 5.1 Ce qu'on enregistre
 
 Une présence par **séance datée** : un créneau hebdomadaire se répète, la présence porte donc sur
-« créneau + date » (ou « événement », qui a déjà une date).
+« créneau + date ». **Pas d'appel ni de QR code pour les événements** (décision du 18/10/2026) : les présences ne
+concernent que les ateliers.
 
 | Donnée | Valeurs |
 |---|---|
-| Séance | créneau d'atelier + date, ou événement |
+| Séance | créneau d'atelier + date |
 | Membre | le participant |
 | Statut | présent, absent, absence signalée |
 | Mode | QR code, appel, signalement du membre, correction d'un responsable |

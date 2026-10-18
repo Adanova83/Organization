@@ -255,16 +255,13 @@ namespace Library.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
-                    b.Property<Guid?>("EventId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Method")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("SessionSlotId")
+                    b.Property<Guid>("SessionSlotId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Status")
@@ -274,18 +271,11 @@ namespace Library.Migrations
 
                     b.HasIndex("MemberId");
 
-                    b.HasIndex("EventId", "MemberId")
-                        .IsUnique()
-                        .HasFilter("\"Audit_DeletedAt\" IS NULL");
-
                     b.HasIndex("SessionSlotId", "Date", "MemberId")
                         .IsUnique()
                         .HasFilter("\"Audit_DeletedAt\" IS NULL");
 
-                    b.ToTable("Attendance", "Organization", t =>
-                        {
-                            t.HasCheckConstraint("CK_Attendance_Target", "(\"SessionSlotId\" IS NULL) <> (\"EventId\" IS NULL)");
-                        });
+                    b.ToTable("Attendance", "Organization");
                 });
 
             modelBuilder.Entity("Library.Entity.Badge", b =>
@@ -483,30 +473,6 @@ namespace Library.Migrations
                     b.HasIndex("SpaceId");
 
                     b.ToTable("Event", "Organization");
-                });
-
-            modelBuilder.Entity("Library.Entity.EventAnimation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("EventAnimation", "Organization");
                 });
 
             modelBuilder.Entity("Library.Entity.EventSubscription", b =>
@@ -1411,10 +1377,6 @@ namespace Library.Migrations
 
             modelBuilder.Entity("Library.Entity.Attendance", b =>
                 {
-                    b.HasOne("Library.Entity.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId");
-
                     b.HasOne("Library.Entity.Member", "Member")
                         .WithMany()
                         .HasForeignKey("MemberId")
@@ -1423,7 +1385,9 @@ namespace Library.Migrations
 
                     b.HasOne("Library.Entity.ActivitySessionSlot", "SessionSlot")
                         .WithMany()
-                        .HasForeignKey("SessionSlotId");
+                        .HasForeignKey("SessionSlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.OwnsOne("Library.Entity.Active", "Active", b1 =>
                         {
@@ -1471,8 +1435,6 @@ namespace Library.Migrations
 
                     b.Navigation("Audit")
                         .IsRequired();
-
-                    b.Navigation("Event");
 
                     b.Navigation("Member");
 
@@ -1831,72 +1793,6 @@ namespace Library.Migrations
                     b.Navigation("SchoolYear");
 
                     b.Navigation("Space");
-                });
-
-            modelBuilder.Entity("Library.Entity.EventAnimation", b =>
-                {
-                    b.HasOne("Library.Entity.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Library.Entity.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
-                        {
-                            b1.Property<Guid>("EventAnimationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime>("From")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime?>("Until")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.HasKey("EventAnimationId");
-
-                            b1.ToTable("EventAnimation", "Organization");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EventAnimationId");
-                        });
-
-                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
-                        {
-                            b1.Property<Guid>("EventAnimationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime>("CreatedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime?>("DeletedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime>("LastUpdatedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.HasKey("EventAnimationId");
-
-                            b1.ToTable("EventAnimation", "Organization");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EventAnimationId");
-                        });
-
-                    b.Navigation("Active")
-                        .IsRequired();
-
-                    b.Navigation("Audit")
-                        .IsRequired();
-
-                    b.Navigation("Event");
-
-                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("Library.Entity.EventSubscription", b =>

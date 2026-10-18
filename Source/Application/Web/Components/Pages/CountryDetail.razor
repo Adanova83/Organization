@@ -6,7 +6,7 @@
 
 <PageTitle>@(country?.Name ?? "Pays")</PageTitle>
 
-<p><a href="/countries">← Retour aux pays</a></p>
+<p><a href="/countries"><Icon Name="arrow-left" /> Retour aux pays</a></p>
 
 @if (error is not null)
 {
@@ -18,7 +18,7 @@ else if (country is not null)
 
     @if (canEdit)
     {
-        <p><a class="button" href="/countries/@Id/edit">Modifier le pays</a></p>
+        <p><a class="button" href="/countries/@Id/edit"><Icon Name="pen" /> Modifier le pays</a></p>
     }
 
     <dl class="meta">

@@ -43,9 +43,9 @@ else
                     </td>
                     <td class="actions">
                         <a href="/participants/@SubscriptionClient.Segment(row.Kind)/@row.TargetId">Participants</a>
-                        @if (row.Kind != SubscriptionKind.Project)
+                        @if (row.Kind == SubscriptionKind.Slot)
                         {
-                            <a href="@AttendanceRoutes.Sessions(row.Kind, row.TargetId)">Appel</a>
+                            <a href="@AttendanceRoutes.Sessions(row.TargetId)">Appel</a>
                         }
                     </td>
                 </tr>
@@ -78,7 +78,7 @@ else
 
         try
         {
-            foreach (var kind in Enum.GetValues<SubscriptionKind>())
+            foreach (var kind in Enum.GetValues<SubscriptionKind>().Where(AnimationClient.IsAnimated))
             {
                 // Les animations d'un domaine ne sont lisibles qu'avec sa permission *.read.
                 if (!await Access.CanAsync(AnimationClient.ReadPermission(kind)))

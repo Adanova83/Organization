@@ -28,7 +28,6 @@ public static class ApiRoutes
     public const string Holidays = "api/holidays";
 
     public const string ActivitySlotAnimations = "api/activity-session-slot-animations";
-    public const string EventAnimations = "api/event-animations";
     public const string ProjectSlotAnimations = "api/project-slot-animations";
 
     public const string Notes = "api/notes";

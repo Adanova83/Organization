@@ -1,4 +1,4 @@
-@page "/attendance/{Kind}/{TargetId:guid}/{Date}/print"
+@page "/attendance/{SlotId:guid}/{Date}/print"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject NavigationManager Navigation
@@ -11,8 +11,8 @@
 <PageTitle>Feuille d'émargement</PageTitle>
 
 <p class="no-print">
-    <a href="@($"/attendance/{Kind}/{TargetId}/{Date}")">← Appel</a>
-    <button type="button" onclick="window.print()">Imprimer ou enregistrer en PDF</button>
+    <a href="@($"/attendance/{SlotId}/{Date}")"><Icon Name="arrow-left" /> Appel</a>
+    <button type="button" onclick="window.print()"><Icon Name="print" /> Imprimer ou enregistrer en PDF</button>
 </p>
 
 @if (error is not null)
@@ -26,7 +26,7 @@ else if (sheet is not null)
             <p class="association">Adanova 83</p>
             <h1>Feuille d'émargement</h1>
             <dl class="meta">
-                <dt>@(sheet.Kind == Ct.SubscriptionTargetKind.Event ? "Événement" : "Atelier")</dt><dd>@sheet.Title</dd>
+                <dt>Atelier</dt><dd>@sheet.Title</dd>
                 <dt>Séance</dt><dd>@Format.LongDate(sheet.Date), @Format.Time(sheet.StartTime) – @Format.Time(sheet.EndTime)</dd>
                 <dt>Lieu</dt><dd>@(sheet.SpaceName ?? "—")</dd>
                 <dt>Animation</dt><dd>@(sheet.Animators.Count == 0 ? "—" : string.Join(", ", sheet.Animators))</dd>
@@ -70,8 +70,7 @@ else if (sheet is not null)
 }
 
 @code {
-    [Parameter] public string Kind { get; set; } = "";
-    [Parameter] public Guid TargetId { get; set; }
+    [Parameter] public Guid SlotId { get; set; }
     [Parameter] public string Date { get; set; } = "";
 
     private Ct.AttendanceSheet? sheet;
@@ -79,7 +78,7 @@ else if (sheet is not null)
 
     protected override async Task OnInitializedAsync()
     {
-        if (AttendanceRoutes.Parse(Kind) is not { } kind || AttendanceRoutes.ParseDate(Date) is not { } date)
+        if (AttendanceRoutes.ParseDate(Date) is not { } date)
         {
             Navigation.NavigateTo("/not-found");
             return;
@@ -87,7 +86,7 @@ else if (sheet is not null)
 
         try
         {
-            sheet = await Api.GetAttendanceSheetAsync(kind, TargetId, date);
+            sheet = await Api.GetAttendanceSheetAsync(SlotId, date);
         }
         catch (Exception ex) when (ApiErrors.IsNotFound(ex))
         {
@@ -95,7 +94,7 @@ else if (sheet is not null)
         }
         catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
         {
-            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{Kind}/{TargetId}/{Date}/print", forceLoad: true);
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{SlotId}/{Date}/print", forceLoad: true);
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))
         {

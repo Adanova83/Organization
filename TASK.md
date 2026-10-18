@@ -34,7 +34,8 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       jour, reste à payer, paiement prérempli), bloc « Cotisations » des saisons en cours sur le tableau de bord.
 - [ ] **Application mobile** (application web installable) : présences par QR code et appel, rappels, agenda
       personnel ; cahier des charges dans [docs/application-mobile.md](docs/application-mobile.md), en 5 lots.
-      Lot 1 fait : présences par séance datée, appel sur le site (animateurs et responsables), feuille d'émargement
+      Lot 1 fait (ateliers seulement, pas d'appel pour les événements) : présences par séance datée, appel sur le site
+      (animateurs et responsables), feuille d'émargement
       imprimable ou en PDF (impression du navigateur), statistiques de fréquentation (page « Présences »).
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.

@@ -7,7 +7,7 @@
 
 <PageTitle>@(activity?.Name ?? "Activité")</PageTitle>
 
-<p><a href="/activities">← Retour aux activités</a></p>
+<p><a href="/activities"><Icon Name="arrow-left" /> Retour aux activités</a></p>
 
 @if (error is not null)
 {
@@ -20,8 +20,8 @@ else if (activity is not null)
     @if (canEdit)
     {
         <p class="actions">
-            <a class="button" href="/activities/@Id/edit">Modifier l'activité</a>
-            <a class="button" href="/activities/@Id/sessions/new">Nouvelle session</a>
+            <a class="button" href="/activities/@Id/edit"><Icon Name="pen" /> Modifier l'activité</a>
+            <a class="button" href="/activities/@Id/sessions/new"><Icon Name="plus" /> Nouvelle session</a>
         </p>
     }
 
@@ -55,8 +55,8 @@ else if (activity is not null)
             @if (canEdit)
             {
                 <p class="actions">
-                    <a href="/activity-sessions/@item.Session.Id/edit">Modifier la session</a>
-                    <a href="/activity-sessions/@item.Session.Id/slots/new">Nouveau créneau</a>
+                    <a class="button" href="/activity-sessions/@item.Session.Id/slots/new"><Icon Name="plus" /> Nouveau créneau</a>
+                    <RowActions EditUrl="@($"/activity-sessions/{item.Session.Id}/edit")" DeleteRoute="@ApiRoutes.ActivitySessions" Id="item.Session.Id" Confirm="Supprimer cette session, avec ses créneaux, inscriptions et animateurs ?" />
                 </p>
             }
 
@@ -89,14 +89,14 @@ else if (activity is not null)
                                         @if (canSeeSubscribers)
                                         {
                                             <a href="/subscriptions/slot/@slot.Id">Inscrits</a>
-                                            <a href="/attendance/slot/@slot.Id">Présences</a>
+                                            <a href="@AttendanceRoutes.Sessions(slot.Id)">Présences</a>
                                         }
                                         </div>
                                     </td>
                                 }
                                 @if (canEdit)
                                 {
-                                    <td><a href="/activity-session-slots/@slot.Id/edit">Modifier</a></td>
+                                    <td><RowActions EditUrl="@($"/activity-session-slots/{slot.Id}/edit")" DeleteRoute="@ApiRoutes.ActivitySessionSlots" Id="slot.Id" Confirm="Supprimer ce créneau, avec ses inscriptions et animateurs ?" /></td>
                                 }
                             </tr>
                         }

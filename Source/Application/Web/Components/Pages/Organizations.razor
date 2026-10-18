@@ -10,7 +10,7 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/organizations/new">Nouvelle organisation</a></p>
+    <p><a class="button" href="/organizations/new"><Icon Name="plus" /> Nouvelle organisation</a></p>
 }
 
 @if (error is not null)
@@ -27,7 +27,7 @@ else if (organizations is not null)
     {
         <table>
             <thead>
-                <tr><th>Organisation</th><th>Statut</th></tr>
+                <tr><th>Organisation</th><th>Statut</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var organization in organizations)
@@ -35,6 +35,10 @@ else if (organizations is not null)
                     <tr>
                         <td><a href="/organizations/@organization.Id">@organization.Name</a></td>
                         <td>@(organization.Active?.IsActive == false ? "Inactive" : "Active")</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/organizations/{organization.Id}/edit")" DeleteRoute="@ApiRoutes.Organizations" Id="organization.Id" Confirm="Supprimer cette organisation ?" /></td>
+                        }
                     </tr>
                 }
             </tbody>

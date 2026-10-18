@@ -1,10 +1,10 @@
-@page "/attendance/{Kind}/{TargetId:guid}"
+@page "/attendance/{SlotId:guid}"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject NavigationManager Navigation
 
 @*
-    Séances d'un créneau d'atelier ou d'un événement, avec leur appel. Ouvert aux animateurs de l'élément et aux
+    Séances d'un créneau d'atelier, avec leur appel. Ouvert aux animateurs du créneau et aux
     responsables : l'API refuse les autres.
 *@
 
@@ -26,7 +26,7 @@ else if (occurrences is not null)
     {
         @if (Next is { } next)
         {
-            <p><a class="button" href="@SessionUrl(next.Date)">Faire l'appel du @Format.LongDate(next.Date)</a></p>
+            <p><a class="button" href="@SessionUrl(next.Date)"><Icon Name="clipboard-check" /> Faire l'appel du @Format.LongDate(next.Date)</a></p>
         }
 
         <table>
@@ -58,14 +58,13 @@ else if (occurrences is not null)
 
         @if (!ShowAll && occurrences.Occurrences.Count > Shown.Count)
         {
-            <p><a href="@($"/attendance/{Kind}/{TargetId}?all=true")">Afficher toutes les séances (@occurrences.Occurrences.Count)</a></p>
+            <p><a href="@($"{AttendanceRoutes.Sessions(SlotId)}?all=true")">Afficher toutes les séances (@occurrences.Occurrences.Count)</a></p>
         }
     }
 }
 
 @code {
-    [Parameter] public string Kind { get; set; } = "";
-    [Parameter] public Guid TargetId { get; set; }
+    [Parameter] public Guid SlotId { get; set; }
 
     [SupplyParameterFromQuery(Name = "all")] public bool ShowAll { get; set; }
 
@@ -84,19 +83,13 @@ else if (occurrences is not null)
             .Concat(occurrences.Occurrences.Where(o => o.Date > Today).Take(4))
             .ToList();
 
-    private string SessionUrl(DateOnly date) => $"/attendance/{Kind}/{TargetId}/{date:yyyy-MM-dd}";
+    private string SessionUrl(DateOnly date) => AttendanceRoutes.Session(SlotId, date);
 
     protected override async Task OnInitializedAsync()
     {
-        if (AttendanceRoutes.Parse(Kind) is not { } kind)
-        {
-            Navigation.NavigateTo("/not-found");
-            return;
-        }
-
         try
         {
-            occurrences = await Api.GetAttendanceOccurrencesAsync(kind, TargetId);
+            occurrences = await Api.GetAttendanceOccurrencesAsync(SlotId);
         }
         catch (Exception ex) when (ApiErrors.IsNotFound(ex))
         {
@@ -104,7 +97,7 @@ else if (occurrences is not null)
         }
         catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
         {
-            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{Kind}/{TargetId}", forceLoad: true);
+            Navigation.NavigateTo($"/api/auth/login?returnUrl={AttendanceRoutes.Sessions(SlotId)}", forceLoad: true);
         }
         catch (Exception ex) when (ApiErrors.IsApi(ex))
         {

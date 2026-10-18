@@ -8,7 +8,7 @@
 
 <PageTitle>Année @(year?.Code)</PageTitle>
 
-<p><a href="/school-years">← Retour aux années scolaires</a></p>
+<p><a href="/school-years"><Icon Name="arrow-left" /> Retour aux années scolaires</a></p>
 
 @if (error is not null)
 {
@@ -20,7 +20,7 @@ else if (year is not null)
 
     @if (canEdit)
     {
-        <p><a class="button" href="/school-years/@Id/edit">Modifier l'année</a></p>
+        <p><a class="button" href="/school-years/@Id/edit"><Icon Name="pen" /> Modifier l'année</a></p>
     }
 
     <dl class="meta">
@@ -37,13 +37,17 @@ else if (year is not null)
         else
         {
             <table>
-                <thead><tr><th>Organisation</th><th>Cotisation</th></tr></thead>
+                <thead><tr><th>Organisation</th><th>Cotisation</th>@if (canEdit){<th></th>}</tr></thead>
                 <tbody>
                     @foreach (var season in seasons)
                     {
                         <tr>
                             <td><a href="/organizations/@season.OrganizationId">@OrganizationName(season.OrganizationId)</a></td>
                             <td>@Format.Price(season.Price)</td>
+                            @if (canEdit)
+                            {
+                                <td><RowActions EditUrl="@($"/organization-sessions/{season.Id}/edit")" DeleteRoute="@ApiRoutes.OrganizationSessions" Id="season.Id" Confirm="Supprimer cette saison ?" /></td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -153,7 +157,7 @@ else if (year is not null)
         else
         {
             <table>
-                <thead><tr><th>Nom</th><th>Du</th><th>Au</th></tr></thead>
+                <thead><tr><th>Nom</th><th>Du</th><th>Au</th>@if (canEdit){<th></th>}</tr></thead>
                 <tbody>
                     @foreach (var holiday in holidays)
                     {
@@ -161,6 +165,10 @@ else if (year is not null)
                             <td><a href="/holidays/@holiday.Id">@holiday.Name</a></td>
                             <td>@Format.Date(holiday.StartDate)</td>
                             <td>@Format.Date(holiday.EndDate)</td>
+                            @if (canEdit)
+                            {
+                                <td><RowActions EditUrl="@($"/holidays/{holiday.Id}/edit")" DeleteRoute="@ApiRoutes.Holidays" Id="holiday.Id" Confirm="Supprimer cette période ?" /></td>
+                            }
                         </tr>
                     }
                 </tbody>

@@ -11,11 +11,11 @@
 
 <PageTitle>Participants</PageTitle>
 
-<p><a href="/me/animations">← Mes animations</a></p>
+<p><a href="/me/animations"><Icon Name="arrow-left" /> Mes animations</a></p>
 
-@if (Target is { } current && current.Kind != SubscriptionKind.Project)
+@if (Target is { } current && current.Kind == SubscriptionKind.Slot)
 {
-    <p><a class="button" href="@AttendanceRoutes.Sessions(current.Kind, TargetId)">Faire l'appel</a></p>
+    <p><a class="button" href="@AttendanceRoutes.Sessions(TargetId)"><Icon Name="clipboard-check" /> Faire l'appel</a></p>
 }
 
 <h1>Participants @(title is null ? "" : $"– {title}")</h1>

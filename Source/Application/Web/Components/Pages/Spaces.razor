@@ -10,7 +10,7 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/spaces/new">Nouvel espace</a></p>
+    <p><a class="button" href="/spaces/new"><Icon Name="plus" /> Nouvel espace</a></p>
 }
 
 @if (error is not null)
@@ -27,7 +27,7 @@ else if (spaces is not null)
     {
         <table>
             <thead>
-                <tr><th>Espace</th><th>Statut</th></tr>
+                <tr><th>Espace</th><th>Statut</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var space in spaces)
@@ -35,6 +35,10 @@ else if (spaces is not null)
                     <tr>
                         <td><a href="/spaces/@space.Id">@space.Name</a></td>
                         <td>@(space.Active?.IsActive == false ? "Inactif" : "Actif")</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/spaces/{space.Id}/edit")" DeleteRoute="@ApiRoutes.Spaces" Id="space.Id" Confirm="Supprimer cet espace ?" /></td>
+                        }
                     </tr>
                 }
             </tbody>

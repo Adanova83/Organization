@@ -1,21 +1,13 @@
-using Web.Clients;
-
 namespace Web.Models;
 
-/// <summary>Type d'élément dans l'adresse des pages de présences : « slot » (créneau d'atelier) ou « event ».</summary>
+/// <summary>Adresses des pages de présences d'un créneau d'atelier (pas d'appel pour les événements).</summary>
 public static class AttendanceRoutes
 {
-    public static SubscriptionKind? Parse(string segment) => segment switch
-    {
-        "slot" => SubscriptionKind.Slot,
-        "event" => SubscriptionKind.Event,
-        _ => null
-    };
+    /// <summary>Séances d'un créneau.</summary>
+    public static string Sessions(Guid slotId) => $"/attendance/{slotId}";
 
-    public static string Segment(SubscriptionKind kind) => kind == SubscriptionKind.Event ? "event" : "slot";
-
-    /// <summary>Page des séances d'un créneau ou d'un événement.</summary>
-    public static string Sessions(SubscriptionKind kind, Guid targetId) => $"/attendance/{Segment(kind)}/{targetId}";
+    /// <summary>Appel d'une séance.</summary>
+    public static string Session(Guid slotId, DateOnly date) => $"/attendance/{slotId}/{date:yyyy-MM-dd}";
 
     /// <summary>Date d'une séance dans l'adresse (yyyy-MM-dd).</summary>
     public static DateOnly? ParseDate(string value)

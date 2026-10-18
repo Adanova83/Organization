@@ -14,7 +14,7 @@
 
 @if (backUrl is not null)
 {
-    <p><a href="@backUrl">← Retour à la fiche</a></p>
+    <p><a href="@backUrl"><Icon Name="arrow-left" /> Retour à la fiche</a></p>
 }
 
 @if (error is not null)
@@ -109,8 +109,9 @@
     {
         Add ??= new MemberChoiceModel();
 
+        // Pas d'animateurs pour les événements.
         kind = SubscriptionClient.Parse(Kind);
-        if (kind is not { } k)
+        if (kind is not { } k || !AnimationClient.IsAnimated(k))
         {
             Navigation.NavigateTo("/not-found");
             return;

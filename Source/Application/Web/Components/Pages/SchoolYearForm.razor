@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouvelle année scolaire" : "Modifier l'année scolaire")</h1>
 
-<p><a href="@BackUrl">← Retour</a></p>
+<p><a href="@BackUrl"><Icon Name="arrow-left" /> Retour</a></p>
 
 @if (error is not null)
 {
@@ -42,7 +42,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@BackUrl">Annuler</a>
         </p>
     </EditForm>
@@ -51,7 +51,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-school-year" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette année scolaire ?');">Supprimer cette année scolaire</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette année scolaire ?');"><Icon Name="trash-can" /> Supprimer cette année scolaire</button>
             <p class="muted">Impossible tant que des saisons, sessions, événements, projets ou vacances y sont rattachés.</p>
         </form>
     }

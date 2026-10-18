@@ -13,6 +13,9 @@
 <body>
     <Routes />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    @* Menu du téléphone : refermé après chaque changement de page. *@
+    <script>Blazor.addEventListener("enhancedload", () => { const toggle = document.getElementById("nav-toggle"); if (toggle) toggle.checked = false; });</script>
+    <script src="@Assets["responsive.js"]"></script>
 </body>
 
 </html>

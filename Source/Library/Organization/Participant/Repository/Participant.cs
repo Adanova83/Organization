@@ -107,8 +107,8 @@ public sealed class Participant : IParticipant
         {
             Contract.SubscriptionTargetKind.ActivitySlot => _dbContext.ActivitySessionSlotAnimations
                 .AnyAsync(item => item.SessionSlotId == targetId && item.MemberId == memberId, ct),
-            Contract.SubscriptionTargetKind.Event => _dbContext.EventAnimations
-                .AnyAsync(item => item.EventId == targetId && item.MemberId == memberId, ct),
+            // Pas d'animateurs pour les événements.
+            Contract.SubscriptionTargetKind.Event => Task.FromResult(false),
             _ => _dbContext.ProjectSlotAnimations
                 .AnyAsync(item => item.ProjectSlotId == targetId && item.MemberId == memberId, ct)
         };

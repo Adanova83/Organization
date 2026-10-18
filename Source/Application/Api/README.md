@@ -51,15 +51,15 @@ Tous les endpoints suivent le même modèle (`Crud/CrudEndpoints.cs` et `Crud/Ow
 | --- | --- | --- |
 | Membres | `/api/members` | `member.edit` |
 | Contacts des familles | `/api/contacts` (liste : `?query=`), `/api/member-contacts` (liste : `?memberId=`, `?targetId=` = contact) : parent ou tuteur, lien (`Mother`, `Father`, `Guardian`, `Other`), à prévenir en urgence, autorisé à venir chercher ; un contact peut suivre plusieurs membres | `member.edit` |
-| Participants | `GET /api/participants/{activity-slot|event|project-slot}/{id}` : inscrits et liste d'attente avec coordonnées, âge et contacts des familles | animateurs de cet élément seulement, ou `subscription.read` + `member.read` |
-| Présences (feuilles d'émargement) | `GET /api/attendances/{activity-slot|event}/{id}` : séances datées (rythme, vacances, jours fériés) et décomptes ; `GET` / `PUT .../{id}/{yyyy-MM-dd}` : feuille d'émargement, appel `[{ memberId, status }]` (`Present`, `Absent`, `Excused`) ; `GET /api/attendances/stats?from=&to=` : fréquentation par atelier / événement et par membre | animateurs de la séance (appel), `subscription.read` (lecture, statistiques), `subscription.edit` (correction) |
+| Participants | `GET /api/participants/{activity-slot|event|project-slot}/{id}` : inscrits et liste d'attente avec coordonnées, âge et contacts des familles | animateurs de cet élément seulement (créneaux ; les événements n'ont pas d'animateurs), ou `subscription.read` + `member.read` |
+| Présences (feuilles d'émargement) | ateliers seulement (pas d'appel pour les événements) ; `GET /api/attendances/slots/{slotId}` : séances datées (rythme, vacances, jours fériés) et décomptes ; `GET` / `PUT /api/attendances/slots/{slotId}/{yyyy-MM-dd}` : feuille d'émargement, appel `[{ memberId, status }]` (`Present`, `Absent`, `Excused`) ; `GET /api/attendances/stats?from=&to=` : fréquentation par atelier et par membre | animateurs du créneau (appel), `subscription.read` (lecture, statistiques), `subscription.edit` (correction) |
 | Espaces | `/api/spaces` | `space.edit` |
 | Années scolaires | `/api/school-years` (+ `/{id}/organization-sessions`, `/{id}/activity-sessions`, `/{id}/events`, `/{id}/projects`, `/{id}/holidays`) | `organization.edit` |
 | Pays, organisations, saisons, jours fériés | `/api/countries`, `/api/organizations` (+ `/{id}/sessions`), `/api/organization-sessions`, `/api/holidays` | `organization.edit` (pays : lisibles par tout compte connecté) |
 | Ateliers | `/api/activities` (+ `/{id}/sessions`), `/api/activity-sessions` (+ `/{id}/slots`), `/api/activity-session-slots` | `activity.edit` |
 | Événements | `/api/events` | `event.edit` |
 | Projets | `/api/projects` (+ `/{id}/slots`), `/api/project-slots` | `project.edit` |
-| Animateurs | `/api/activity-session-slot-animations`, `/api/event-animations`, `/api/project-slot-animations` (liste : `?targetId=` et `?memberId=`) | `activity.edit`, `event.edit`, `project.edit` |
+| Animateurs | `/api/activity-session-slot-animations`, `/api/project-slot-animations` (liste : `?targetId=` et `?memberId=`) ; pas d'animateurs pour les événements | `activity.edit`, `project.edit` |
 | Inscriptions | `/api/activity-session-slot-subscriptions`, `/api/event-subscriptions`, `/api/project-slot-subscriptions` | le membre pour lui-même, ou `subscription.edit` |
 | Cotisations | `/api/contributions` (liste : `?memberId=`), `amount` = montant payé ; `/api/contributions/seasons/{organizationSessionId}` : situation de la saison | `contribution.edit` (lecture : le membre pour les siennes ; saison : `contribution.read`) |
 | Notes personnelles | `/api/notes`, `/api/note-links` (liste : `?targetId=<id de la note>`) | l'auteur seul |

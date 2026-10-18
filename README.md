@@ -133,3 +133,7 @@ Le détail des endpoints, des permissions, des flux ICS et des réglages est dan
 
 Ce logiciel est distribué sous la licence libre **CeCILL-B** (licence de droit français, proche des licences BSD) :
 voir le fichier [LICENCE](LICENCE) ou <https://cecill.info>.
+
+Les icônes du site proviennent de [Font Awesome Free](https://fontawesome.com) (Fonticons, Inc.), sous licence
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Seules les icônes utilisées sont reprises, dans
+`Source/Application/Web/wwwroot/icons.svg`, servi par le site lui-même.

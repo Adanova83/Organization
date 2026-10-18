@@ -103,8 +103,31 @@ h1 { margin-top: 0; font-size: 1.7rem; }
 .topbar-user { display: flex; gap: 1rem; align-items: center; font-size: 0.95rem; }
 .topbar-user a { font-family: var(--font-button); text-decoration: none; }
 
+/* Menu de l'utilisateur (nom en haut à droite) : « Mon profil », « Déconnexion ». */
+.user-menu { position: relative; }
+.user-menu summary {
+    display: flex; align-items: center; gap: 0.5rem; list-style: none; cursor: pointer;
+    padding: 0.25rem 0.75rem 0.25rem 0.25rem; border-radius: 50px; border: 1px solid transparent;
+}
+.user-menu summary::-webkit-details-marker { display: none; }
+.user-menu summary::after { content: "▾"; color: var(--muted); font-size: 0.8rem; }
+.user-menu summary:hover, .user-menu[open] summary { border-color: var(--border); background: var(--bg); }
+.user-icon {
+    display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+    background: var(--accent); color: var(--accent-text); font-family: var(--font-heading); font-weight: 600; font-size: 0.8rem;
+}
+.user-menu ul {
+    position: absolute; right: 0; top: calc(100% + 0.4rem); z-index: 10; min-width: 12rem;
+    margin: 0; padding: 0.4rem; list-style: none;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+.user-menu li a { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.9rem; border-radius: 8px; color: var(--text); }
+.user-menu li a:hover { background: var(--bg); color: var(--link-hover); }
+
 .sidebar { grid-area: side; padding: 1.25rem 1rem; background: var(--surface); border-right: 1px solid var(--border); }
 .nav { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+/* Bouton « Menu » : sur tablette et téléphone seulement (voir « Responsive » en fin de fichier). */
+.nav-toggle, .nav-toggle-label { display: none; }
 .nav a {
     display: block;
     padding: 0.5rem 1rem;
@@ -115,6 +138,12 @@ h1 { margin-top: 0; font-size: 1.7rem; }
 }
 .nav a:hover { background: var(--bg); color: var(--link-hover); }
 .nav a.active { background: var(--accent); color: var(--accent-text); }
+
+/* Icônes (Font Awesome Free, wwwroot/icons.svg, composant Icon) : à la taille et à la couleur du texte. */
+.icon { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.125em; flex: none; }
+.nav a { display: flex; align-items: center; gap: 0.7rem; }
+.nav a .icon { width: 1.1em; height: 1.1em; opacity: 0.85; }
+.nav a.active .icon { opacity: 1; }
 
 .content { grid-area: main; padding: 1.75rem 2rem; max-width: 1100px; }
 
@@ -177,13 +206,6 @@ tbody tr:last-child td { border-bottom: 0; }
 .danger-button { background: var(--danger); color: #fff; }
 .danger-button:hover { background: #a62f23; color: #fff; }
 
-@media (max-width: 700px) {
-    .shell { grid-template-columns: 1fr; grid-template-areas: "top" "side" "main"; }
-    .sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
-    .nav { grid-auto-flow: column; justify-content: start; overflow-x: auto; }
-    .content { padding: 1.25rem 1rem; }
-    table { display: block; overflow-x: auto; }
-}
 
 /* Fiches en lecture */
 .meta { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1.25rem; margin: 0 0 1.5rem; }
@@ -253,9 +275,6 @@ form.inline { display: inline; }
 .calendar-legend > div { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
 .calendar-legend h2 { flex-basis: 100%; margin: 0; font-size: 0.95rem; }
 .calendar-legend .swatch { width: 1rem; height: 1rem; border-radius: 4px; }
-@media (max-width: 700px) {
-    .calendar { grid-template-columns: 3rem repeat(7, minmax(6.5rem, 1fr)); }
-}
 
 .form label.checkbox { display: flex; gap: 0.5rem; align-items: center; }
 .form fieldset p { margin: 0; }
@@ -335,4 +354,108 @@ tr.today td { font-weight: 600; }
     .attendance-sheet, .attendance-sheet * { color: #000 !important; background: #fff !important; }
     .attendance-sheet table { border-collapse: collapse; width: 100%; }
     .attendance-sheet th, .attendance-sheet td { border: 1px solid #000; padding: 0.3rem 0.5rem; }
+}
+
+
+/* =====================================================================================================================
+   Responsive : trois formats.
+   - Ordinateur (1024 px et plus) : menu latéral toujours visible (règles ci-dessus).
+   - Tablette (600 à 1023 px) : menu replié derrière « Menu », ouvert en panneau sur trois colonnes ; contenu pleine
+     largeur ; tableau de bord sur deux colonnes ; tableaux larges défilant dans leur cadre.
+   - Téléphone (moins de 600 px) : menu replié en liste ; tout sur une colonne ; tableaux affichés en fiches
+     (« intitulé : valeur », intitulés posés par responsive.js) ; boutons et champs plus grands pour le doigt.
+   ===================================================================================================================== */
+
+@media (max-width: 1023.98px) {
+    /* minmax(0, 1fr) et min-width: 0 : un élément large défile dans son cadre au lieu d'élargir toute la page. */
+    .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr; grid-template-areas: "top" "side" "main"; }
+    .content { min-width: 0; max-width: none; padding: 1.5rem; }
+    .topbar { padding: 0.6rem 1.25rem; }
+    .brand { white-space: nowrap; }
+
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--border); padding: 0.5rem 1.25rem; }
+    .nav-toggle-label {
+        display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.5rem; padding: 0.4rem 1.1rem;
+        border-radius: 50px; border: 1px solid var(--border); font-family: var(--font-button); cursor: pointer;
+    }
+    /* Icône « barres » menu fermé, « croix » menu ouvert. */
+    .nav-toggle-label .when-open { display: none; }
+    .nav-toggle:checked + .nav-toggle-label .when-open { display: inline-block; }
+    .nav-toggle:checked + .nav-toggle-label .when-closed { display: none; }
+    .sidebar .nav { display: none; margin: 0.75rem 0 0.25rem; }
+    .nav-toggle:checked ~ .nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.25rem 0.75rem; }
+    .nav-section { grid-column: 1 / -1; }
+
+    /* Tableaux à leur largeur normale ; un tableau trop large fait défiler la zone de contenu, pas toute la page. */
+    .content { overflow-x: auto; }
+    .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Blocs avec un tableau : toute la largeur, pour que les colonnes ne s'écrasent pas. */
+    .dashboard .card:has(table) { grid-column: 1 / -1; }
+    .calendar { grid-template-columns: 3rem repeat(7, minmax(6.5rem, 1fr)); }
+}
+
+@media (max-width: 599.98px) {
+    body { font-size: 1rem; }
+    h1 { font-size: 1.4rem; }
+    .content { padding: 1rem; }
+    .topbar { padding: 0.5rem 1rem; }
+    .brand { font-size: 1.15rem; }
+    /* Menu de l'utilisateur : seulement la pastille de ses initiales. */
+    .user-menu .user-name { display: none; }
+    .sidebar { padding: 0.5rem 1rem; }
+    .nav-toggle:checked ~ .nav { grid-template-columns: 1fr; }
+    .nav a { padding: 0.65rem 1rem; }
+
+    /* Une seule colonne partout. */
+    .dashboard { grid-template-columns: 1fr; }
+    .meta { grid-template-columns: 1fr; gap: 0; }
+    .meta dt { margin-top: 0.6rem; font-size: 0.85rem; }
+    .form { max-width: none; }
+    .search { flex-wrap: wrap; }
+    .search input, .search button { flex: 1 1 100%; }
+    .inline-form > * { flex: 1 1 100%; }
+
+    /* Cibles tactiles : 44 px au moins ; champs en 16 px (sinon l'iPhone zoome à la saisie). */
+    .button, button { min-height: 2.75rem; padding: 0.6rem 1.25rem; }
+    .form input, .form select, .form textarea, .search input { font-size: 1rem; min-height: 2.75rem; }
+    .actions { flex-wrap: wrap; }
+
+    /* Tableaux en fiches : une carte par ligne, chaque cellule précédée de l'intitulé de sa colonne. */
+    table, table tbody, table tr, table td { display: block; width: 100%; }
+    table { overflow: visible; border: 0; background: transparent; }
+    table thead { display: none; }
+    table tr { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.5rem 0.9rem; margin-bottom: 0.75rem; }
+    tbody tr:hover { background: var(--surface); }
+    table td { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.35rem 0; border-bottom: 1px solid var(--border); text-align: right; }
+    table td:last-child { border-bottom: 0; }
+    table td::before { content: attr(data-label); color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; text-align: left; flex: none; }
+    /* Première cellule (le nom) en titre de la fiche ; cellules sans intitulé (actions) alignées à gauche. */
+    table td:first-child { display: block; text-align: left; font-weight: 600; font-size: 1.05rem; }
+    table td:first-child::before, table td[data-label=""]::before, table td:not([data-label])::before { content: none; }
+    table td[data-label=""], table td:not([data-label]) { justify-content: flex-start; text-align: left; }
+    .card table tr { border: 0; padding: 0.5rem 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+
+    /* Appel : nom puis choix « Présent / Absent », sans intitulés. */
+    .roll-call table td { display: block; text-align: left; }
+    .roll-call table td::before { content: none; }
+    .roll-call label.choice { padding: 0.35rem 0; margin-right: 1.5rem; font-size: 1.05rem; }
+
+    .calendar { grid-template-columns: 2.75rem repeat(7, minmax(6rem, 1fr)); }
+}
+
+/* Actions d'une ligne de tableau (composant RowActions) : crayon et corbeille, boutons ronds. */
+.row-actions { display: flex; gap: 0.35rem; align-items: center; justify-content: flex-end; }
+.row-actions form { display: flex; margin: 0; }
+.icon-button {
+    display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; min-height: 0; padding: 0; border-radius: 50%;
+    background: transparent; color: var(--link); border: 1px solid var(--border); text-decoration: none;
+}
+.icon-button:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.icon-button-danger { color: var(--danger); }
+.icon-button-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+.row-actions-error { color: var(--danger); font-size: 0.8rem; margin-top: 0.3rem; max-width: 22rem; }
+@media (max-width: 599.98px) {
+    /* Cible tactile de 44 px ; actions alignées à gauche dans les fiches. */
+    .icon-button { width: 2.75rem; height: 2.75rem; }
+    .row-actions { justify-content: flex-start; }
 }

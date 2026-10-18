@@ -10,12 +10,12 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/events/new">Nouvel événement</a></p>
+    <p><a class="button" href="/events/new"><Icon Name="plus" /> Nouvel événement</a></p>
 }
 
 <form method="get" action="/events" class="search">
     <input type="search" name="query" value="@Query" placeholder="Nom ou code" aria-label="Rechercher un événement" />
-    <button type="submit">Rechercher</button>
+    <button type="submit"><Icon Name="magnifying-glass" /> Rechercher</button>
 </form>
 
 @if (error is not null)
@@ -37,7 +37,7 @@ else if (result is not null)
                     <th>Début</th>
                     <th>Fin</th>
                     <th>Lieu</th>
-                    <th>Âge</th>
+                    <th>Âge</th>@if (canEdit){<th></th>}
                 </tr>
             </thead>
             <tbody>
@@ -55,6 +55,10 @@ else if (result is not null)
                         <td>@Format.DateTimeLabel(item.EndDate)</td>
                         <td>@(item.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</td>
                         <td>@Format.Age(item.AgeMinimum)</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/events/{item.Id}/edit")" DeleteRoute="@ApiRoutes.Events" Id="item.Id" Confirm="Supprimer cet événement, avec ses inscriptions et animateurs ?" /></td>
+                        }
                     </tr>
                 }
             </tbody>
@@ -63,12 +67,12 @@ else if (result is not null)
         <p class="pager">
             @if (CurrentPage > 1)
             {
-                <a href="@PageUrl(CurrentPage - 1)">← Précédent</a>
+                <a href="@PageUrl(CurrentPage - 1)"><Icon Name="arrow-left" /> Précédent</a>
             }
             <span>Page @CurrentPage / @PageCount · @result.FilteredCount événement(s)</span>
             @if (CurrentPage < PageCount)
             {
-                <a href="@PageUrl(CurrentPage + 1)">Suivant →</a>
+                <a href="@PageUrl(CurrentPage + 1)">Suivant <Icon Name="arrow-right" /></a>
             }
         </p>
     }
