@@ -1,0 +1,114 @@
+@page "/attendance/{Kind}/{TargetId:guid}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+@*
+    Séances d'un créneau d'atelier ou d'un événement, avec leur appel. Ouvert aux animateurs de l'élément et aux
+    responsables : l'API refuse les autres.
+*@
+
+<PageTitle>Présences</PageTitle>
+
+<h1>Présences @(occurrences is null ? "" : $"– {occurrences.Title}")</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (occurrences is not null)
+{
+    @if (occurrences.Occurrences.Count == 0)
+    {
+        <p class="muted">Aucune séance prévue.</p>
+    }
+    else
+    {
+        @if (Next is { } next)
+        {
+            <p><a class="button" href="@SessionUrl(next.Date)">Faire l'appel du @Format.LongDate(next.Date)</a></p>
+        }
+
+        <table>
+            <thead>
+                <tr><th>Séance</th><th>Présents</th><th>Absents</th><th>Absences signalées</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var occurrence in Shown)
+                {
+                    <tr class="@(occurrence.Date == Today ? "today" : "")">
+                        <td><a href="@SessionUrl(occurrence.Date)">@Format.LongDate(occurrence.Date)</a></td>
+                        <td>@(occurrence.IsRecorded ? occurrence.Present : "—")</td>
+                        <td>@(occurrence.IsRecorded ? occurrence.Absent : "—")</td>
+                        <td>@(occurrence.Excused > 0 ? occurrence.Excused : "—")</td>
+                        <td>
+                            @if (occurrence.IsRecorded)
+                            {
+                                <a href="@($"{SessionUrl(occurrence.Date)}/print")">Feuille d'émargement</a>
+                            }
+                            else if (occurrence.Date <= Today)
+                            {
+                                <span class="muted">appel non fait</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!ShowAll && occurrences.Occurrences.Count > Shown.Count)
+        {
+            <p><a href="@($"/attendance/{Kind}/{TargetId}?all=true")">Afficher toutes les séances (@occurrences.Occurrences.Count)</a></p>
+        }
+    }
+}
+
+@code {
+    [Parameter] public string Kind { get; set; } = "";
+    [Parameter] public Guid TargetId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "all")] public bool ShowAll { get; set; }
+
+    private Ct.AttendanceOccurrences? occurrences;
+    private string? error;
+
+    private static DateOnly Today => DateOnly.FromDateTime(Format.ParisLocal(DateTime.UtcNow));
+
+    /// <summary>Prochaine séance (ou celle du jour) : celle dont on fait l'appel.</summary>
+    private Ct.AttendanceOccurrence? Next => occurrences?.Occurrences.FirstOrDefault(o => o.Date >= Today);
+
+    /// <summary>Par défaut : les séances passées des six dernières semaines et les quatre prochaines.</summary>
+    private List<Ct.AttendanceOccurrence> Shown => ShowAll
+        ? occurrences!.Occurrences
+        : occurrences!.Occurrences.Where(o => o.Date <= Today && o.Date >= Today.AddDays(-42))
+            .Concat(occurrences.Occurrences.Where(o => o.Date > Today).Take(4))
+            .ToList();
+
+    private string SessionUrl(DateOnly date) => $"/attendance/{Kind}/{TargetId}/{date:yyyy-MM-dd}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AttendanceRoutes.Parse(Kind) is not { } kind)
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+
+        try
+        {
+            occurrences = await Api.GetAttendanceOccurrencesAsync(kind, TargetId);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{Kind}/{TargetId}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

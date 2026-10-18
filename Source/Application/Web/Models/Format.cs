@@ -18,6 +18,30 @@ public static class Format
 
     public static string Date(DateOnly value) => value.ToString("dd/MM/yyyy", French);
 
+    /// <summary>Date avec le jour de la semaine : « mercredi 21/10/2026 ».</summary>
+    public static string LongDate(DateOnly value) => value.ToString("dddd dd/MM/yyyy", French);
+
+    /// <summary>Présence à une séance (vide si rien n'est enregistré).</summary>
+    public static string Attendance(Ct.AttendanceStatus? status) => status switch
+    {
+        Ct.AttendanceStatus.Present => "Présent",
+        Ct.AttendanceStatus.Absent => "Absent",
+        Ct.AttendanceStatus.Excused => "Absence signalée",
+        _ => "—"
+    };
+
+    public static string AttendanceMethod(Ct.AttendanceMethod? method) => method switch
+    {
+        Ct.AttendanceMethod.RollCall => "appel",
+        Ct.AttendanceMethod.QrCode => "QR code",
+        Ct.AttendanceMethod.MemberNotice => "signalée par le membre",
+        Ct.AttendanceMethod.StaffCorrection => "saisie d'un responsable",
+        _ => ""
+    };
+
+    /// <summary>Taux de présence : « 85 % », ou « — » sans donnée.</summary>
+    public static string Rate(double? rate) => rate is { } value ? value.ToString("P0", French) : "—";
+
     /// <summary>Places d'un créneau ou d'un événement : « 8 / 12 », « Complet », avec la liste d'attente ; capacité seule si les inscrits sont inconnus.</summary>
     public static string Places(int? capacity, Ct.SubscriptionAvailability? availability)
     {

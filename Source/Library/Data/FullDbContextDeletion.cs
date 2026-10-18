@@ -65,6 +65,7 @@ public partial class FullDbContext
         Cascade<Contact>((db, id) => db.MemberContacts.Where(e => e.ContactId == id)),
 
         // Membre : sa participation, ses données personnelles et ses contacts ; ses cotisations sont conservées (historique comptable).
+        // Les présences (feuilles d'émargement) sont conservées dans tous les cas, comme les cotisations.
         Cascade<Member>((db, id) => db.ActivitySessionSlotSubscriptions.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.EventSubscriptions.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.ProjectSlotSubscriptions.Where(e => e.MemberId == id)),

@@ -184,6 +184,24 @@ public sealed class ApiClient
     private static string SeriesUrl(Guid seriesId, DateOnly? from)
         => $"{ApiRoutes.Events}/series/{seriesId}" + (from is { } date ? $"?from={date:yyyy-MM-dd}" : "");
 
+    // ---- Présences (feuilles d'émargement) ----
+
+    /// <summary>Segment de route de l'API pour un type d'élément (créneau d'atelier ou événement).</summary>
+    public static string AttendanceKind(SubscriptionKind kind) => kind == SubscriptionKind.Event ? "event" : "activity-slot";
+
+    public Task<Ct.AttendanceOccurrences> GetAttendanceOccurrencesAsync(SubscriptionKind kind, Guid targetId, CancellationToken ct = default)
+        => GetAsync<Ct.AttendanceOccurrences>($"api/attendances/{AttendanceKind(kind)}/{targetId}", ct);
+
+    public Task<Ct.AttendanceSheet> GetAttendanceSheetAsync(SubscriptionKind kind, Guid targetId, DateOnly date, CancellationToken ct = default)
+        => GetAsync<Ct.AttendanceSheet>($"api/attendances/{AttendanceKind(kind)}/{targetId}/{date:yyyy-MM-dd}", ct);
+
+    /// <summary>Enregistre l'appel et renvoie la feuille à jour.</summary>
+    public Task<Ct.AttendanceSheet> RecordAttendanceAsync(SubscriptionKind kind, Guid targetId, DateOnly date, List<Ct.AttendanceEntry> entries, CancellationToken ct = default)
+        => SendAsync<Ct.AttendanceSheet>(HttpMethod.Put, $"api/attendances/{AttendanceKind(kind)}/{targetId}/{date:yyyy-MM-dd}", entries, ct);
+
+    public Task<Ct.AttendanceStats> GetAttendanceStatsAsync(DateOnly from, DateOnly to, CancellationToken ct = default)
+        => GetAsync<Ct.AttendanceStats>($"api/attendances/stats?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}", ct);
+
     public Task<PagedResponse<Ct.Project>> GetProjectsAsync(string? query, int page, int pageSize, CancellationToken ct = default)
         => GetPagedAsync<Ct.Project>("api/projects", query, page, pageSize, ct);
 

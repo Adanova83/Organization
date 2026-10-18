@@ -325,3 +325,15 @@ public sealed class ContactModel
         return target;
     }
 }
+
+/// <summary>Appel d'une séance : la présence de chaque participant.</summary>
+public sealed class RollCallModel
+{
+    public List<RollCallItem> Items { get; set; } = [];
+}
+
+public sealed class RollCallItem
+{
+    public Guid MemberId { get; set; }
+    public Ct.AttendanceStatus Status { get; set; } = Ct.AttendanceStatus.Present;
+}

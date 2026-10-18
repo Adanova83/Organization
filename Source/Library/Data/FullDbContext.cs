@@ -25,6 +25,7 @@ public partial class FullDbContext : DbContext
     internal DbSet<NoteLink> NoteLinks => Set<NoteLink>();
     internal DbSet<Contact> Contacts => Set<Contact>();
     internal DbSet<MemberContact> MemberContacts => Set<MemberContact>();
+    internal DbSet<Attendance> Attendances => Set<Attendance>();
     internal DbSet<Organization> Organizations => Set<Organization>();
     internal DbSet<OrganizationSession> OrganizationSessions => Set<OrganizationSession>();
     internal DbSet<Project> Projects => Set<Project>();
@@ -66,6 +67,10 @@ public partial class FullDbContext : DbContext
         modelBuilder.Entity<NoteLink>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Contact>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<MemberContact>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Attendance>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        // Une présence porte soit sur un créneau d'atelier (à une date), soit sur un événement.
+        modelBuilder.Entity<Attendance>().ToTable(table => table.HasCheckConstraint(
+            "CK_Attendance_Target", "(\"SessionSlotId\" IS NULL) <> (\"EventId\" IS NULL)"));
         modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<OrganizationSession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Project>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);

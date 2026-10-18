@@ -313,3 +313,26 @@ form.inline { display: inline; }
 /* Participants (vue des animateurs) : contacts des familles, une ligne chacun. */
 .participant-contact { font-size: 0.9rem; margin: 0.15rem 0; }
 .tag { display: inline-block; border-radius: 6px; padding: 0 0.4rem; margin-left: 0.3rem; font-size: 0.8rem; color: var(--notice-text); background: var(--notice-bg); }
+
+/* Présences : appel et séances. */
+.success { background: var(--surface); color: var(--heading); padding: 0.75rem 1rem; border-radius: 12px; border-left: 4px solid var(--cyan); }
+.small { font-size: 0.8rem; }
+.roll-call { max-width: 820px; }
+.roll-call label.choice { display: inline-flex; gap: 0.35rem; align-items: center; margin-right: 1rem; color: var(--text); }
+.roll-call input[type="radio"] { width: 1.2rem; height: 1.2rem; }
+tr.today td { font-weight: 600; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; max-width: none; margin-bottom: 1rem; }
+
+/* Feuille d'émargement : à l'impression, seule la feuille apparaît, en noir sur blanc. */
+.attendance-sheet .association { font-weight: 600; margin: 0; }
+.attendance-sheet .totals { margin-top: 1rem; }
+.attendance-sheet .signature { margin-top: 2rem; min-height: 4rem; }
+
+@media print {
+    .topbar, .sidebar, .no-print { display: none !important; }
+    .shell, .content { display: block; margin: 0; padding: 0; }
+    body { background: #fff; color: #000; }
+    .attendance-sheet, .attendance-sheet * { color: #000 !important; background: #fff !important; }
+    .attendance-sheet table { border-collapse: collapse; width: 100%; }
+    .attendance-sheet th, .attendance-sheet td { border: 1px solid #000; padding: 0.3rem 0.5rem; }
+}

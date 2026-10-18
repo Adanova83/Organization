@@ -80,12 +80,11 @@ public static class IcsBuilder
         int dayOfWeek, bool mondayFirst, DateTime rangeStartUtc, DateTime rangeEndUtc,
         TimeOnly start, TimeOnly end, int intervalWeeks, string? category, Func<DateOnly, bool>? isActive = null)
     {
-        var target = ToDayOfWeek(dayOfWeek, mondayFirst);
+        var target = Library.Domain.SlotOccurrences.ToDayOfWeek(dayOfWeek, mondayFirst);
         var firstDay = DateOnly.FromDateTime(ParisTime.ToLocal(rangeStartUtc));
         var lastDay = DateOnly.FromDateTime(ParisTime.ToLocal(rangeEndUtc));
 
-        var shift = ((int)target - (int)firstDay.DayOfWeek + 7) % 7;
-        var first = firstDay.AddDays(shift);
+        var first = Library.Domain.SlotOccurrences.First(dayOfWeek, mondayFirst, firstDay);
         if (first > lastDay)
         {
             return null;
@@ -104,8 +103,7 @@ public static class IcsBuilder
         // Occurrences retirées (vacances, jours fériés...) : EXDATE ; aucune occurrence restante : pas d'événement.
         if (isActive is not null)
         {
-            var step = 7 * Math.Max(intervalWeeks, 1);
-            var occurrences = Enumerable.Range(0, (lastDay.DayNumber - first.DayNumber) / step + 1).Select(i => first.AddDays(i * step)).ToList();
+            var occurrences = Library.Domain.SlotOccurrences.All(dayOfWeek, mondayFirst, firstDay, lastDay, intervalWeeks);
             var excluded = occurrences.Where(day => !isActive(day)).ToList();
 
             if (excluded.Count == occurrences.Count)
@@ -241,9 +239,6 @@ public static class IcsBuilder
            + time.ToString("HHmmss", CultureInfo.InvariantCulture);
 
     /// <summary>Convertit le numéro de jour stocké (0 à 6) en jour de la semaine .NET.</summary>
-    private static DayOfWeek ToDayOfWeek(int value, bool mondayFirst)
-        => mondayFirst ? (DayOfWeek)((value + 1) % 7) : (DayOfWeek)(value % 7);
-
     private static string ByDay(DayOfWeek day) => day switch
     {
         DayOfWeek.Monday => "MO",

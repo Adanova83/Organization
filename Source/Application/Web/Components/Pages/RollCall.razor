@@ -1,0 +1,159 @@
+@page "/attendance/{Kind}/{TargetId:guid}/{Date}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+@*
+    Appel d'une séance : présent ou absent pour chaque participant. Les participants sans présence enregistrée sont
+    proposés « présent » : l'animateur n'a qu'à cocher les absents. Une absence signalée par le membre est conservée tant
+    qu'on ne la change pas.
+*@
+
+<PageTitle>Appel</PageTitle>
+
+<p><a href="@($"/attendance/{Kind}/{TargetId}")">← Toutes les séances</a></p>
+
+@if (sheet is not null)
+{
+    <h1>Appel – @sheet.Title</h1>
+    <p class="muted">
+        @Format.LongDate(sheet.Date), @Format.Time(sheet.StartTime) – @Format.Time(sheet.EndTime)@(sheet.SpaceName is null ? "" : $", {sheet.SpaceName}")
+    </p>
+}
+
+@if (saved)
+{
+    <p class="success">Appel enregistré : @sheet!.Present présent(s), @sheet.Absent absent(s)@(sheet.Excused > 0 ? $", {sheet.Excused} absence(s) signalée(s)" : "").</p>
+}
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (sheet is not null && Model is not null)
+{
+    @if (sheet.Rows.Count == 0)
+    {
+        <p class="muted">Personne n'est inscrit à cette séance.</p>
+    }
+    else
+    {
+        <EditForm Model="Model" FormName="roll-call" OnValidSubmit="SaveAsync" Enhance class="form roll-call">
+            <table>
+                <thead>
+                    <tr><th>Participant</th><th>Présence</th></tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Items.Count; i++)
+                    {
+                        // Copie locale : chaque ligne garde son index (noms des champs du formulaire).
+                        var index = i;
+                        var item = Model.Items[index];
+                        var row = sheet.Rows.First(r => r.MemberId == item.MemberId);
+                        <tr>
+                            <td>
+                                @($"{row.Lastname} {row.Firstname}".Trim())
+                                @if (row.Birthdate is { } birthdate)
+                                {
+                                    <span class="muted"> (@Format.AgeYears(birthdate) ans)</span>
+                                }
+                                @if (!row.IsSubscribed)
+                                {
+                                    <span class="tag">plus inscrit</span>
+                                }
+                                @if (row.Status is not null)
+                                {
+                                    <div class="muted small">Enregistré : @Format.Attendance(row.Status) (@Format.AttendanceMethod(row.Method))</div>
+                                }
+                                <input type="hidden" name="Model.Items[@index].MemberId" value="@item.MemberId" />
+                            </td>
+                            <td>
+                                <InputRadioGroup @bind-Value="Model.Items[index].Status">
+                                    <label class="choice"><InputRadio Value="Ct.AttendanceStatus.Present" /> Présent</label>
+                                    <label class="choice"><InputRadio Value="Ct.AttendanceStatus.Absent" /> Absent</label>
+                                    @if (row.Status == Ct.AttendanceStatus.Excused)
+                                    {
+                                        <label class="choice"><InputRadio Value="Ct.AttendanceStatus.Excused" /> Absence signalée</label>
+                                    }
+                                </InputRadioGroup>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <p class="actions">
+                <button type="submit">Enregistrer l'appel</button>
+                <a href="@($"/attendance/{Kind}/{TargetId}/{Date}/print")">Feuille d'émargement</a>
+            </p>
+        </EditForm>
+    }
+}
+
+@code {
+    [Parameter] public string Kind { get; set; } = "";
+    [Parameter] public Guid TargetId { get; set; }
+    [Parameter] public string Date { get; set; } = "";
+
+    [SupplyParameterFromForm(FormName = "roll-call")]
+    private RollCallModel? Model { get; set; }
+
+    private Ct.AttendanceSheet? sheet;
+    private string? error;
+    private bool saved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AttendanceRoutes.Parse(Kind) is not { } kind || AttendanceRoutes.ParseDate(Date) is not { } date)
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+
+        try
+        {
+            sheet = await Api.GetAttendanceSheetAsync(kind, TargetId, date);
+            Model ??= new RollCallModel
+            {
+                Items = sheet.Rows.Select(row => new RollCallItem
+                {
+                    MemberId = row.MemberId,
+                    Status = row.Status ?? Ct.AttendanceStatus.Present
+                }).ToList()
+            };
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{Kind}/{TargetId}/{Date}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (AttendanceRoutes.Parse(Kind) is not { } kind || AttendanceRoutes.ParseDate(Date) is not { } date)
+        {
+            return;
+        }
+
+        try
+        {
+            sheet = await Api.RecordAttendanceAsync(kind, TargetId, date, Model!.Items
+                .Select(item => new Ct.AttendanceEntry { MemberId = item.MemberId, Status = item.Status })
+                .ToList());
+            saved = true;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

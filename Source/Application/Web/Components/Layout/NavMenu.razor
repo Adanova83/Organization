@@ -36,6 +36,10 @@
         }
     </AuthorizeView>
 
+    <AuthorizeView Policy="@Permissions.SubscriptionRead" Context="attendance">
+        <li><NavLink href="attendance">Présences</NavLink></li>
+    </AuthorizeView>
+
     <AuthorizeView Policy="@Permissions.OrganizationRead" Context="organizations">
         <li class="nav-section">Référentiels</li>
         <li><NavLink href="school-years">Années scolaires</NavLink></li>

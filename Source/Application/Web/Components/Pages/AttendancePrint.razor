@@ -1,0 +1,105 @@
+@page "/attendance/{Kind}/{TargetId:guid}/{Date}/print"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+@*
+    Feuille d'émargement d'une séance, mise en page pour l'impression : « Imprimer » ouvre la fenêtre du navigateur, qui
+    permet aussi d'enregistrer en PDF (justificatif pour les financeurs).
+*@
+
+<PageTitle>Feuille d'émargement</PageTitle>
+
+<p class="no-print">
+    <a href="@($"/attendance/{Kind}/{TargetId}/{Date}")">← Appel</a>
+    <button type="button" onclick="window.print()">Imprimer ou enregistrer en PDF</button>
+</p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (sheet is not null)
+{
+    <article class="attendance-sheet">
+        <header>
+            <p class="association">Adanova 83</p>
+            <h1>Feuille d'émargement</h1>
+            <dl class="meta">
+                <dt>@(sheet.Kind == Ct.SubscriptionTargetKind.Event ? "Événement" : "Atelier")</dt><dd>@sheet.Title</dd>
+                <dt>Séance</dt><dd>@Format.LongDate(sheet.Date), @Format.Time(sheet.StartTime) – @Format.Time(sheet.EndTime)</dd>
+                <dt>Lieu</dt><dd>@(sheet.SpaceName ?? "—")</dd>
+                <dt>Animation</dt><dd>@(sheet.Animators.Count == 0 ? "—" : string.Join(", ", sheet.Animators))</dd>
+            </dl>
+        </header>
+
+        <table>
+            <thead>
+                <tr><th>Nom</th><th>Prénom</th><th>Âge</th><th>Présence</th><th>Enregistrement</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var row in sheet.Rows)
+                {
+                    <tr>
+                        <td>@row.Lastname</td>
+                        <td>@row.Firstname</td>
+                        <td>@(row.Birthdate is { } birthdate ? Format.AgeYears(birthdate).ToString() : "")</td>
+                        <td>@Format.Attendance(row.Status)</td>
+                        <td>@(row.Status is null ? "" : $"{Format.AttendanceMethod(row.Method)}{(row.RecordedAt is { } at ? $", {Format.DateTimeLabel(at)}" : "")}")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p class="totals">
+            Inscrits : @sheet.Rows.Count – Présents : @sheet.Present – Absents : @sheet.Absent
+            @if (sheet.Excused > 0)
+            {
+                <span> – Absences signalées : @sheet.Excused</span>
+            }
+            @if (sheet.NotRecorded > 0)
+            {
+                <span> – Non pointés : @sheet.NotRecorded</span>
+            }
+        </p>
+
+        <footer class="signature">
+            <p>Signature de l'animateur ou de l'animatrice :</p>
+        </footer>
+    </article>
+}
+
+@code {
+    [Parameter] public string Kind { get; set; } = "";
+    [Parameter] public Guid TargetId { get; set; }
+    [Parameter] public string Date { get; set; } = "";
+
+    private Ct.AttendanceSheet? sheet;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AttendanceRoutes.Parse(Kind) is not { } kind || AttendanceRoutes.ParseDate(Date) is not { } date)
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+
+        try
+        {
+            sheet = await Api.GetAttendanceSheetAsync(kind, TargetId, date);
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/attendance/{Kind}/{TargetId}/{Date}/print", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

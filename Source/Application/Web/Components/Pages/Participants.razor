@@ -13,6 +13,11 @@
 
 <p><a href="/me/animations">← Mes animations</a></p>
 
+@if (Target is { } current && current.Kind != SubscriptionKind.Project)
+{
+    <p><a class="button" href="@AttendanceRoutes.Sessions(current.Kind, TargetId)">Faire l'appel</a></p>
+}
+
 <h1>Participants @(title is null ? "" : $"– {title}")</h1>
 
 @if (error is not null)

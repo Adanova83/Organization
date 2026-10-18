@@ -41,7 +41,13 @@ else
                             @row.Title
                         }
                     </td>
-                    <td><a href="/participants/@SubscriptionClient.Segment(row.Kind)/@row.TargetId">Participants</a></td>
+                    <td class="actions">
+                        <a href="/participants/@SubscriptionClient.Segment(row.Kind)/@row.TargetId">Participants</a>
+                        @if (row.Kind != SubscriptionKind.Project)
+                        {
+                            <a href="@AttendanceRoutes.Sessions(row.Kind, row.TargetId)">Appel</a>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>

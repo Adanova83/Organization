@@ -69,6 +69,9 @@ public static class BusinessEndpoints
         // Participants d'un créneau ou d'un événement, pour ses animateurs (voir ParticipantEndpoints).
         app.MapParticipants();
 
+        // Présences (feuilles d'émargement) des ateliers et des événements (voir AttendanceEndpoints).
+        app.MapAttendances();
+
         // ---- Référentiels et saisons ----
         // Années scolaires (2026-2027...) : communes à toutes les organisations ; saisons, sessions, événements, projets
         // et vacances scolaires s'y rattachent. Lecture : organization.read ; écriture : organization.edit.

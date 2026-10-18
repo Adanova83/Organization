@@ -1,0 +1,111 @@
+@page "/attendance"
+@attribute [Authorize(Policy = Permissions.SubscriptionRead)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Présences</PageTitle>
+
+<h1>Présences</h1>
+
+<form method="get" class="form inline-form">
+    <label>Du <input type="date" name="from" value="@From.ToString("yyyy-MM-dd")" /></label>
+    <label>au <input type="date" name="to" value="@To.ToString("yyyy-MM-dd")" /></label>
+    <button type="submit">Afficher</button>
+</form>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (stats is not null)
+{
+    @if (stats.Targets.Count == 0)
+    {
+        <p class="muted">Aucun appel enregistré sur cette période.</p>
+    }
+    else
+    {
+        <p class="dashboard-figures">
+            <span><strong>@stats.Targets.Sum(t => t.Sessions)</strong> séance(s) pointée(s)</span>
+            <span><strong>@Format.Rate(OverallRate)</strong> de présence</span>
+        </p>
+
+        <h2>Par atelier et événement</h2>
+        <table>
+            <thead>
+                <tr><th>Atelier ou événement</th><th>Séances</th><th>Présents</th><th>Absents</th><th>Absences signalées</th><th>Taux</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var target in stats.Targets)
+                {
+                    <tr>
+                        <td><a href="@AttendanceRoutes.Sessions(target.Kind == Ct.SubscriptionTargetKind.Event ? SubscriptionKind.Event : SubscriptionKind.Slot, target.TargetId)">@target.Title</a></td>
+                        <td>@target.Sessions</td>
+                        <td>@target.Present</td>
+                        <td>@target.Absent</td>
+                        <td>@target.Excused</td>
+                        <td>@Format.Rate(target.Rate)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <h2>Par membre</h2>
+        <table>
+            <thead>
+                <tr><th>Membre</th><th>Présent</th><th>Absent</th><th>Absence signalée</th><th>Taux</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var member in stats.Members)
+                {
+                    <tr>
+                        <td>@($"{member.Lastname} {member.Firstname}".Trim())</td>
+                        <td>@member.Present</td>
+                        <td>@member.Absent</td>
+                        <td>@member.Excused</td>
+                        <td>@Format.Rate(member.Rate)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "from")] public string? FromValue { get; set; }
+    [SupplyParameterFromQuery(Name = "to")] public string? ToValue { get; set; }
+
+    private Ct.AttendanceStats? stats;
+    private string? error;
+
+    private static DateOnly Today => DateOnly.FromDateTime(Format.ParisLocal(DateTime.UtcNow));
+
+    // Par défaut : depuis le 1er septembre de l'année scolaire en cours jusqu'à aujourd'hui.
+    private DateOnly From => AttendanceRoutes.ParseDate(FromValue ?? "") ?? new DateOnly(Today.Month >= 9 ? Today.Year : Today.Year - 1, 9, 1);
+    private DateOnly To => AttendanceRoutes.ParseDate(ToValue ?? "") ?? Today;
+
+    private double? OverallRate
+    {
+        get
+        {
+            var total = stats!.Targets.Sum(t => t.Present + t.Absent + t.Excused);
+            return total == 0 ? null : (double)stats.Targets.Sum(t => t.Present) / total;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            stats = await Api.GetAttendanceStatsAsync(From, To);
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/attendance", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}
