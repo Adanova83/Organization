@@ -50,6 +50,25 @@ public static class BusinessEndpoints
             // Membre supprimé avec ses inscriptions (voir FullDbContextDeletion) : ses places reviennent aux listes d'attente.
             afterChange: (_, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAllAsync(ct));
 
+        // Contacts des familles (parents, tuteurs) : fiches d'information gérées par les responsables, sans compte.
+        // Lecture : member.read ; écriture : member.edit. Un contact peut être rattaché à plusieurs membres.
+        app.MapCrud<Ct.Contact, Do.Contact, H.Contact>(
+            "/api/contacts", "Contacts", Permissions.MemberEdit,
+            M.Contact.ContractToDomain, M.Contact.DomainToContract,
+            (handler, query, page, size, ct) => handler.SearchAsync(query, page, size, ct));
+
+        // Rattachements contact ↔ membre (lien de parenté, urgence, autorisé à venir chercher). Liste : ?memberId= et/ou
+        // ?targetId= (contact).
+        app.MapCrud<Ct.MemberContact, Do.MemberContact, H.MemberContact>(
+                "/api/member-contacts", "MemberContacts", Permissions.MemberEdit,
+                M.MemberContact.ContractToDomain, M.MemberContact.DomainToContract)
+            .MapFilteredList<Ct.MemberContact, Do.MemberContact, H.MemberContact>(
+                (handler, targetId, memberId, page, size, ct) => handler.SearchAsync(memberId, targetId, page, size, ct),
+                M.MemberContact.DomainToContract);
+
+        // Participants d'un créneau ou d'un événement, pour ses animateurs (voir ParticipantEndpoints).
+        app.MapParticipants();
+
         // ---- Référentiels et saisons ----
         // Années scolaires (2026-2027...) : communes à toutes les organisations ; saisons, sessions, événements, projets
         // et vacances scolaires s'y rattachent. Lecture : organization.read ; écriture : organization.edit.
@@ -91,10 +110,12 @@ public static class BusinessEndpoints
                 M.Project.DomainToContract,
                 Permissions.ProjectRead);
 
+        // Pays : lisibles par tout compte connecté (adresse du profil) ; écriture : organization.edit.
         app.MapCrud<Ct.Country, Do.Country, H.Country>(
             "/api/countries", "Countries", Permissions.OrganizationEdit,
             M.Country.ContractToDomain, M.Country.DomainToContract,
-            (handler, query, page, size, ct) => handler.SearchByNameAsync(query, page, size, ct));
+            (handler, query, page, size, ct) => handler.SearchByNameAsync(query, page, size, ct),
+            readPermission: Permissions.Authenticated);
 
         var organizations = app.MapCrud<Ct.Organization, Do.Organization, H.Organization>(
             "/api/organizations", "Organizations", Permissions.OrganizationEdit,

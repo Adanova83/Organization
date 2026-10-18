@@ -54,6 +54,43 @@ else if (member is not null)
         <dt>Statut</dt><dd>@(member.Active?.IsActive == false ? "Inactif" : "Actif")</dd>
         <dt>Compte de l'annuaire</dt><dd>@(string.IsNullOrEmpty(member.ExternalId) ? "Pas encore connecté" : "Rattaché")</dd>
     </dl>
+
+    <h2>Contacts de la famille</h2>
+
+    @if (canEdit)
+    {
+        <p><a class="button" href="/members/@Id/contacts/new">Ajouter un contact</a></p>
+    }
+
+    @if (contacts.Count == 0)
+    {
+        <p class="muted">Aucun contact.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Contact</th><th>Lien</th><th>Téléphone</th><th>E-mail</th><th>Urgence</th><th>Peut venir chercher</th>@if (canEdit){<th></th>}</tr>
+            </thead>
+            <tbody>
+                @foreach (var contact in contacts)
+                {
+                    <tr>
+                        <td>@($"{contact.ContactLastname} {contact.ContactFirstname}".Trim())</td>
+                        <td>@Format.Relation(contact.Relation)</td>
+                        <td>@(contact.ContactPhoneNumber ?? "—")</td>
+                        <td>@(contact.ContactEmail ?? "—")</td>
+                        <td>@(contact.IsEmergencyContact ? "Oui" : "—")</td>
+                        <td>@(contact.CanPickUp ? "Oui" : "—")</td>
+                        @if (canEdit)
+                        {
+                            <td><a href="/member-contacts/@contact.Id/edit">Modifier</a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
 
 @code {
@@ -61,6 +98,7 @@ else if (member is not null)
 
     private Ct.Member? member;
     private string? countryName;
+    private List<Ct.MemberContact> contacts = [];
     private string? error;
     private bool canEdit;
     private bool canReadContributions;
@@ -75,6 +113,7 @@ else if (member is not null)
         try
         {
             member = await Api.GetMemberAsync(Id);
+            contacts = await Api.ListAllAsync<Ct.MemberContact>(ApiRoutes.MemberContacts, null, Id);
         }
         catch (Exception ex) when (ApiErrors.IsNotFound(ex))
         {
@@ -92,7 +131,7 @@ else if (member is not null)
             return;
         }
 
-        // Nom du pays : demande organization.read ; sans elle, il n'est pas affiché.
+        // Nom du pays (lisible par tout compte connecté).
         try
         {
             countryName = (await Api.GetByIdAsync<Ct.Country>(ApiRoutes.Countries, member.Addr.CountryId)).Name;

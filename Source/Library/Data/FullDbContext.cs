@@ -23,6 +23,8 @@ public partial class FullDbContext : DbContext
     internal DbSet<Member> Members => Set<Member>();
     internal DbSet<Note> Notes => Set<Note>();
     internal DbSet<NoteLink> NoteLinks => Set<NoteLink>();
+    internal DbSet<Contact> Contacts => Set<Contact>();
+    internal DbSet<MemberContact> MemberContacts => Set<MemberContact>();
     internal DbSet<Organization> Organizations => Set<Organization>();
     internal DbSet<OrganizationSession> OrganizationSessions => Set<OrganizationSession>();
     internal DbSet<Project> Projects => Set<Project>();
@@ -62,6 +64,8 @@ public partial class FullDbContext : DbContext
         modelBuilder.Entity<Member>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Note>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<NoteLink>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<Contact>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
+        modelBuilder.Entity<MemberContact>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<OrganizationSession>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);
         modelBuilder.Entity<Project>().HasQueryFilter(e => !e.Audit.DeletedAt.HasValue);

@@ -251,3 +251,77 @@ public sealed class MemberChoiceModel
     [Required(ErrorMessage = "Choisissez un membre.")]
     public Guid? MemberId { get; set; }
 }
+
+/// <summary>Rattachement d'un contact à un membre ; avec un contact existant, ou un nouveau contact saisi ici.</summary>
+public sealed class MemberContactModel
+{
+    /// <summary>Contact existant ; vide : nouveau contact (champs ci-dessous).</summary>
+    public Guid? ContactId { get; set; }
+
+    public string? Firstname { get; set; }
+    public string? Lastname { get; set; }
+    public string? PhoneNumber { get; set; }
+
+    [EmailAddress(ErrorMessage = "L'adresse e-mail n'est pas valide.")]
+    public string? Email { get; set; }
+
+    public Ct.ContactRelation Relation { get; set; } = Ct.ContactRelation.Mother;
+
+    // Cases à cocher : décochées, elles ne sont pas envoyées par le formulaire (valeur par défaut false).
+    public bool IsEmergencyContact { get; set; }
+    public bool CanPickUp { get; set; }
+
+    public static MemberContactModel From(Ct.MemberContact source) => new()
+    {
+        ContactId = source.ContactId,
+        Relation = source.Relation,
+        IsEmergencyContact = source.IsEmergencyContact,
+        CanPickUp = source.CanPickUp
+    };
+
+    public Ct.MemberContact ApplyTo(Ct.MemberContact target)
+    {
+        target.Relation = Relation;
+        target.IsEmergencyContact = IsEmergencyContact;
+        target.CanPickUp = CanPickUp;
+        return target;
+    }
+
+    public Ct.Contact NewContact() => new()
+    {
+        Firstname = string.IsNullOrWhiteSpace(Firstname) ? null : Firstname.Trim(),
+        Lastname = Lastname?.Trim() ?? "",
+        PhoneNumber = string.IsNullOrWhiteSpace(PhoneNumber) ? null : PhoneNumber.Trim(),
+        Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim()
+    };
+}
+
+public sealed class ContactModel
+{
+    public string? Firstname { get; set; }
+
+    [Required(ErrorMessage = "Le nom est obligatoire.")]
+    public string? Lastname { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
+    [EmailAddress(ErrorMessage = "L'adresse e-mail n'est pas valide.")]
+    public string? Email { get; set; }
+
+    public static ContactModel From(Ct.Contact source) => new()
+    {
+        Firstname = source.Firstname,
+        Lastname = source.Lastname,
+        PhoneNumber = source.PhoneNumber,
+        Email = source.Email
+    };
+
+    public Ct.Contact ApplyTo(Ct.Contact target)
+    {
+        target.Firstname = string.IsNullOrWhiteSpace(Firstname) ? null : Firstname.Trim();
+        target.Lastname = Lastname!.Trim();
+        target.PhoneNumber = string.IsNullOrWhiteSpace(PhoneNumber) ? null : PhoneNumber.Trim();
+        target.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
+        return target;
+    }
+}

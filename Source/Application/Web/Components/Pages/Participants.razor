@@ -1,0 +1,127 @@
+@page "/participants/{Kind}/{TargetId:guid}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject SubscriptionClient Subscriptions
+@inject NavigationManager Navigation
+
+@*
+    Participants d'un créneau, d'un événement ou d'un créneau de projet, pour ses animateurs : coordonnées, âge et
+    contacts des familles. L'API ne les donne qu'aux animateurs de cet élément et aux responsables.
+*@
+
+<PageTitle>Participants</PageTitle>
+
+<p><a href="/me/animations">← Mes animations</a></p>
+
+<h1>Participants @(title is null ? "" : $"– {title}")</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (participants is not null)
+{
+    @if (participants.Count == 0)
+    {
+        <p class="muted">Aucun inscrit pour le moment.</p>
+    }
+    else
+    {
+        <p class="dashboard-figures">
+            <span><strong>@participants.Count(p => !p.IsWaiting)</strong> inscrit(s)</span>
+            @if (participants.Any(p => p.IsWaiting))
+            {
+                <span class="waiting"><strong>@participants.Count(p => p.IsWaiting)</strong> en liste d'attente</span>
+            }
+        </p>
+
+        <table>
+            <thead>
+                <tr><th>Participant</th><th>Âge</th><th>Téléphone</th><th>E-mail</th><th>Contacts de la famille</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var participant in participants)
+                {
+                    <tr>
+                        <td>
+                            @($"{participant.Lastname} {participant.Firstname}".Trim())
+                            @if (participant.IsWaiting)
+                            {
+                                <span class="waiting">liste d'attente@(participant.WaitingRank is { } rank ? $", {rank}e" : "")</span>
+                            }
+                        </td>
+                        <td>@(participant.Birthdate is { } birthdate ? $"{Format.AgeYears(birthdate)} ans" : "—")</td>
+                        <td>@(participant.PhoneNumber ?? "—")</td>
+                        <td>@(participant.Email ?? "—")</td>
+                        <td>
+                            @if (participant.Contacts.Count == 0)
+                            {
+                                <span class="muted">—</span>
+                            }
+                            @foreach (var contact in participant.Contacts)
+                            {
+                                <div class="participant-contact">
+                                    <strong>@($"{contact.Firstname} {contact.Lastname}".Trim())</strong>
+                                    (@Format.Relation(contact.Relation))
+                                    @if (contact.PhoneNumber is { } phone)
+                                    {
+                                        <span> · <a href="tel:@phone">@phone</a></span>
+                                    }
+                                    @if (contact.IsEmergencyContact)
+                                    {
+                                        <span class="tag">urgence</span>
+                                    }
+                                    @if (contact.CanPickUp)
+                                    {
+                                        <span class="tag">peut venir chercher</span>
+                                    }
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public string Kind { get; set; } = "";
+    [Parameter] public Guid TargetId { get; set; }
+
+    private List<Ct.Participant>? participants;
+    private string? title;
+    private string? error;
+
+    /// <summary>Type d'élément dans l'adresse de la page (comme les pages des inscrits) → route de l'API.</summary>
+    private (SubscriptionKind Kind, string ApiKind)? Target => Kind switch
+    {
+        "slot" => (SubscriptionKind.Slot, "activity-slot"),
+        "event" => (SubscriptionKind.Event, "event"),
+        "project" => (SubscriptionKind.Project, "project-slot"),
+        _ => null
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Target is not { } target)
+        {
+            Navigation.NavigateTo("/not-found");
+            return;
+        }
+
+        try
+        {
+            participants = await Api.GetListAsync<Ct.Participant>($"{ApiRoutes.Participants}/{target.ApiKind}/{TargetId}");
+            (title, _) = await Subscriptions.DescribeAsync(target.Kind, TargetId);
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo($"/api/auth/login?returnUrl=/participants/{Kind}/{TargetId}", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

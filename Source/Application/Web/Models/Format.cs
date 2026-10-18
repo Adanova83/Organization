@@ -45,6 +45,15 @@ public static class Format
     /// <summary>Montant (payé, reste...) : « 0,00 € » plutôt que « Gratuit ».</summary>
     public static string Money(float value) => value.ToString("C2", French);
 
+    /// <summary>Lien d'un contact avec le membre.</summary>
+    public static string Relation(Ct.ContactRelation relation) => relation switch
+    {
+        Ct.ContactRelation.Mother => "Mère",
+        Ct.ContactRelation.Father => "Père",
+        Ct.ContactRelation.Guardian => "Tuteur ou tutrice",
+        _ => "Autre"
+    };
+
     public static string Age(int? minimum) => minimum is null or 0 ? "Tout âge" : $"{minimum} ans et +";
 
     public static string Frequency(int weeks) => weeks <= 1 ? "Chaque semaine" : $"Toutes les {weeks} semaines";

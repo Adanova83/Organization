@@ -37,8 +37,10 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
 - [ ] **Flux ICS** : page indiquant aux membres l'adresse d'abonnement pour l'Agenda Nextcloud.
 - [ ] **Séries d'événements** : permettre de modifier le rythme (vacances, jours fériés) d'une série existante ; les
       dates sont aujourd'hui calculées une fois pour toutes à la création.
-- [ ] **Profil** : la liste des pays demande `organization.read` ; un membre sans cette permission ne peut pas
-      changer de pays.
+- [x] **Profil** : la liste des pays est lisible par tout compte connecté (adresse du profil).
+- [x] **Profils de l'intranet** : groupes `membres` (planning, inscription), `animateurs` (en plus, participants de ce
+      qu'ils animent, avec les contacts des familles), `responsables` (planning, inscriptions, membres, cotisations),
+      administrateurs (groupe `Admin__Group`) ; contacts des familles (parents, tuteurs) gérés par les responsables.
 - [ ] **Formulaires** : les unités affichées à côté de « Tous les N » suivent la fréquence grâce au CSS ; vérifier
       l'affichage sur les navigateurs anciens (sélecteur `:has()`).
 

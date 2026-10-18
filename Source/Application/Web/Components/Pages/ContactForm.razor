@@ -1,0 +1,115 @@
+@page "/contacts/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.MemberEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Modifier le contact</PageTitle>
+
+<h1>Modifier le contact</h1>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    @if (members.Count > 0)
+    {
+        <p class="muted">
+            Coordonnées partagées par :
+            @for (var i = 0; i < members.Count; i++)
+            {
+                var member = members[i];
+                <a href="/members/@member.Id">@member.Name</a>@(i < members.Count - 1 ? ", " : "")
+            }
+        </p>
+    }
+
+    <EditForm Model="Model" FormName="contact" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset>
+            <legend>Contact</legend>
+            <label>Prénom <InputText @bind-Value="Model.Firstname" /></label>
+            <label>Nom <InputText @bind-Value="Model.Lastname" /></label>
+            <label>Téléphone <InputText @bind-Value="Model.PhoneNumber" type="tel" /></label>
+            <label>E-mail <InputText @bind-Value="Model.Email" type="email" /></label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    <form method="post" @onsubmit="DeleteAsync" @formname="delete-contact" class="danger">
+        <AntiforgeryToken />
+        <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce contact ? Il sera retiré de tous les membres qu’il suit.');">Supprimer ce contact</button>
+    </form>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "contact")]
+    private ContactModel? Model { get; set; }
+
+    private sealed record LinkedMember(Guid Id, string Name);
+
+    private List<LinkedMember> members = [];
+    private string? error;
+
+    // Retour au premier membre suivi par ce contact (la page est ouverte depuis sa fiche).
+    private string BackUrl => members.Count > 0 ? $"/members/{members[0].Id}" : "/members";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model ??= ContactModel.From(await Api.GetByIdAsync<Ct.Contact>(ApiRoutes.Contacts, Id));
+
+            foreach (var link in await Api.ListAllAsync<Ct.MemberContact>(ApiRoutes.MemberContacts, Id))
+            {
+                var member = await Api.GetMemberAsync(link.MemberId);
+                members.Add(new LinkedMember(member.Id, $"{member.Firstname} {member.Lastname}".Trim()));
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            var existing = await Api.GetByIdAsync<Ct.Contact>(ApiRoutes.Contacts, Id);
+            await Api.UpdateAsync(ApiRoutes.Contacts, Id, Model!.ApplyTo(existing));
+            Navigation.NavigateTo(BackUrl);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(ApiRoutes.Contacts, Id);
+            Navigation.NavigateTo(BackUrl);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

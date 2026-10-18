@@ -50,9 +50,11 @@ Tous les endpoints suivent le même modèle (`Crud/CrudEndpoints.cs` et `Crud/Ow
 | Domaine | Routes | Écriture (la lecture exige `*.read` du domaine) |
 | --- | --- | --- |
 | Membres | `/api/members` | `member.edit` |
+| Contacts des familles | `/api/contacts` (liste : `?query=`), `/api/member-contacts` (liste : `?memberId=`, `?targetId=` = contact) : parent ou tuteur, lien (`Mother`, `Father`, `Guardian`, `Other`), à prévenir en urgence, autorisé à venir chercher ; un contact peut suivre plusieurs membres | `member.edit` |
+| Participants | `GET /api/participants/{activity-slot|event|project-slot}/{id}` : inscrits et liste d'attente avec coordonnées, âge et contacts des familles | animateurs de cet élément seulement, ou `subscription.read` + `member.read` |
 | Espaces | `/api/spaces` | `space.edit` |
 | Années scolaires | `/api/school-years` (+ `/{id}/organization-sessions`, `/{id}/activity-sessions`, `/{id}/events`, `/{id}/projects`, `/{id}/holidays`) | `organization.edit` |
-| Pays, organisations, saisons, jours fériés | `/api/countries`, `/api/organizations` (+ `/{id}/sessions`), `/api/organization-sessions`, `/api/holidays` | `organization.edit` |
+| Pays, organisations, saisons, jours fériés | `/api/countries`, `/api/organizations` (+ `/{id}/sessions`), `/api/organization-sessions`, `/api/holidays` | `organization.edit` (pays : lisibles par tout compte connecté) |
 | Ateliers | `/api/activities` (+ `/{id}/sessions`), `/api/activity-sessions` (+ `/{id}/slots`), `/api/activity-session-slots` | `activity.edit` |
 | Événements | `/api/events` | `event.edit` |
 | Projets | `/api/projects` (+ `/{id}/slots`), `/api/project-slots` | `project.edit` |

@@ -309,3 +309,7 @@ form.inline { display: inline; }
 .contribution-state.unpaid { color: var(--notice-text); background: var(--notice-bg); }
 .contribution-state.partial { color: var(--notice-text); background: var(--notice-bg); opacity: 0.75; }
 .contribution-state.paid { color: var(--muted); }
+
+/* Participants (vue des animateurs) : contacts des familles, une ligne chacun. */
+.participant-contact { font-size: 0.9rem; margin: 0.15rem 0; }
+.tag { display: inline-block; border-radius: 6px; padding: 0 0.4rem; margin-left: 0.3rem; font-size: 0.8rem; color: var(--notice-text); background: var(--notice-bg); }

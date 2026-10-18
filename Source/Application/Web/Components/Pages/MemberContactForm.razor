@@ -1,0 +1,182 @@
+@page "/members/{MemberId:guid}/contacts/new"
+@page "/member-contacts/{Id:guid}/edit"
+@attribute [Authorize(Policy = Permissions.MemberEdit)]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsNew ? "Ajouter un contact" : "Modifier le rattachement")</PageTitle>
+
+<h1>@(IsNew ? "Ajouter un contact" : "Modifier le rattachement")</h1>
+
+<p><a href="@BackUrl">← Retour au membre</a></p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+
+@if (Model is not null)
+{
+    <EditForm Model="Model" FormName="member-contact" OnValidSubmit="SaveAsync" Enhance class="form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (IsNew)
+        {
+            <fieldset>
+                <legend>Contact</legend>
+                <label>
+                    Contact déjà enregistré (frère ou sœur déjà inscrit...)
+                    <InputSelect @bind-Value="Model.ContactId">
+                        <option value="">— Nouveau contact —</option>
+                        @foreach (var contact in contacts)
+                        {
+                            <option value="@contact.Id">@ContactLabel(contact)</option>
+                        }
+                    </InputSelect>
+                </label>
+                <p class="muted">Pour un nouveau contact, laisse « Nouveau contact » et remplis les champs suivants.</p>
+                <label>Prénom <InputText @bind-Value="Model.Firstname" /></label>
+                <label>Nom <InputText @bind-Value="Model.Lastname" /></label>
+                <label>Téléphone <InputText @bind-Value="Model.PhoneNumber" type="tel" /></label>
+                <label>E-mail <InputText @bind-Value="Model.Email" type="email" /></label>
+            </fieldset>
+        }
+        else if (existing is not null)
+        {
+            <p>
+                <strong>@($"{existing.ContactLastname} {existing.ContactFirstname}".Trim())</strong>
+                — <a href="/contacts/@existing.ContactId/edit">modifier ses coordonnées</a>
+                (partagées avec les autres membres qu'il suit)
+            </p>
+        }
+
+        <fieldset>
+            <legend>Rattachement à @memberName</legend>
+            <label>
+                Lien
+                <InputSelect @bind-Value="Model.Relation">
+                    @foreach (var relation in Enum.GetValues<Ct.ContactRelation>())
+                    {
+                        <option value="@relation">@Format.Relation(relation)</option>
+                    }
+                </InputSelect>
+            </label>
+            <label class="checkbox"><InputCheckbox @bind-Value="Model.IsEmergencyContact" /> À prévenir en cas d'urgence</label>
+            <label class="checkbox"><InputCheckbox @bind-Value="Model.CanPickUp" /> Autorisé à venir chercher le membre</label>
+        </fieldset>
+
+        <p class="actions">
+            <button type="submit">Enregistrer</button>
+            <a href="@BackUrl">Annuler</a>
+        </p>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="delete-member-contact" class="danger">
+            <AntiforgeryToken />
+            <button type="submit" class="danger-button" onclick="return confirm('Retirer ce contact du membre ? La fiche du contact est conservée pour les autres membres.');">Retirer ce contact</button>
+        </form>
+    }
+}
+
+@code {
+    [Parameter] public Guid? MemberId { get; set; }
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "member-contact")]
+    private MemberContactModel? Model { get; set; }
+
+    private Ct.MemberContact? existing;
+    private List<Ct.Contact> contacts = [];
+    private string memberName = "";
+    private string? error;
+
+    private bool IsNew => Id is null;
+    private Guid TargetMemberId => MemberId ?? existing!.MemberId;
+    private string BackUrl => $"/members/{(MemberId ?? existing?.MemberId)}";
+
+    private static string ContactLabel(Ct.Contact contact)
+        => $"{contact.Lastname} {contact.Firstname}".Trim() + (contact.PhoneNumber is { } phone ? $" ({phone})" : "");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                contacts = await Api.ListAllAsync<Ct.Contact>(ApiRoutes.Contacts);
+                Model ??= new MemberContactModel();
+            }
+            else
+            {
+                existing = await Api.GetByIdAsync<Ct.MemberContact>(ApiRoutes.MemberContacts, Id!.Value);
+                Model ??= MemberContactModel.From(existing);
+            }
+
+            var member = await Api.GetMemberAsync(TargetMemberId);
+            memberName = $"{member.Firstname} {member.Lastname}".Trim();
+        }
+        catch (Exception ex) when (ApiErrors.IsNotFound(ex))
+        {
+            Navigation.NavigateTo("/not-found");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            if (IsNew)
+            {
+                var contactId = Model!.ContactId;
+                if (contactId is null)
+                {
+                    if (string.IsNullOrWhiteSpace(Model.Lastname))
+                    {
+                        error = "Choisis un contact déjà enregistré, ou indique au moins le nom du nouveau contact.";
+                        return;
+                    }
+
+                    contactId = (await Api.CreateAsync(ApiRoutes.Contacts, Model.NewContact())).Id;
+                }
+
+                await Api.CreateAsync(ApiRoutes.MemberContacts, Model.ApplyTo(new Ct.MemberContact
+                {
+                    MemberId = MemberId!.Value,
+                    ContactId = contactId.Value
+                }));
+                Navigation.NavigateTo($"/members/{MemberId}");
+            }
+            else
+            {
+                var current = await Api.GetByIdAsync<Ct.MemberContact>(ApiRoutes.MemberContacts, Id!.Value);
+                await Api.UpdateAsync(ApiRoutes.MemberContacts, Id.Value, Model!.ApplyTo(current));
+                Navigation.NavigateTo($"/members/{current.MemberId}");
+            }
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            var current = await Api.GetByIdAsync<Ct.MemberContact>(ApiRoutes.MemberContacts, Id!.Value);
+            await Api.DeleteAsync(ApiRoutes.MemberContacts, Id.Value);
+            Navigation.NavigateTo($"/members/{current.MemberId}");
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}
