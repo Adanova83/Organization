@@ -92,6 +92,24 @@ public static class MemberEndpoints
             return updated.Data is null ? Results.NotFound() : Results.Ok(updated.Data.DomainToContract());
         });
 
+        // Agenda du membre connecté : ses séances datées (ateliers, projets, événements), comme participant ou animateur.
+        // Par défaut : aujourd'hui et les 13 jours suivants (heure de Paris).
+        api.MapGet("/me/agenda", async (
+            DateOnly? from, DateOnly? to,
+            ClaimsPrincipal user, CurrentMember currentMember, H.Agenda agenda,
+            IOptions<Api.Calendar.CalendarFeedOptions> calendar, CancellationToken ct) =>
+        {
+            var (member, error) = await currentMember.FindAsync(user, ct);
+            if (member is null)
+            {
+                return error!;
+            }
+
+            var start = from ?? DateOnly.FromDateTime(ParisTime.ToLocal(DateTime.UtcNow));
+            var end = to ?? start.AddDays(13);
+            return Results.Ok(await agenda.ListAsync(member.Id, start, end, calendar.Value.DayOfWeekStartsOnMonday, ct));
+        });
+
         return app;
     }
 }

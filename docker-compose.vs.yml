@@ -1,0 +1,8 @@
+# Chargé uniquement par Visual Studio (docker-compose.dcproj), en plus de docker-compose.yml et docker-compose.dev.yml.
+# Visual Studio démarre les conteneurs en attente et lance l'application ensuite, avec son débogueur : l'API n'est donc pas
+# encore en bonne santé quand le site démarre. Le site n'attend ici que le démarrage du conteneur de l'API.
+services:
+  web:
+    depends_on:
+      api:
+        condition: service_started

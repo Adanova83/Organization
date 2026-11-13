@@ -166,10 +166,10 @@ Fonctionnement :
 | Sujet | Choix |
 |---|---|
 | Type d'application | PWA : manifeste d'application, service worker (hors connexion, notifications) |
-| Interface | Blazor WebAssembly (C#), servi par le site sous `https://intranet.adanova83.org/app` |
-| Connexion | session de l'intranet (cookie sécurisé du même site), durée allongée pour le téléphone ; l'API ne change pas de modèle de sécurité |
+| Interface | le site lui-même, rendu responsive (téléphone, tablette, ordinateur) et rendu installable (décision du 18/10/2026 : plutôt qu'une application Blazor WebAssembly séparée, plus lourde et à maintenir en double) |
+| Connexion | session de l'intranet (cookie sécurisé du même site), prolongée tant qu'elle sert, reconnexion silencieuse par Authentik ; l'API ne change pas de modèle de sécurité |
 | Scan | appareil photo du navigateur, décodage du QR code dans l'application |
-| Hors connexion | planning, participants et contacts en cache chiffré par le navigateur ; file d'attente de l'appel |
+| Hors connexion | pages consultées gardées par le service worker (sw.js), appels du jour préchargés depuis l'accueil, file d'attente de l'appel (pwa.js) ; la déconnexion efface les pages gardées |
 | Notifications | Web Push (VAPID) envoyé par l'API ; bibliothèque libre côté serveur |
 | E-mails | serveur mail de l'association (étape 04 de l'infrastructure) |
 | Installation | depuis le site ; pas de store |

@@ -39,7 +39,8 @@
     }
     else
     {
-        <EditForm Model="Model" FormName="roll-call" OnValidSubmit="SaveAsync" Enhance class="form roll-call">
+        @* data-offline-queue : sans réseau, l'appel est gardé sur le téléphone puis envoyé au retour (pwa.js). *@
+        <EditForm Model="Model" FormName="roll-call" OnValidSubmit="SaveAsync" Enhance class="form roll-call" data-offline-queue="true">
             <table>
                 <thead>
                     <tr><th>Participant</th><th>Présence</th></tr>

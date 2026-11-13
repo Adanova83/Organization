@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<R.IActivitySessionSlot, R.ActivitySessionSlot>();
         services.AddScoped<R.IActivitySessionSlotAnimation, R.ActivitySessionSlotAnimation>();
         services.AddScoped<R.IActivitySessionSlotSubscription, R.ActivitySessionSlotSubscription>();
+        services.AddScoped<R.IAgenda, R.Agenda>();
         services.AddScoped<R.IApplication, R.Application>();
         services.AddScoped<R.IAttendance, R.Attendance>();
         services.AddScoped<R.IBadge, R.Badge>();
@@ -47,6 +48,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<H.ActivitySessionSlot>();
         services.AddScoped<H.ActivitySessionSlotAnimation>();
         services.AddScoped<H.ActivitySessionSlotSubscription>();
+        services.AddScoped<H.Agenda>();
         services.AddScoped<H.Application>();
         services.AddScoped<H.Attendance>();
         services.AddScoped<H.Badge>();

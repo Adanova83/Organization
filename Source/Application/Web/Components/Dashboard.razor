@@ -15,6 +15,16 @@
 else if (loaded)
 {
     <div class="dashboard">
+        @if (agenda is not null)
+        {
+            @* Prochaines séances en premier : c'est ce qu'on cherche en ouvrant le site sur son téléphone. *@
+            <section class="card dashboard-wide">
+                <h2><Icon Name="calendar-check" /> Mes prochaines séances</h2>
+                <AgendaList Entries="agenda" EmptyText="Aucune séance dans les sept prochains jours." />
+                <p><a href="/me/agenda">Toutes mes séances</a></p>
+            </section>
+        }
+
         <section class="card">
             <h2>Mes inscriptions</h2>
             @if (mine.Count == 0)
@@ -160,6 +170,7 @@ else if (loaded)
     }
 
     private List<MineRow> mine = [];
+    private List<Ct.AgendaEntry>? agenda;
     private List<Ct.Event>? upcomingEvents;
     private Dictionary<Guid, Ct.SubscriptionAvailability> eventAvailability = [];
     private List<FillingRow>? filling;
@@ -175,6 +186,9 @@ else if (loaded)
         {
             if (await Access.MemberIdAsync() is { } me)
             {
+                var today = DateOnly.FromDateTime(Format.ParisLocal(DateTime.UtcNow));
+                agenda = await Api.GetMyAgendaAsync(today, today.AddDays(6));
+
                 foreach (var kind in Enum.GetValues<SubscriptionKind>())
                 {
                     foreach (var item in await Subs.ListAsync(kind, null, me))

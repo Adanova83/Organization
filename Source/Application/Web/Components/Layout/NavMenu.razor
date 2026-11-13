@@ -5,6 +5,7 @@
     <AuthorizeView Context="mine">
         @if (mine.User.HasClaim("member_linked", "true"))
         {
+            <li><NavLink href="me/agenda"><Icon Name="calendar-check" /> Mes séances</NavLink></li>
             <li><NavLink href="me/subscriptions"><Icon Name="clipboard-list" /> Mes inscriptions</NavLink></li>
             <li><NavLink href="me/animations"><Icon Name="chalkboard-user" /> Mes animations</NavLink></li>
             <li><NavLink href="notes"><Icon Name="note-sticky" /> Mes notes</NavLink></li>

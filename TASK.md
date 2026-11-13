@@ -37,6 +37,10 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       Lot 1 fait (ateliers seulement, pas d'appel pour les événements) : présences par séance datée, appel sur le site
       (animateurs et responsables), feuille d'émargement
       imprimable ou en PDF (impression du navigateur), statistiques de fréquentation (page « Présences »).
+      Lot 2 fait : site installable (manifeste, icônes, page « Installer l'application »), « Mes séances » (agenda daté,
+      accès direct à l'appel), pages consultées gardées hors connexion (service worker), appel hors connexion envoyé au
+      retour du réseau, session prolongée tant qu'elle sert. À vérifier sur un vrai téléphone (le service worker ne
+      tourne pas dans le navigateur intégré de Claude).
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.
 - [ ] **Flux ICS** : page indiquant aux membres l'adresse d'abonnement pour l'Agenda Nextcloud.

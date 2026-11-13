@@ -184,6 +184,25 @@ public sealed class ApiClient
     private static string SeriesUrl(Guid seriesId, DateOnly? from)
         => $"{ApiRoutes.Events}/series/{seriesId}" + (from is { } date ? $"?from={date:yyyy-MM-dd}" : "");
 
+    // ---- Agenda du membre connecté ----
+
+    /// <summary>Séances datées du membre connecté (par défaut : aujourd'hui et les 13 jours suivants).</summary>
+    public Task<List<Ct.AgendaEntry>> GetMyAgendaAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default)
+    {
+        var query = new List<string>();
+        if (from is { } start)
+        {
+            query.Add($"from={start:yyyy-MM-dd}");
+        }
+
+        if (to is { } end)
+        {
+            query.Add($"to={end:yyyy-MM-dd}");
+        }
+
+        return GetAsync<List<Ct.AgendaEntry>>("api/me/agenda" + (query.Count == 0 ? "" : "?" + string.Join("&", query)), ct);
+    }
+
     // ---- Présences (feuilles d'émargement) des ateliers ----
 
     public Task<Ct.AttendanceOccurrences> GetAttendanceOccurrencesAsync(Guid slotId, CancellationToken ct = default)

@@ -459,3 +459,25 @@ tr.today td { font-weight: 600; }
     .icon-button { width: 2.75rem; height: 2.75rem; }
     .row-actions { justify-content: flex-start; }
 }
+
+/* Agenda (Mes séances) : un bloc par jour, une ligne par séance. */
+.agenda-day h3 { margin: 1rem 0 0.4rem; font-size: 0.95rem; color: var(--muted); text-transform: capitalize; }
+.agenda-day:first-child h3 { margin-top: 0.25rem; }
+.agenda-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.agenda-entry {
+    display: grid; grid-template-columns: 7.5rem 1fr auto; gap: 0.25rem 1rem; align-items: center;
+    padding: 0.55rem 0.8rem; border: 1px solid var(--border); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--surface);
+}
+.agenda-entry.animator { border-left-color: var(--green); }
+.agenda-time { font-family: var(--font-heading); font-weight: 600; white-space: nowrap; }
+.agenda-title { display: flex; flex-wrap: wrap; gap: 0.3rem 0.5rem; align-items: center; }
+.agenda-space { grid-column: 2; font-size: 0.85rem; }
+.agenda-action { grid-column: 3; grid-row: 1 / span 2; padding: 0.4rem 1rem; }
+@media (max-width: 599.98px) {
+    .agenda-entry { grid-template-columns: 1fr; }
+    .agenda-space, .agenda-action { grid-column: 1; grid-row: auto; }
+    .agenda-action { justify-self: start; }
+}
+
+/* Appels gardés sur le téléphone en attendant le réseau (pwa.js). */
+.offline-banner { margin: 0 0 1rem; }
