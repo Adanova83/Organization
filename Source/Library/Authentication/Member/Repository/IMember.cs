@@ -10,4 +10,6 @@ public  interface IMember : IRepository<Domain.Member>
     /// sinon le membre portant cet e-mail et non encore lié (il est alors lié), sinon aucun.
     /// </summary>
     Task<RepositoryResponse<Domain.Member>> LinkExternalAccountAsync(string externalId, string email, CancellationToken ct);
+    /// <summary>Enregistre (ou efface) l'identifiant du compte de l'annuaire créé ou rattaché par l'intranet.</summary>
+    Task SetDirectoryAccountAsync(Guid memberId, string? accountId, CancellationToken ct);
 }

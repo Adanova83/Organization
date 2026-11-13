@@ -16,6 +16,8 @@ public class Member : PrimaryKey
     public DateTime? Birthdate { get; set; } = null;
     [Required, MaxLength(320)] public string Email { get; set; } = default!;
     [MaxLength(255)] public string? ExternalId { get; set; }
+    /// <summary>Identifiant du compte dans l'annuaire (Authentik), quand l'intranet l'a créé ou rattaché.</summary>
+    [MaxLength(64)] public string? DirectoryAccountId { get; set; }
     public string? PhoneNumber { get; set; }
     [Required] public Address Addr { get; set; } = default!;
 }

@@ -119,6 +119,16 @@ public sealed class Member : IMember
         };
     }
 
+    public async Task SetDirectoryAccountAsync(Guid memberId, string? accountId, CancellationToken ct)
+    {
+        var entity = await _dbContext.Members.FirstOrDefaultAsync(item => item.Id == memberId, ct);
+        if (entity != null)
+        {
+            entity.DirectoryAccountId = accountId;
+            await _dbContext.SaveChangesAsync(ct);
+        }
+    }
+
     public async Task<RepositoryResponse<Domain.Member>> LinkExternalAccountAsync(string externalId, string email, CancellationToken ct)
     {
         var entity = await _dbContext.Members

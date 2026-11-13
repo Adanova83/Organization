@@ -46,9 +46,18 @@ public static class BusinessEndpoints
             "/api/members", "Members", Permissions.MemberEdit,
             M.Member.ContractToDomain, M.Member.DomainToContract,
             (handler, query, page, size, ct) => handler.SearchAsync(query, page, size, ct),
-            keepOnUpdate: (updated, existing) => updated.ExternalId = existing.ExternalId,
+            keepOnUpdate: (updated, existing) =>
+            {
+                updated.ExternalId = existing.ExternalId;
+                updated.DirectoryAccountId = existing.DirectoryAccountId;
+            },
             // Membre supprimé avec ses inscriptions (voir FullDbContextDeletion) : ses places reviennent aux listes d'attente.
-            afterChange: (_, services, ct) => services.GetRequiredService<H.SubscriptionGuard>().FillAllAsync(ct));
+            // Son compte Authentik suit la fiche : nom et e-mail recopiés, ou compte désactivé si le membre est supprimé.
+            afterChange: async (member, services, ct) =>
+            {
+                await services.GetRequiredService<H.SubscriptionGuard>().FillAllAsync(ct);
+                await services.GetRequiredService<Api.Accounts.AccountService>().SyncAsync(member, ct);
+            });
 
         // Contacts des familles (parents, tuteurs) : fiches d'information gérées par les responsables, sans compte.
         // Lecture : member.read ; écriture : member.edit. Un contact peut être rattaché à plusieurs membres.
