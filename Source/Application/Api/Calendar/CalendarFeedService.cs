@@ -186,6 +186,16 @@ public sealed class CalendarFeedService
                     slot.Audit?.LastUpdatedAt,
                     project.Audit?.LastUpdatedAt,
                     space?.Audit?.LastUpdatedAt);
+                // Créneau ponctuel : un seul événement, à sa date (heure de Paris).
+                if (slot.Date is { } date)
+                {
+                    items.Add(IcsBuilder.OneOff(
+                        Uid(nameof(D.ProjectSlot), slot.Id), changed, project.Name,
+                        Describe(project.Description, project.AgeMinimum), space?.Name,
+                        ParisTime.ToUtc(date.ToDateTime(slot.StartTime)), ParisTime.ToUtc(date.ToDateTime(slot.EndTime)), "Projet"));
+                    continue;
+                }
+
                 var ics = IcsBuilder.Weekly(
                     Uid(nameof(D.ProjectSlot), slot.Id), changed, project.Name,
                     Describe(project.Description, project.AgeMinimum), space?.Name,

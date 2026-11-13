@@ -18,6 +18,10 @@ public static class Format
 
     public static string Date(DateOnly value) => value.ToString("dd/MM/yyyy", French);
 
+    /// <summary>Jour d'un créneau de projet : sa date s'il est ponctuel, sinon son jour de la semaine.</summary>
+    public static string SlotDay(Library.Contract.ProjectSlot slot)
+        => slot.Date is { } date ? $"{Day((int)date.DayOfWeek)} {Date(date)}" : Day(slot.DayOfWeek);
+
     /// <summary>Date avec le jour de la semaine : « mercredi 21/10/2026 ».</summary>
     public static string LongDate(DateOnly value) => value.ToString("dddd dd/MM/yyyy", French);
 

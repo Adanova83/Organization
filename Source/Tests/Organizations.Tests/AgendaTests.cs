@@ -57,4 +57,30 @@ public class AgendaTests
         // Ordre chronologique : la fête du 12 entre les séances du 9 et du 23.
         Assert.Equal(fete, agenda[2]);
     }
+
+    [Fact]
+    public async Task Agenda_lists_one_off_project_slot_on_its_date_only()
+    {
+        await using var db = NewContext();
+        var country = New(new Country { CodeAlpha2 = "FR", CodeAlpha3 = "FRA", Name = "France" });
+        var me = New(new Member { Lastname = "Moi", Email = "moi@example.org", Addr = new Address { Line1 = "1 rue", City = "Toulon", PostalCode = "83000", CountryId = country.Id } });
+        var organization = New(new Organization { Name = "Adanova" });
+        var year = New(new SchoolYear { Code = "2026-2027", StartDate = Utc(9, 1), EndDate = Utc(9, 30) });
+        var project = New(new Project { Code = "EXPO", Name = "Exposition", OrganizationId = organization.Id, SchoolYearId = year.Id, DuringTermTime = true });
+        // Créneau ponctuel le samedi 19 septembre, pendant les vacances : retenu quand même (date choisie explicitement).
+        var slot = New(new ProjectSlot { ProjectId = project.Id, DayOfWeek = 6, Date = new DateOnly(2026, 9, 19), StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(12, 0) });
+        var holidays = New(new Holiday { Name = "Vacances", SchoolYearId = year.Id, StartDate = Utc(9, 16), EndDate = Utc(9, 22) });
+
+        db.AddRange(country, me, organization, year, project, slot, holidays,
+            New(new ProjectSlotSubscription { ProjectSlotId = slot.Id, MemberId = me.Id }));
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        var agenda = await new Library.Repository.Agenda(db).ListAsync(me.Id, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30), false, CancellationToken.None);
+
+        var entry = Assert.Single(agenda);
+        Assert.Equal(new DateOnly(2026, 9, 19), entry.Date);
+        Assert.Equal(Ct.SubscriptionTargetKind.ProjectSlot, entry.Kind);
+        Assert.Equal(project.Id, entry.ParentId);
+    }
 }

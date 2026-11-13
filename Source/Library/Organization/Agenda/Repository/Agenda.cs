@@ -17,7 +17,7 @@ public sealed class Agenda : IAgenda
     /// <summary>Créneau hebdomadaire (atelier ou projet) et ce qu'il faut pour dater ses séances.</summary>
     private sealed record WeeklySlot(
         Guid Id, Guid ParentId, string Title, int DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, int Frequency,
-        string? SpaceName, DateTime Start, DateTime End, bool DuringTermTime, bool DuringSchoolHolidays);
+        string? SpaceName, DateTime Start, DateTime End, bool DuringTermTime, bool DuringSchoolHolidays, DateOnly? Date = null);
 
     public async Task<IReadOnlyList<Ct.AgendaEntry>> ListAsync(Guid memberId, DateOnly from, DateOnly to, bool mondayFirst, CancellationToken ct)
     {
@@ -56,7 +56,7 @@ public sealed class Agenda : IAgenda
                     s.Id, s.ProjectId, s.Project.Name, s.DayOfWeek, s.StartTime, s.EndTime, 1,
                     s.Space != null ? s.Space.Name : null,
                     s.Project.StartDate ?? s.Project.SchoolYear.StartDate, s.Project.EndDate ?? s.Project.SchoolYear.EndDate,
-                    s.Project.DuringTermTime, s.Project.DuringSchoolHolidays))
+                    s.Project.DuringTermTime, s.Project.DuringSchoolHolidays, s.Date))
                 .ToListAsync(ct);
             entries.AddRange(Expand(projectSlots, Ct.SubscriptionTargetKind.ProjectSlot, projectRoles, from, to, mondayFirst, closed));
         }
@@ -116,9 +116,12 @@ public sealed class Agenda : IAgenda
             // Séances du rythme, limitées à la période demandée.
             var first = DateOnly.FromDateTime(ParisTime.ToLocal(slot.Start));
             var last = DateOnly.FromDateTime(ParisTime.ToLocal(slot.End));
-            var dates = SlotOccurrences.Active(
-                slot.DayOfWeek, mondayFirst, first, last, slot.Frequency,
-                day => day >= from && day <= to && SessionSchedule.IsActiveOn(day, slot.DuringTermTime, slot.DuringSchoolHolidays, closed));
+            // Créneau ponctuel (projet) : sa date seulement, sans rythme ni période.
+            IEnumerable<DateOnly> dates = slot.Date is { } single
+                ? (single >= from && single <= to ? [single] : [])
+                : SlotOccurrences.Active(
+                    slot.DayOfWeek, mondayFirst, first, last, slot.Frequency,
+                    day => day >= from && day <= to && SessionSchedule.IsActiveOn(day, slot.DuringTermTime, slot.DuringSchoolHolidays, closed));
 
             var (role, isWaiting) = roles[slot.Id];
             foreach (var date in dates)

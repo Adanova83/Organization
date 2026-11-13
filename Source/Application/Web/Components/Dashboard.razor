@@ -284,7 +284,7 @@ else if (loaded)
                 .Where(s => availability.ContainsKey(s.Slot.Id))
                 .Select(s => new FillingRow(
                     s.Project.Name, $"/projects/{s.Project.Id}",
-                    $"{Format.Day(s.Slot.DayOfWeek)} {Format.Time(s.Slot.StartTime)}", $"/subscriptions/project/{s.Slot.Id}",
+                    $"{Format.SlotDay(s.Slot)} {Format.Time(s.Slot.StartTime)}", $"/subscriptions/project/{s.Slot.Id}",
                     availability[s.Slot.Id])));
         }
 

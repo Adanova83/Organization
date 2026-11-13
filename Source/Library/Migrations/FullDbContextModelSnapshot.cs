@@ -779,6 +779,9 @@ namespace Library.Migrations
                     b.Property<int?>("Capacity")
                         .HasColumnType("integer");
 
+                    b.Property<DateOnly?>("Date")
+                        .HasColumnType("date");
+
                     b.Property<int>("DayOfWeek")
                         .HasColumnType("integer");
 

@@ -24,7 +24,11 @@
         <fieldset>
             <legend>Créneau</legend>
             <label>
-                Jour
+                Date (créneau ponctuel ; vide = chaque semaine, le jour ci-dessous)
+                <InputDate @bind-Value="Model.Date" />
+            </label>
+            <label>
+                Jour (créneau hebdomadaire)
                 <InputSelect @bind-Value="Model.DayOfWeek">
                     @foreach (var day in new[] { 1, 2, 3, 4, 5, 6, 0 })
                     {

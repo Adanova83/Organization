@@ -306,13 +306,11 @@ else if (loaded)
             for (var day = 0; day < 7; day++)
             {
                 var date = weekStart.AddDays(day);
-                if (date < first || date > last
-                    || !Library.Domain.SessionSchedule.IsActiveOn(date, project.DuringTermTime, project.DuringSchoolHolidays, closedPeriods))
-                {
-                    continue;
-                }
+                var weekly = date >= first && date <= last
+                    && Library.Domain.SessionSchedule.IsActiveOn(date, project.DuringTermTime, project.DuringSchoolHolidays, closedPeriods);
 
-                foreach (var slot in slots.Where(s => s.DayOfWeek == (int)date.DayOfWeek))
+                // Créneaux ponctuels : leur date seulement ; hebdomadaires : leur jour, sur la période et selon le rythme du projet.
+                foreach (var slot in slots.Where(s => s.Date is { } single ? single == date : weekly && s.DayOfWeek == (int)date.DayOfWeek))
                 {
                     var space = SpaceOf(slot.SpaceId);
                     items.Add(new CalendarItem(
