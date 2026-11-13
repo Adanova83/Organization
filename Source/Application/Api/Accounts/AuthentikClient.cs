@@ -128,7 +128,8 @@ public sealed class AuthentikClient : IDirectoryClient
             using var request = new HttpRequestMessage(method, url);
             if (body is not null)
             {
-                request.Content = JsonContent.Create(body);
+                // Corps complet avec sa longueur : Authentik ne lit pas un corps envoyé par morceaux (JsonContent).
+                request.Content = new StringContent(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json");
             }
 
             response = await _http.SendAsync(request, ct);
