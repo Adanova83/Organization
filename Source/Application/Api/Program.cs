@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Api;
+using Api.Accounts;
 using Api.Calendar;
 using Api.Catalog;
 using Api.Crud;
@@ -60,6 +61,9 @@ builder.Services.AddSchoolHolidayImport(builder.Configuration);
 // Rôles = groupes de l'annuaire (claim « groups ») ; permissions = correspondance groupe -> permissions dans la configuration.
 builder.Services.AddPermissions(builder.Configuration);
 
+// Comptes des membres dans Authentik, gérés depuis leur fiche : actifs si Directory:BaseUrl et Directory:Token sont renseignés.
+builder.Services.AddMemberAccounts(builder.Configuration);
+
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
@@ -109,6 +113,7 @@ app.MapHealthChecks("/health");
 app.MapMigrationCatalog();
 app.MapCalendarFeeds();
 app.MapBusinessEndpoints();
+app.MapMemberAccountEndpoints();
 
 if (oidcEnabled)
 {

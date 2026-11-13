@@ -62,6 +62,9 @@ services:
       Admin__Firstname: ${ADMIN_FIRSTNAME:-}
       Admin__Lastname: ${ADMIN_LASTNAME:-}
       Admin__Group: ${ADMIN_GROUP:-authentik Admins}
+      # Comptes des membres dans Authentik, gérés depuis leur fiche (jeton d'un compte de service). Vide = désactivé.
+      Directory__BaseUrl: ${DIRECTORY_BASE_URL:-}
+      Directory__Token: ${DIRECTORY_TOKEN:-}
       # Flux ICS du planning (abonnement depuis l'Agenda Nextcloud). Vide = flux désactivés.
       Calendar__FeedToken: ${CALENDAR_FEED_TOKEN:-}
     volumes:

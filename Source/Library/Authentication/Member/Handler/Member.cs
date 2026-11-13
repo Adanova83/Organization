@@ -105,6 +105,16 @@ public sealed class Member : ICrudHandler<Domain.Member>
         return await _repository.SearchByExternalIdAsync(externalId, ct);
     }
 
+    public Task SetDirectoryAccountAsync(Guid memberId, string? accountId, CancellationToken ct)
+    {
+        if (memberId == Guid.Empty)
+        {
+            throw new ArgumentException("ID must not be empty.", nameof(memberId));
+        }
+
+        return _repository.SetDirectoryAccountAsync(memberId, accountId, ct);
+    }
+
     public async Task<RepositoryResponse<Domain.Member>> LinkExternalAccountAsync(string externalId, string email, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(externalId))

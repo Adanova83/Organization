@@ -481,3 +481,7 @@ tr.today td { font-weight: 600; }
 
 /* Appels gardés sur le téléphone en attendant le réseau (pwa.js). */
 .offline-banner { margin: 0 0 1rem; }
+
+/* Compte de connexion : mot de passe provisoire lisible, boutons sur plusieurs lignes au besoin. */
+.secret { font-family: ui-monospace, Consolas, monospace; font-size: 1.15em; letter-spacing: 0.05em; }
+.card .actions { flex-wrap: wrap; }

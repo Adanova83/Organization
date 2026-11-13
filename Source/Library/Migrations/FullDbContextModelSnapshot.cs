@@ -534,6 +534,10 @@ namespace Library.Migrations
                     b.Property<DateTime?>("Birthdate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DirectoryAccountId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(320)

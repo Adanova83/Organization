@@ -23,6 +23,8 @@ public sealed class Member : PrimaryKey
     public DateTime? Birthdate { get; set; } = null;
     public string Email { get; set; } = default!;
     public string? ExternalId { get; set; }
+    /// <summary>Identifiant du compte dans l'annuaire (Authentik), quand l'intranet l'a créé ou rattaché.</summary>
+    public string? DirectoryAccountId { get; set; }
     public string? PhoneNumber { get; set; }
     public Address Addr { get; set; } = default!;
 }

@@ -243,6 +243,20 @@ public sealed class ApiClient
     public Task DeleteMemberAsync(Guid id, CancellationToken ct = default)
         => SendAsync(HttpMethod.Delete, $"api/members/{id}", ct);
 
+    // ---- Compte de connexion (Authentik) d'un membre ----
+
+    public Task<Ct.MemberAccount> GetMemberAccountAsync(Guid memberId, CancellationToken ct = default)
+        => GetAsync<Ct.MemberAccount>($"api/members/{memberId}/account", ct);
+
+    public Task<Ct.MemberAccount> CreateMemberAccountAsync(Guid memberId, bool isAnimator, CancellationToken ct = default)
+        => SendAsync<Ct.MemberAccount>(HttpMethod.Post, $"api/members/{memberId}/account", new Ct.MemberAccountCreate { IsAnimator = isAnimator }, ct);
+
+    public Task<Ct.MemberAccount> UpdateMemberAccountAsync(Guid memberId, Ct.MemberAccountUpdate update, CancellationToken ct = default)
+        => SendAsync<Ct.MemberAccount>(HttpMethod.Put, $"api/members/{memberId}/account", update, ct);
+
+    public Task<Ct.MemberAccount> ResetMemberPasswordAsync(Guid memberId, CancellationToken ct = default)
+        => SendAsync<Ct.MemberAccount>(HttpMethod.Post, $"api/members/{memberId}/account/reset-password", new { }, ct);
+
     /// <summary>Tous les pays (l'API pagine par 200 au plus).</summary>
     public async Task<IReadOnlyList<Ct.Country>> GetCountriesAsync(CancellationToken ct = default)
     {

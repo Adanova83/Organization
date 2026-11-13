@@ -52,8 +52,89 @@ else if (member is not null)
             }
         </dd>
         <dt>Statut</dt><dd>@(member.Active?.IsActive == false ? "Inactif" : "Actif")</dd>
-        <dt>Compte de l'annuaire</dt><dd>@(string.IsNullOrEmpty(member.ExternalId) ? "Pas encore connecté" : "Rattaché")</dd>
+        <dt>Première connexion</dt><dd>@(string.IsNullOrEmpty(member.ExternalId) ? "Pas encore faite" : "Faite")</dd>
     </dl>
+
+    @if (account is { Enabled: true })
+    {
+        <section class="card">
+            <h2>Compte de connexion</h2>
+
+            @if (accountError is not null)
+            {
+                <p class="notice">@accountError</p>
+            }
+
+            @if (account.TemporaryPassword is not null)
+            {
+                <div class="success">
+                    <p>Identifiant : <strong>@account.Username</strong><br />
+                       Mot de passe provisoire : <strong class="secret">@account.TemporaryPassword</strong></p>
+                    <p class="muted">Affiché une seule fois : transmettez-le de vive voix ou par SMS (pas dans le même message que
+                       l'identifiant). La personne se connecte sur l'intranet, puis change son mot de passe dans son compte Authentik.</p>
+                </div>
+            }
+            else if (linkedExisting)
+            {
+                <p class="success">Un compte existait déjà avec cet e-mail : il est rattaché au membre, son mot de passe est inchangé.</p>
+            }
+
+            @if (!account.Exists)
+            {
+                <p class="muted">Pas de compte : ce membre ne peut pas se connecter à l'intranet.</p>
+                @if (canEdit)
+                {
+                    <div class="actions">
+                        <form method="post" @onsubmit="CreateMemberAccountAsync" @formname="account-create-member" class="inline">
+                            <AntiforgeryToken />
+                            <button type="submit"><Icon Name="user-check" /> Créer son compte</button>
+                        </form>
+                        <form method="post" @onsubmit="CreateAnimatorAccountAsync" @formname="account-create-animator" class="inline">
+                            <AntiforgeryToken />
+                            <button type="submit"><Icon Name="chalkboard-user" /> Créer son compte d'animateur</button>
+                        </form>
+                    </div>
+                }
+            }
+            else
+            {
+                <dl class="meta">
+                    <dt>Identifiant</dt><dd>@account.Username</dd>
+                    <dt>État</dt><dd>@(account.IsActive ? "Actif" : "Désactivé")</dd>
+                    <dt>Animateur</dt><dd>@(account.IsAnimator ? "Oui" : "Non")</dd>
+                </dl>
+
+                @if (account.IsProtected)
+                {
+                    <p class="muted">Compte administrateur d'Authentik : il se gère dans Authentik.</p>
+                }
+                else if (canEdit)
+                {
+                    <div class="actions">
+                        <form method="post" @onsubmit="ToggleAnimatorAsync" @formname="account-animator" class="inline">
+                            <AntiforgeryToken />
+                            <button type="submit">@(account.IsAnimator ? "Retirer le rôle d'animateur" : "Donner le rôle d'animateur")</button>
+                        </form>
+                        <form method="post" @onsubmit="ResetPasswordAsync" @formname="account-password" class="inline">
+                            <AntiforgeryToken />
+                            <button type="submit" onclick="return confirm('Remplacer son mot de passe par un nouveau mot de passe provisoire ?');">Nouveau mot de passe provisoire</button>
+                        </form>
+                        <form method="post" @onsubmit="ToggleActiveAsync" @formname="account-active" class="inline">
+                            <AntiforgeryToken />
+                            @if (account.IsActive)
+                            {
+                                <button type="submit" class="icon-button-danger" onclick="return confirm('Désactiver son compte ? Il ne pourra plus se connecter (réversible).');">Désactiver le compte</button>
+                            }
+                            else
+                            {
+                                <button type="submit">Réactiver le compte</button>
+                            }
+                        </form>
+                    </div>
+                }
+            }
+        </section>
+    }
 
     <h2>Contacts de la famille</h2>
 
@@ -102,6 +183,9 @@ else if (member is not null)
     private string? error;
     private bool canEdit;
     private bool canReadContributions;
+    private Ct.MemberAccount? account;
+    private string? accountError;
+    private bool linkedExisting;
 
     private string FullName => $"{member!.Lastname} {member.Firstname}".Trim();
 
@@ -131,6 +215,17 @@ else if (member is not null)
             return;
         }
 
+        // Compte de connexion (Authentik) : section masquée si l'intranet n'est pas relié à Authentik.
+        try
+        {
+            account = await Api.GetMemberAccountAsync(Id);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            account = new Ct.MemberAccount { Enabled = true };
+            accountError = ApiErrors.Message(ex);
+        }
+
         // Nom du pays (lisible par tout compte connecté).
         try
         {
@@ -139,6 +234,38 @@ else if (member is not null)
         catch (Exception ex) when (ApiErrors.IsApi(ex))
         {
             countryName = null;
+        }
+    }
+
+    // Le mot de passe provisoire n'est affiché qu'une fois : la page est rendue directement, sans redirection.
+    private Task CreateMemberAccountAsync() => CreateAccountAsync(isAnimator: false);
+
+    private Task CreateAnimatorAccountAsync() => CreateAccountAsync(isAnimator: true);
+
+    private async Task CreateAccountAsync(bool isAnimator)
+    {
+        await RunAccountAsync(() => Api.CreateMemberAccountAsync(Id, isAnimator));
+        linkedExisting = account is { Exists: true, TemporaryPassword: null } && accountError is null;
+    }
+
+    private Task ToggleAnimatorAsync()
+        => RunAccountAsync(() => Api.UpdateMemberAccountAsync(Id, new Ct.MemberAccountUpdate { IsAnimator = !account!.IsAnimator, IsActive = account.IsActive }));
+
+    private Task ToggleActiveAsync()
+        => RunAccountAsync(() => Api.UpdateMemberAccountAsync(Id, new Ct.MemberAccountUpdate { IsAnimator = account!.IsAnimator, IsActive = !account.IsActive }));
+
+    private Task ResetPasswordAsync() => RunAccountAsync(() => Api.ResetMemberPasswordAsync(Id));
+
+    private async Task RunAccountAsync(Func<Task<Ct.MemberAccount>> action)
+    {
+        try
+        {
+            account = await action();
+            accountError = null;
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            accountError = ApiErrors.Message(ex);
         }
     }
 }
