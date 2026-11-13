@@ -10,12 +10,12 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/badges/new">Nouveau badge</a></p>
+    <p><a class="button" href="/badges/new"><Icon Name="plus" /> Nouveau badge</a></p>
 }
 
 <form method="get" action="/badges" class="search">
     <input type="search" name="query" value="@Query" placeholder="Identifiant" aria-label="Rechercher un badge" />
-    <button type="submit">Rechercher</button>
+    <button type="submit"><Icon Name="magnifying-glass" /> Rechercher</button>
 </form>
 
 @if (error is not null)
@@ -32,7 +32,7 @@ else if (result is not null)
     {
         <table>
             <thead>
-                <tr><th>Identifiant</th><th>Statut</th></tr>
+                <tr><th>Identifiant</th><th>Statut</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var badge in result.Data)
@@ -40,6 +40,10 @@ else if (result is not null)
                     <tr>
                         <td><a href="/badges/@badge.Id">@badge.Identifier</a></td>
                         <td>@(badge.Active?.IsActive == false ? "Inactif" : "Actif")</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/badges/{badge.Id}/edit")" DeleteRoute="@ApiRoutes.Badges" Id="badge.Id" Confirm="Supprimer ce badge et ses attributions ? L’historique des passages est conservé." /></td>
+                        }
                     </tr>
                 }
             </tbody>
@@ -48,12 +52,12 @@ else if (result is not null)
         <p class="pager">
             @if (CurrentPage > 1)
             {
-                <a href="@PageUrl(CurrentPage - 1)">← Précédent</a>
+                <a href="@PageUrl(CurrentPage - 1)"><Icon Name="arrow-left" /> Précédent</a>
             }
             <span>Page @CurrentPage / @PageCount · @result.FilteredCount badge(s)</span>
             @if (CurrentPage < PageCount)
             {
-                <a href="@PageUrl(CurrentPage + 1)">Suivant →</a>
+                <a href="@PageUrl(CurrentPage + 1)">Suivant <Icon Name="arrow-right" /></a>
             }
         </p>
     }

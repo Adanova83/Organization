@@ -1,0 +1,70 @@
+@*
+    Séances datées d'un membre, groupées par jour (« Aujourd'hui », « Demain », puis la date) : horaires, lieu, rôle.
+    Pour un atelier animé dont la séance a commencé ou est passée : lien direct vers l'appel.
+*@
+
+@if (Entries.Count == 0)
+{
+    <p class="muted">@EmptyText</p>
+}
+else
+{
+    @foreach (var day in Entries.GroupBy(e => e.Date))
+    {
+        <section class="agenda-day">
+            <h3>@DayLabel(day.Key)</h3>
+            <ul class="agenda-list">
+                @foreach (var entry in day)
+                {
+                    <li class="agenda-entry @(entry.Role == Ct.AgendaRole.Animator ? "animator" : "")">
+                        <span class="agenda-time">@Format.Time(entry.StartTime) – @Format.Time(entry.EndTime)</span>
+                        <span class="agenda-title">
+                            <a href="@Url(entry)">@entry.Title</a>
+                            @if (entry.Role == Ct.AgendaRole.Animator)
+                            {
+                                <span class="tag">animateur</span>
+                            }
+                            @if (entry.IsWaiting)
+                            {
+                                <span class="waiting">liste d'attente</span>
+                            }
+                        </span>
+                        @if (entry.SpaceName is not null)
+                        {
+                            <span class="agenda-space muted">@entry.SpaceName</span>
+                        }
+                        @if (CanCallRoll(entry))
+                        {
+                            <a class="button agenda-action" href="@AttendanceRoutes.Session(entry.TargetId, entry.Date)"><Icon Name="clipboard-check" /> Faire l'appel</a>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public List<Ct.AgendaEntry> Entries { get; set; } = [];
+
+    [Parameter] public string EmptyText { get; set; } = "Aucune séance prévue.";
+
+    private static DateOnly Today => DateOnly.FromDateTime(Format.ParisLocal(DateTime.UtcNow));
+
+    private static string DayLabel(DateOnly date)
+    {
+        var label = Format.LongDate(date);
+        return date == Today ? $"Aujourd'hui – {label}" : date == Today.AddDays(1) ? $"Demain – {label}" : label;
+    }
+
+    private static string Url(Ct.AgendaEntry entry) => entry.Kind switch
+    {
+        Ct.SubscriptionTargetKind.ActivitySlot => $"/activities/{entry.ParentId}",
+        Ct.SubscriptionTargetKind.ProjectSlot => $"/projects/{entry.ParentId}",
+        _ => $"/events/{entry.TargetId}"
+    };
+
+    /// <summary>Appel : ateliers seulement, pour l'animateur, le jour même ou après.</summary>
+    private static bool CanCallRoll(Ct.AgendaEntry entry)
+        => entry.Role == Ct.AgendaRole.Animator && entry.Kind == Ct.SubscriptionTargetKind.ActivitySlot && entry.Date <= Today;
+}

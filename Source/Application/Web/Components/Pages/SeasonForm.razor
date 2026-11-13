@@ -10,7 +10,7 @@
 
 @if (organizationId is not null)
 {
-    <p><a href="/organizations/@organizationId">← Retour à l'organisation</a></p>
+    <p><a href="/organizations/@organizationId"><Icon Name="arrow-left" /> Retour à l'organisation</a></p>
 }
 
 @if (error is not null)
@@ -44,7 +44,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="/organizations/@organizationId">Annuler</a>
         </p>
     </EditForm>
@@ -53,7 +53,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-season" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette saison ?');">Supprimer cette saison</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette saison ?');"><Icon Name="trash-can" /> Supprimer cette saison</button>
         </form>
     }
 }

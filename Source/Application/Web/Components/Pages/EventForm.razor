@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouvel événement" : "Modifier l'événement")</h1>
 
-<p><a href="@(IsNew ? "/events" : $"/events/{Id}")">← Retour</a></p>
+<p><a href="@(IsNew ? "/events" : $"/events/{Id}")"><Icon Name="arrow-left" /> Retour</a></p>
 
 @if (error is not null)
 {
@@ -177,7 +177,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@(IsNew ? "/events" : $"/events/{Id}")">Annuler</a>
         </p>
     </EditForm>
@@ -186,7 +186,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-event" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cet événement, avec ses inscriptions et animateurs ?');">Supprimer cet événement</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cet événement, avec ses inscriptions et animateurs ?');"><Icon Name="trash-can" /> Supprimer cet événement</button>
         </form>
     }
 }

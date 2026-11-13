@@ -6,7 +6,7 @@
 
 <PageTitle>@(space?.Name ?? "Espace")</PageTitle>
 
-<p><a href="/spaces">← Retour aux espaces</a></p>
+<p><a href="/spaces"><Icon Name="arrow-left" /> Retour aux espaces</a></p>
 
 @if (error is not null)
 {
@@ -18,7 +18,7 @@ else if (space is not null)
 
     @if (canEdit)
     {
-        <p><a class="button" href="/spaces/@Id/edit">Modifier l'espace</a></p>
+        <p><a class="button" href="/spaces/@Id/edit"><Icon Name="pen" /> Modifier l'espace</a></p>
     }
 
     <dl class="meta">

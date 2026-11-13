@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lancement de tout le projet (base, serveur OIDC de dev, API, site) depuis Visual Studio : docker-compose.yml + docker-compose.dev.yml. -->
+<Project ToolsVersion="15.0" Sdk="Microsoft.Docker.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectVersion>2.1</ProjectVersion>
+    <DockerTargetOS>Linux</DockerTargetOS>
+    <ProjectGuid>{86F88F1E-BF85-44FF-B88F-F697A67F8052}</ProjectGuid>
+    <DockerComposeProjectName>organization</DockerComposeProjectName>
+    <AdditionalComposeFilePaths>docker-compose.dev.yml;docker-compose.vs.yml</AdditionalComposeFilePaths>
+    <!-- Regular : images construites avec les Dockerfile du projet, comme docker compose up avec reconstruction. -->
+    <DockerDevelopmentMode>Regular</DockerDevelopmentMode>
+    <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+    <DockerServiceName>web</DockerServiceName>
+    <DockerServiceUrl>http://localhost:5200</DockerServiceUrl>
+  </PropertyGroup>
+</Project>

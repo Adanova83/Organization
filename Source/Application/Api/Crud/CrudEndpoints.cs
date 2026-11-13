@@ -44,8 +44,17 @@ public static class CrudEndpoints
     {
         var group = app.MapGroup(route).WithTags(tag);
 
-        // Lecture : permission *.read du domaine (ou *.edit, qui l'implique), déduite de la permission d'écriture.
-        group.RequirePermission(readPermission ?? Permissions.ReadOf(writePermission));
+        // Lecture : permission *.read du domaine (ou *.edit, qui l'implique), déduite de la permission d'écriture ;
+        // Permissions.Authenticated : tout compte connecté.
+        var read = readPermission ?? Permissions.ReadOf(writePermission);
+        if (read == Permissions.Authenticated)
+        {
+            group.RequireAccess();
+        }
+        else
+        {
+            group.RequirePermission(read);
+        }
 
         if (list is not null)
         {

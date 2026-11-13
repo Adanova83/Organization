@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouveau créneau" : "Modifier le créneau")</h1>
 
-<p><a href="/activities/@activityId">← Retour à l'activité</a></p>
+<p><a href="/activities/@activityId"><Icon Name="arrow-left" /> Retour à l'activité</a></p>
 
 @if (error is not null)
 {
@@ -49,7 +49,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="/activities/@activityId">Annuler</a>
         </p>
     </EditForm>
@@ -58,7 +58,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-slot" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce créneau, avec ses inscriptions et animateurs ?');">Supprimer ce créneau</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce créneau, avec ses inscriptions et animateurs ?');"><Icon Name="trash-can" /> Supprimer ce créneau</button>
         </form>
     }
 }

@@ -7,12 +7,22 @@
     <base href="/" />
     <ImportMap />
     <link rel="stylesheet" href="@Assets["app.css"]" />
+    @* Application installable : manifeste, icône d'écran d'accueil, couleur de la barre du téléphone. *@
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="app-icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#043d54" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="AdaNova 83" />
     <HeadOutlet />
 </head>
 
 <body>
     <Routes />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    @* Menu du téléphone : refermé après chaque changement de page. *@
+    <script>Blazor.addEventListener("enhancedload", () => { const toggle = document.getElementById("nav-toggle"); if (toggle) toggle.checked = false; });</script>
+    <script src="@Assets["responsive.js"]"></script>
+    <script src="@Assets["pwa.js"]"></script>
 </body>
 
 </html>

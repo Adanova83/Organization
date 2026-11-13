@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouveau membre" : "Modifier un membre")</h1>
 
-<p><a href="@BackUrl">← Retour</a></p>
+<p><a href="@BackUrl"><Icon Name="arrow-left" /> Retour</a></p>
 
 @if (error is not null)
 {
@@ -54,7 +54,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@BackUrl">Annuler</a>
         </p>
     </EditForm>
@@ -63,7 +63,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-member" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce membre, avec ses inscriptions, animations, notes et badges ? Ses cotisations sont conservées.');">Supprimer ce membre</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce membre, avec ses inscriptions, animations, notes et badges ? Ses cotisations sont conservées.');"><Icon Name="trash-can" /> Supprimer ce membre</button>
         </form>
     }
 }

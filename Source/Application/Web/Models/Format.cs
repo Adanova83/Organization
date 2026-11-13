@@ -18,6 +18,34 @@ public static class Format
 
     public static string Date(DateOnly value) => value.ToString("dd/MM/yyyy", French);
 
+    /// <summary>Jour d'un créneau de projet : sa date s'il est ponctuel, sinon son jour de la semaine.</summary>
+    public static string SlotDay(Library.Contract.ProjectSlot slot)
+        => slot.Date is { } date ? $"{Day((int)date.DayOfWeek)} {Date(date)}" : Day(slot.DayOfWeek);
+
+    /// <summary>Date avec le jour de la semaine : « mercredi 21/10/2026 ».</summary>
+    public static string LongDate(DateOnly value) => value.ToString("dddd dd/MM/yyyy", French);
+
+    /// <summary>Présence à une séance (vide si rien n'est enregistré).</summary>
+    public static string Attendance(Ct.AttendanceStatus? status) => status switch
+    {
+        Ct.AttendanceStatus.Present => "Présent",
+        Ct.AttendanceStatus.Absent => "Absent",
+        Ct.AttendanceStatus.Excused => "Absence signalée",
+        _ => "—"
+    };
+
+    public static string AttendanceMethod(Ct.AttendanceMethod? method) => method switch
+    {
+        Ct.AttendanceMethod.RollCall => "appel",
+        Ct.AttendanceMethod.QrCode => "QR code",
+        Ct.AttendanceMethod.MemberNotice => "signalée par le membre",
+        Ct.AttendanceMethod.StaffCorrection => "saisie d'un responsable",
+        _ => ""
+    };
+
+    /// <summary>Taux de présence : « 85 % », ou « — » sans donnée.</summary>
+    public static string Rate(double? rate) => rate is { } value ? value.ToString("P0", French) : "—";
+
     /// <summary>Places d'un créneau ou d'un événement : « 8 / 12 », « Complet », avec la liste d'attente ; capacité seule si les inscrits sont inconnus.</summary>
     public static string Places(int? capacity, Ct.SubscriptionAvailability? availability)
     {
@@ -44,6 +72,15 @@ public static class Format
 
     /// <summary>Montant (payé, reste...) : « 0,00 € » plutôt que « Gratuit ».</summary>
     public static string Money(float value) => value.ToString("C2", French);
+
+    /// <summary>Lien d'un contact avec le membre.</summary>
+    public static string Relation(Ct.ContactRelation relation) => relation switch
+    {
+        Ct.ContactRelation.Mother => "Mère",
+        Ct.ContactRelation.Father => "Père",
+        Ct.ContactRelation.Guardian => "Tuteur ou tutrice",
+        _ => "Autre"
+    };
 
     public static string Age(int? minimum) => minimum is null or 0 ? "Tout âge" : $"{minimum} ans et +";
 

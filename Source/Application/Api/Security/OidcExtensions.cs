@@ -82,7 +82,8 @@ public static class OidcExtensions
                     ? CookieSecurePolicy.SameAsRequest
                     : CookieSecurePolicy.Always;
                 cookie.ExpireTimeSpan = TimeSpan.FromHours(Math.Max(session.LifetimeHours, 1));
-                cookie.SlidingExpiration = false;
+                // Prolongée tant que le site est utilisé (téléphone) ; au-delà, reconnexion silencieuse par l'annuaire.
+                cookie.SlidingExpiration = true;
 
                 // API : pas de redirection vers une page de connexion, simplement 401 / 403.
                 cookie.Events.OnRedirectToLogin = context =>

@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouvelle session" : "Modifier la session")</h1>
 
-<p><a href="/activities/@activityId">← Retour à l'activité</a></p>
+<p><a href="/activities/@activityId"><Icon Name="arrow-left" /> Retour à l'activité</a></p>
 
 @if (error is not null)
 {
@@ -51,7 +51,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="/activities/@activityId">Annuler</a>
         </p>
     </EditForm>
@@ -60,7 +60,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-session" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette session, avec ses créneaux, inscriptions et animateurs ?');">Supprimer cette session</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette session, avec ses créneaux, inscriptions et animateurs ?');"><Icon Name="trash-can" /> Supprimer cette session</button>
         </form>
     }
 }

@@ -15,7 +15,7 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/school-years/new">Nouvelle année scolaire</a></p>
+    <p><a class="button" href="/school-years/new"><Icon Name="plus" /> Nouvelle année scolaire</a></p>
 }
 
 @if (error is not null)
@@ -32,7 +32,7 @@ else if (years is not null)
     {
         <table>
             <thead>
-                <tr><th>Année</th><th>Période</th><th>Zone</th></tr>
+                <tr><th>Année</th><th>Période</th><th>Zone</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var year in years)
@@ -41,6 +41,10 @@ else if (years is not null)
                         <td><a href="/school-years/@year.Id">@year.Code</a></td>
                         <td>@Format.Period(year.StartDate, year.EndDate)</td>
                         <td>Zone @year.Zone</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/school-years/{year.Id}/edit")" DeleteRoute="@ApiRoutes.SchoolYears" Id="year.Id" Confirm="Supprimer cette année scolaire ?" /></td>
+                        }
                     </tr>
                 }
             </tbody>

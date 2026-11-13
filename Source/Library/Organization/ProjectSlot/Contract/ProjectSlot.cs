@@ -10,4 +10,7 @@ public class ProjectSlot : PrimaryKey
 
     /// <summary>Nombre maximal d'inscrits ; vide = illimité.</summary>
     public int? Capacity { get; set; }
+
+    /// <summary>Créneau ponctuel : sa seule date (le jour de la semaine en découle). Vide = chaque semaine, sur la période du projet.</summary>
+    public DateOnly? Date { get; set; }
 }

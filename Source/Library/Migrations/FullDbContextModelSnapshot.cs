@@ -242,6 +242,42 @@ namespace Library.Migrations
                     b.ToTable("Application", "Access");
                 });
 
+            modelBuilder.Entity("Library.Entity.Attendance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SessionSlotId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("SessionSlotId", "Date", "MemberId")
+                        .IsUnique()
+                        .HasFilter("\"Audit_DeletedAt\" IS NULL");
+
+                    b.ToTable("Attendance", "Organization");
+                });
+
             modelBuilder.Entity("Library.Entity.Badge", b =>
                 {
                     b.Property<Guid>("Id")
@@ -280,6 +316,34 @@ namespace Library.Migrations
                     b.HasIndex("MemberId");
 
                     b.ToTable("BadgeAssignation", "Access");
+                });
+
+            modelBuilder.Entity("Library.Entity.Contact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("Firstname")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Lastname")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Contact", "Authentication");
                 });
 
             modelBuilder.Entity("Library.Entity.Contribution", b =>
@@ -411,30 +475,6 @@ namespace Library.Migrations
                     b.ToTable("Event", "Organization");
                 });
 
-            modelBuilder.Entity("Library.Entity.EventAnimation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("EventAnimation", "Organization");
-                });
-
             modelBuilder.Entity("Library.Entity.EventSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -534,6 +574,38 @@ namespace Library.Migrations
                         .HasFilter("\"Audit_DeletedAt\" IS NULL");
 
                     b.ToTable("Member", "Authentication");
+                });
+
+            modelBuilder.Entity("Library.Entity.MemberContact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CanPickUp")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsEmergencyContact")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Relation")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.HasIndex("MemberId", "ContactId")
+                        .IsUnique()
+                        .HasFilter("\"Audit_DeletedAt\" IS NULL");
+
+                    b.ToTable("MemberContact", "Authentication");
                 });
 
             modelBuilder.Entity("Library.Entity.Note", b =>
@@ -706,6 +778,9 @@ namespace Library.Migrations
 
                     b.Property<int?>("Capacity")
                         .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("Date")
+                        .HasColumnType("date");
 
                     b.Property<int>("DayOfWeek")
                         .HasColumnType("integer");
@@ -1303,6 +1378,72 @@ namespace Library.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Library.Entity.Attendance", b =>
+                {
+                    b.HasOne("Library.Entity.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.ActivitySessionSlot", "SessionSlot")
+                        .WithMany()
+                        .HasForeignKey("SessionSlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("AttendanceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("AttendanceId");
+
+                            b1.ToTable("Attendance", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AttendanceId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("AttendanceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("AttendanceId");
+
+                            b1.ToTable("Attendance", "Organization");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AttendanceId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Audit")
+                        .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("SessionSlot");
+                });
+
             modelBuilder.Entity("Library.Entity.Badge", b =>
                 {
                     b.OwnsOne("Library.Entity.Active", "Active", b1 =>
@@ -1417,6 +1558,56 @@ namespace Library.Migrations
                     b.Navigation("Badge");
 
                     b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("Library.Entity.Contact", b =>
+                {
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("ContactId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ContactId");
+
+                            b1.ToTable("Contact", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContactId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("ContactId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ContactId");
+
+                            b1.ToTable("Contact", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContactId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Audit")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Library.Entity.Contribution", b =>
@@ -1605,72 +1796,6 @@ namespace Library.Migrations
                     b.Navigation("SchoolYear");
 
                     b.Navigation("Space");
-                });
-
-            modelBuilder.Entity("Library.Entity.EventAnimation", b =>
-                {
-                    b.HasOne("Library.Entity.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Library.Entity.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
-                        {
-                            b1.Property<Guid>("EventAnimationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime>("From")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime?>("Until")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.HasKey("EventAnimationId");
-
-                            b1.ToTable("EventAnimation", "Organization");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EventAnimationId");
-                        });
-
-                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
-                        {
-                            b1.Property<Guid>("EventAnimationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime>("CreatedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime?>("DeletedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTime>("LastUpdatedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.HasKey("EventAnimationId");
-
-                            b1.ToTable("EventAnimation", "Organization");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EventAnimationId");
-                        });
-
-                    b.Navigation("Active")
-                        .IsRequired();
-
-                    b.Navigation("Audit")
-                        .IsRequired();
-
-                    b.Navigation("Event");
-
-                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("Library.Entity.EventSubscription", b =>
@@ -1895,6 +2020,72 @@ namespace Library.Migrations
 
                     b.Navigation("Audit")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Library.Entity.MemberContact", b =>
+                {
+                    b.HasOne("Library.Entity.Contact", "Contact")
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Library.Entity.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Library.Entity.Active", "Active", b1 =>
+                        {
+                            b1.Property<Guid>("MemberContactId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("From")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("Until")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("MemberContactId");
+
+                            b1.ToTable("MemberContact", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MemberContactId");
+                        });
+
+                    b.OwnsOne("Library.Entity.Audit", "Audit", b1 =>
+                        {
+                            b1.Property<Guid>("MemberContactId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime?>("DeletedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("LastUpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("MemberContactId");
+
+                            b1.ToTable("MemberContact", "Authentication");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MemberContactId");
+                        });
+
+                    b.Navigation("Active")
+                        .IsRequired();
+
+                    b.Navigation("Audit")
+                        .IsRequired();
+
+                    b.Navigation("Contact");
+
+                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("Library.Entity.Note", b =>

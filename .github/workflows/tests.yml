@@ -1,4 +1,5 @@
 # Compilation de la solution et tests automatiques, à chaque push sur main / develop et à chaque pull request.
+# Aussi appelé par le workflow des images (images.yml) avant toute publication.
 name: Tests
 
 on:
@@ -6,12 +7,14 @@ on:
     branches: [main, develop]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: tests-${{ github.ref }}
+  # Nom du workflow appelant inclus : les tests lancés par images.yml n'annulent pas ceux de ce workflow.
+  group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

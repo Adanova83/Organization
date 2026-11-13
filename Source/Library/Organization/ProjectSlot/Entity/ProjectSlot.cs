@@ -13,5 +13,8 @@ internal class ProjectSlot : PrimaryKey
     [ForeignKey(nameof(ProjectId))] public Project Project { get; set; } = default!;
     public Guid? SpaceId { get; set; }
     public int? Capacity { get; set; }
+
+    /// <summary>Créneau ponctuel : sa seule date (le jour de la semaine en découle). Vide = chaque semaine, sur la période du projet.</summary>
+    public DateOnly? Date { get; set; }
     [ForeignKey(nameof(SpaceId))] public Space? Space { get; set; } = null;
 }

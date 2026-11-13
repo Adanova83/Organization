@@ -1,0 +1,42 @@
+@page "/me/agenda"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Mes séances</PageTitle>
+
+<h1>Mes séances</h1>
+
+<p class="muted">Les quatre prochaines semaines : ateliers, projets et événements auxquels vous êtes inscrit, et ceux que vous animez.</p>
+
+@if (error is not null)
+{
+    <p class="notice">@error</p>
+}
+else if (entries is not null)
+{
+    <AgendaList Entries="entries" EmptyText="Aucune séance dans les quatre prochaines semaines." />
+}
+
+@code {
+    private List<Ct.AgendaEntry>? entries;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var today = DateOnly.FromDateTime(Format.ParisLocal(DateTime.UtcNow));
+
+        try
+        {
+            entries = await Api.GetMyAgendaAsync(today, today.AddDays(27));
+        }
+        catch (Exception ex) when (ApiErrors.IsUnauthorized(ex))
+        {
+            Navigation.NavigateTo("/api/auth/login?returnUrl=/me/agenda", forceLoad: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

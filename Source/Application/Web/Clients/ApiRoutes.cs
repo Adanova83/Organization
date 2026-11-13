@@ -4,6 +4,9 @@ namespace Web.Clients;
 public static class ApiRoutes
 {
     public const string Members = "api/members";
+    public const string Contacts = "api/contacts";
+    public const string MemberContacts = "api/member-contacts";
+    public const string Participants = "api/participants";
     public const string Spaces = "api/spaces";
     public const string Organizations = "api/organizations";
     public const string OrganizationSessions = "api/organization-sessions";
@@ -25,7 +28,6 @@ public static class ApiRoutes
     public const string Holidays = "api/holidays";
 
     public const string ActivitySlotAnimations = "api/activity-session-slot-animations";
-    public const string EventAnimations = "api/event-animations";
     public const string ProjectSlotAnimations = "api/project-slot-animations";
 
     public const string Notes = "api/notes";

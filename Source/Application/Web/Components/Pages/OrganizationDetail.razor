@@ -6,7 +6,7 @@
 
 <PageTitle>@(organization?.Name ?? "Organisation")</PageTitle>
 
-<p><a href="/organizations">← Retour aux organisations</a></p>
+<p><a href="/organizations"><Icon Name="arrow-left" /> Retour aux organisations</a></p>
 
 @if (error is not null)
 {
@@ -19,8 +19,8 @@ else if (organization is not null)
     @if (canEdit)
     {
         <p class="actions">
-            <a class="button" href="/organizations/@Id/edit">Modifier l'organisation</a>
-            <a class="button" href="/organizations/@Id/seasons/new">Nouvelle saison</a>
+            <a class="button" href="/organizations/@Id/edit"><Icon Name="pen" /> Modifier l'organisation</a>
+            <a class="button" href="/organizations/@Id/seasons/new"><Icon Name="plus" /> Nouvelle saison</a>
         </p>
     }
 
@@ -49,7 +49,7 @@ else if (organization is not null)
                         }
                         @if (canEdit)
                         {
-                            <td><a href="/organization-sessions/@season.Id/edit">Modifier</a></td>
+                            <td><RowActions EditUrl="@($"/organization-sessions/{season.Id}/edit")" DeleteRoute="@ApiRoutes.OrganizationSessions" Id="season.Id" Confirm="Supprimer cette saison ?" /></td>
                         }
                     </tr>
                 }

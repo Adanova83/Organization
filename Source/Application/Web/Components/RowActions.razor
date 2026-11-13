@@ -1,0 +1,56 @@
+@using System.Text.Encodings.Web
+@inject ApiClient Api
+@inject NavigationManager Navigation
+
+@*
+    Actions d'une ligne de tableau : crayon (formulaire de modification) et corbeille (suppression, après confirmation).
+    À n'afficher qu'avec la permission d'écriture du domaine ; l'API vérifie de toute façon les droits.
+    Une suppression refusée (élément encore utilisé...) affiche le message de l'API sous les boutons.
+*@
+
+<div class="row-actions">
+    @if (EditUrl is not null)
+    {
+        <a class="icon-button" href="@EditUrl" title="Modifier" aria-label="Modifier"><Icon Name="pen" /></a>
+    }
+    @if (DeleteRoute is not null)
+    {
+        <form method="post" @onsubmit="DeleteAsync" @formname="@($"delete-{Id}")" class="inline">
+            <AntiforgeryToken />
+            <button type="submit" class="icon-button icon-button-danger" title="Supprimer" aria-label="Supprimer"
+                    onclick="return confirm('@JavaScriptEncoder.Default.Encode(Confirm)');"><Icon Name="trash-can" /></button>
+        </form>
+    }
+</div>
+@if (error is not null)
+{
+    <div class="row-actions-error">@error</div>
+}
+
+@code {
+    /// <summary>Adresse du formulaire de modification ; null : pas de crayon.</summary>
+    [Parameter] public string? EditUrl { get; set; }
+
+    /// <summary>Route de l'API de l'élément (ApiRoutes...) ; null : pas de suppression.</summary>
+    [Parameter] public string? DeleteRoute { get; set; }
+
+    [Parameter, EditorRequired] public Guid Id { get; set; }
+
+    /// <summary>Question posée avant la suppression (préciser ce qui est supprimé avec l'élément).</summary>
+    [Parameter] public string Confirm { get; set; } = "Supprimer cet élément ?";
+
+    private string? error;
+
+    private async Task DeleteAsync()
+    {
+        try
+        {
+            await Api.DeleteAsync(DeleteRoute!, Id);
+            Navigation.NavigateTo(Navigation.Uri, replace: true);
+        }
+        catch (Exception ex) when (ApiErrors.IsApi(ex))
+        {
+            error = ApiErrors.Message(ex);
+        }
+    }
+}

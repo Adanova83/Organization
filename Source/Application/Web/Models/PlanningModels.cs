@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Ct = Library.Contract;
 
 namespace Web.Models;
@@ -114,14 +114,18 @@ public sealed class SlotModel : IValidatableObject
     [Required(ErrorMessage = "L'heure de fin est obligatoire.")]
     public string? EndTime { get; set; }
 
+    /// <summary>Créneau d'activité seulement (le formulaire de projet n'a pas ce champ) : vide = chaque semaine.</summary>
     [Range(1, 52, ErrorMessage = "La fréquence est comprise entre 1 et 52 semaines.")]
-    public int Frequency { get; set; } = 1;
+    public int? Frequency { get; set; } = 1;
 
     public Guid? SpaceId { get; set; }
 
     /// <summary>Nombre maximal d'inscrits ; vide = illimité.</summary>
     [Range(1, 10000, ErrorMessage = "La capacité est d'au moins 1 place (vide = illimitée).")]
     public int? Capacity { get; set; }
+
+    /// <summary>Créneau de projet ponctuel : sa date (le jour choisi est alors ignoré). Vide = chaque semaine.</summary>
+    public DateOnly? Date { get; set; }
 
     public static SlotModel From(Ct.ActivitySessionSlot source) => new()
     {
@@ -139,7 +143,8 @@ public sealed class SlotModel : IValidatableObject
         StartTime = source.StartTime.ToString("HH:mm"),
         EndTime = source.EndTime.ToString("HH:mm"),
         SpaceId = source.SpaceId,
-        Capacity = source.Capacity
+        Capacity = source.Capacity,
+        Date = source.Date
     };
 
     public Ct.ActivitySessionSlot ApplyTo(Ct.ActivitySessionSlot target)
@@ -147,7 +152,7 @@ public sealed class SlotModel : IValidatableObject
         target.DayOfWeek = DayOfWeek;
         target.StartTime = Start;
         target.EndTime = End;
-        target.Frequency = Frequency;
+        target.Frequency = Frequency ?? 1;
         target.SpaceId = SpaceId;
         target.Capacity = Capacity;
         return target;
@@ -155,7 +160,8 @@ public sealed class SlotModel : IValidatableObject
 
     public Ct.ProjectSlot ApplyTo(Ct.ProjectSlot target)
     {
-        target.DayOfWeek = DayOfWeek;
+        target.Date = Date;
+        target.DayOfWeek = Date is { } date ? (int)date.DayOfWeek : DayOfWeek;
         target.StartTime = Start;
         target.EndTime = End;
         target.SpaceId = SpaceId;

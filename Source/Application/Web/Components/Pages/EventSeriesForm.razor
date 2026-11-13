@@ -14,7 +14,7 @@
 
 @if (backUrl is not null)
 {
-    <p><a href="@backUrl">← Retour à l'événement</a></p>
+    <p><a href="@backUrl"><Icon Name="arrow-left" /> Retour à l'événement</a></p>
 }
 
 @if (error is not null)
@@ -70,7 +70,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer pour ces @targets.Count date(s)</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer pour ces @targets.Count date(s)</button>
             @if (backUrl is not null)
             {
                 <a href="@backUrl">Annuler</a>

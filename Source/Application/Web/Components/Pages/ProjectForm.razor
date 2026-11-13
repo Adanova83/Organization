@@ -8,7 +8,7 @@
 
 <h1>@(IsNew ? "Nouveau projet" : "Modifier le projet")</h1>
 
-<p><a href="@(IsNew ? "/projects" : $"/projects/{Id}")">← Retour</a></p>
+<p><a href="@(IsNew ? "/projects" : $"/projects/{Id}")"><Icon Name="arrow-left" /> Retour</a></p>
 
 @if (error is not null)
 {
@@ -65,7 +65,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="@(IsNew ? "/projects" : $"/projects/{Id}")">Annuler</a>
         </p>
     </EditForm>
@@ -74,7 +74,7 @@
     {
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-project" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce projet, avec ses créneaux, inscriptions et animateurs ?');">Supprimer ce projet</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer ce projet, avec ses créneaux, inscriptions et animateurs ?');"><Icon Name="trash-can" /> Supprimer ce projet</button>
         </form>
     }
 }

@@ -7,7 +7,10 @@ public sealed class WebSessionOptions
 
     public string CookieName { get; set; } = "adanova.session";
 
-    /// <summary>Durée de la session, en heures. Les groupes ne sont relus qu'à la reconnexion.</summary>
+    /// <summary>
+    /// Durée de la session sans activité, en heures (prolongée à chaque utilisation). Les groupes ne sont relus qu'à la
+    /// reconnexion, silencieuse tant que la session de l'annuaire (Authentik) est ouverte.
+    /// </summary>
     public int LifetimeHours { get; set; } = 8;
 
     /// <summary>Adresse (relative) où revenir après connexion ou déconnexion quand aucune n'est demandée.</summary>

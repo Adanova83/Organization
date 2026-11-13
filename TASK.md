@@ -32,13 +32,24 @@ Liste des travaux restants, par ordre de priorité. Cocher une tâche une fois t
       encore utilisés) ; confirmations du site détaillées ; tests `DeletionPolicyTests`.
 - [x] **Cotisations** : montant payé (paiement en plusieurs fois), page « Cotisations de la saison » (participants non à
       jour, reste à payer, paiement prérempli), bloc « Cotisations » des saisons en cours sur le tableau de bord.
+- [ ] **Application mobile** (application web installable) : présences par QR code et appel, rappels, agenda
+      personnel ; cahier des charges dans [docs/application-mobile.md](docs/application-mobile.md), en 5 lots.
+      Lot 1 fait (ateliers seulement, pas d'appel pour les événements) : présences par séance datée, appel sur le site
+      (animateurs et responsables), feuille d'émargement
+      imprimable ou en PDF (impression du navigateur), statistiques de fréquentation (page « Présences »).
+      Lot 2 fait : site installable (manifeste, icônes, page « Installer l'application »), « Mes séances » (agenda daté,
+      accès direct à l'appel), pages consultées gardées hors connexion (service worker), appel hors connexion envoyé au
+      retour du réseau, session prolongée tant qu'elle sert. À vérifier sur un vrai téléphone (le service worker ne
+      tourne pas dans le navigateur intégré de Claude).
 - [ ] **Contrôle d'accès** : endpoints pour les lecteurs de badges (`Application`), enregistrement des passages,
       clé d'API des lecteurs stockée hachée.
 - [ ] **Flux ICS** : page indiquant aux membres l'adresse d'abonnement pour l'Agenda Nextcloud.
 - [ ] **Séries d'événements** : permettre de modifier le rythme (vacances, jours fériés) d'une série existante ; les
       dates sont aujourd'hui calculées une fois pour toutes à la création.
-- [ ] **Profil** : la liste des pays demande `organization.read` ; un membre sans cette permission ne peut pas
-      changer de pays.
+- [x] **Profil** : la liste des pays est lisible par tout compte connecté (adresse du profil).
+- [x] **Profils de l'intranet** : groupes `membres` (planning, inscription), `animateurs` (en plus, participants de ce
+      qu'ils animent, avec les contacts des familles), `responsables` (planning, inscriptions, membres, cotisations),
+      administrateurs (groupe `Admin__Group`) ; contacts des familles (parents, tuteurs) gérés par les responsables.
 - [ ] **Formulaires** : les unités affichées à côté de « Tous les N » suivent la fréquence grâce au CSS ; vérifier
       l'affichage sur les navigateurs anciens (sélecteur `:has()`).
 

@@ -24,7 +24,7 @@ else
 {
     <table>
         <thead>
-            <tr><th>Type</th><th>Animation</th></tr>
+            <tr><th>Type</th><th>Animation</th><th></th></tr>
         </thead>
         <tbody>
             @foreach (var row in rows)
@@ -41,6 +41,13 @@ else
                             @row.Title
                         }
                     </td>
+                    <td class="actions">
+                        <a href="/participants/@SubscriptionClient.Segment(row.Kind)/@row.TargetId">Participants</a>
+                        @if (row.Kind == SubscriptionKind.Slot)
+                        {
+                            <a href="@AttendanceRoutes.Sessions(row.TargetId)">Appel</a>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -48,7 +55,7 @@ else
 }
 
 @code {
-    private sealed record Row(SubscriptionKind Kind, string Title, string? Url);
+    private sealed record Row(SubscriptionKind Kind, Guid TargetId, string Title, string? Url);
 
     private Guid? me;
     private List<Row> rows = [];
@@ -71,7 +78,7 @@ else
 
         try
         {
-            foreach (var kind in Enum.GetValues<SubscriptionKind>())
+            foreach (var kind in Enum.GetValues<SubscriptionKind>().Where(AnimationClient.IsAnimated))
             {
                 // Les animations d'un domaine ne sont lisibles qu'avec sa permission *.read.
                 if (!await Access.CanAsync(AnimationClient.ReadPermission(kind)))
@@ -82,7 +89,7 @@ else
                 foreach (var item in await Animations.ListAsync(kind, null, memberId))
                 {
                     var (title, url) = await Subscriptions.DescribeAsync(kind, item.TargetId);
-                    rows.Add(new Row(kind, title, url));
+                    rows.Add(new Row(kind, item.TargetId, title, url));
                 }
             }
         }

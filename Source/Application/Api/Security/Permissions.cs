@@ -46,6 +46,12 @@ public static class Permissions
     public const string AccessRead = "access.read";
     public const string AccessEdit = "access.edit";
 
+    /// <summary>
+    /// Pas une permission : à utiliser comme permission de lecture d'une route ouverte à tout compte connecté (ou à la
+    /// clé d'API), par exemple la liste des pays. Jamais attribuée à un groupe.
+    /// </summary>
+    public const string Authenticated = "authenticated";
+
     public static readonly IReadOnlyList<string> All = new[]
     {
         MemberRead, MemberEdit, SpaceRead, SpaceEdit, ActivityRead, ActivityEdit,

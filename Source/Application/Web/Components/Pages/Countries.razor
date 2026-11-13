@@ -10,12 +10,12 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/countries/new">Nouveau pays</a></p>
+    <p><a class="button" href="/countries/new"><Icon Name="plus" /> Nouveau pays</a></p>
 }
 
 <form method="get" action="/countries" class="search">
     <input type="search" name="query" value="@Query" placeholder="Nom du pays" aria-label="Rechercher un pays" />
-    <button type="submit">Rechercher</button>
+    <button type="submit"><Icon Name="magnifying-glass" /> Rechercher</button>
 </form>
 
 @if (error is not null)
@@ -32,7 +32,7 @@ else if (result is not null)
     {
         <table>
             <thead>
-                <tr><th>Pays</th><th>Code (2)</th><th>Code (3)</th></tr>
+                <tr><th>Pays</th><th>Code (2)</th><th>Code (3)</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var country in result.Data)
@@ -41,6 +41,10 @@ else if (result is not null)
                         <td><a href="/countries/@country.Id">@country.Name</a></td>
                         <td>@country.CodeAlpha2</td>
                         <td>@country.CodeAlpha3</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/countries/{country.Id}/edit")" DeleteRoute="@ApiRoutes.Countries" Id="country.Id" Confirm="Supprimer ce pays ?" /></td>
+                        }
                     </tr>
                 }
             </tbody>
@@ -49,12 +53,12 @@ else if (result is not null)
         <p class="pager">
             @if (CurrentPage > 1)
             {
-                <a href="@PageUrl(CurrentPage - 1)">← Précédent</a>
+                <a href="@PageUrl(CurrentPage - 1)"><Icon Name="arrow-left" /> Précédent</a>
             }
             <span>Page @CurrentPage / @PageCount · @result.FilteredCount pays</span>
             @if (CurrentPage < PageCount)
             {
-                <a href="@PageUrl(CurrentPage + 1)">Suivant →</a>
+                <a href="@PageUrl(CurrentPage + 1)">Suivant <Icon Name="arrow-right" /></a>
             }
         </p>
     }

@@ -10,7 +10,7 @@
 
 @if (canEdit)
 {
-    <p><a class="button" href="/holidays/new">Nouvelle période</a></p>
+    <p><a class="button" href="/holidays/new"><Icon Name="plus" /> Nouvelle période</a></p>
 
     <EditForm Model="Generate" FormName="generate-holidays" OnValidSubmit="GenerateAsync" Enhance class="form">
         <DataAnnotationsValidator />
@@ -47,7 +47,7 @@ else if (holidays is not null)
     {
         <table>
             <thead>
-                <tr><th>Nom</th><th>Du</th><th>Au</th></tr>
+                <tr><th>Nom</th><th>Du</th><th>Au</th>@if (canEdit){<th></th>}</tr>
             </thead>
             <tbody>
                 @foreach (var holiday in holidays)
@@ -56,6 +56,10 @@ else if (holidays is not null)
                         <td><a href="/holidays/@holiday.Id">@holiday.Name</a></td>
                         <td>@Format.Date(holiday.StartDate)</td>
                         <td>@Format.Date(holiday.EndDate)</td>
+                        @if (canEdit)
+                        {
+                            <td><RowActions EditUrl="@($"/holidays/{holiday.Id}/edit")" DeleteRoute="@ApiRoutes.Holidays" Id="holiday.Id" Confirm="Supprimer cette période ?" /></td>
+                        }
                     </tr>
                 }
             </tbody>

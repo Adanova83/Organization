@@ -11,7 +11,7 @@
 
 <h1>@(IsNew ? "Nouvelle note" : "Note")</h1>
 
-<p><a href="/notes">← Retour à mes notes</a></p>
+<p><a href="/notes"><Icon Name="arrow-left" /> Retour à mes notes</a></p>
 
 @if (error is not null)
 {
@@ -31,7 +31,7 @@
         </fieldset>
 
         <p class="actions">
-            <button type="submit">Enregistrer</button>
+            <button type="submit"><Icon Name="floppy-disk" /> Enregistrer</button>
             <a href="/notes">Annuler</a>
         </p>
     </EditForm>
@@ -103,7 +103,7 @@
 
         <form method="post" @onsubmit="DeleteAsync" @formname="delete-note" class="danger">
             <AntiforgeryToken />
-            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette note et ses liens ?');">Supprimer cette note</button>
+            <button type="submit" class="danger-button" onclick="return confirm('Supprimer cette note et ses liens ?');"><Icon Name="trash-can" /> Supprimer cette note</button>
         </form>
     }
 }

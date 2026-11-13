@@ -31,9 +31,25 @@ services:
       # Le faux serveur accepte n'importe quel client ; ces valeurs ne servent qu'à activer la connexion web.
       Oidc__ClientId: organizations-web
       Oidc__ClientSecret: dev-secret
-      # Groupe « membres » (profil de test « membre-test » de dev/oidc-config.json) : lecture du planning seulement.
+      # Profils de l'intranet (groupes Authentik). Administrateurs : groupe Admin__Group (toutes les permissions).
+      # « membres » (profil de test « membre-test » de dev/oidc-config.json) : voir le planning et s'inscrire soi-même.
       Authorization__RolePermissions__membres__0: activity.read
       Authorization__RolePermissions__membres__1: event.read
       Authorization__RolePermissions__membres__2: project.read
       Authorization__RolePermissions__membres__3: space.read
       Authorization__RolePermissions__membres__4: organization.read
+      # « animateurs » : comme les membres ; les participants de ce qu'ils animent s'ajoutent sans permission (API).
+      Authorization__RolePermissions__animateurs__0: activity.read
+      Authorization__RolePermissions__animateurs__1: event.read
+      Authorization__RolePermissions__animateurs__2: project.read
+      Authorization__RolePermissions__animateurs__3: space.read
+      Authorization__RolePermissions__animateurs__4: organization.read
+      # « responsables » : planning, inscriptions, fiches des membres (et contacts des familles), cotisations.
+      Authorization__RolePermissions__responsables__0: activity.edit
+      Authorization__RolePermissions__responsables__1: event.edit
+      Authorization__RolePermissions__responsables__2: project.edit
+      Authorization__RolePermissions__responsables__3: space.edit
+      Authorization__RolePermissions__responsables__4: subscription.edit
+      Authorization__RolePermissions__responsables__5: member.edit
+      Authorization__RolePermissions__responsables__6: contribution.edit
+      Authorization__RolePermissions__responsables__7: organization.read

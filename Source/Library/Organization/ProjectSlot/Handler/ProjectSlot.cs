@@ -87,6 +87,12 @@ public sealed class ProjectSlot : ICrudHandler<Domain.ProjectSlot>
 
     private void ValidateDomainRules(Domain.ProjectSlot domain)
     {
+        // Créneau ponctuel : le jour de la semaine est celui de sa date.
+        if (domain.Date is { } date)
+        {
+            domain.DayOfWeek = (int)date.DayOfWeek;
+        }
+
         if (domain.Capacity is < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(domain.Capacity), "Capacity must be at least 1, or empty for no limit.");

@@ -184,6 +184,40 @@ public sealed class ApiClient
     private static string SeriesUrl(Guid seriesId, DateOnly? from)
         => $"{ApiRoutes.Events}/series/{seriesId}" + (from is { } date ? $"?from={date:yyyy-MM-dd}" : "");
 
+    // ---- Agenda du membre connecté ----
+
+    /// <summary>Séances datées du membre connecté (par défaut : aujourd'hui et les 13 jours suivants).</summary>
+    public Task<List<Ct.AgendaEntry>> GetMyAgendaAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default)
+    {
+        var query = new List<string>();
+        if (from is { } start)
+        {
+            query.Add($"from={start:yyyy-MM-dd}");
+        }
+
+        if (to is { } end)
+        {
+            query.Add($"to={end:yyyy-MM-dd}");
+        }
+
+        return GetAsync<List<Ct.AgendaEntry>>("api/me/agenda" + (query.Count == 0 ? "" : "?" + string.Join("&", query)), ct);
+    }
+
+    // ---- Présences (feuilles d'émargement) des ateliers ----
+
+    public Task<Ct.AttendanceOccurrences> GetAttendanceOccurrencesAsync(Guid slotId, CancellationToken ct = default)
+        => GetAsync<Ct.AttendanceOccurrences>($"api/attendances/slots/{slotId}", ct);
+
+    public Task<Ct.AttendanceSheet> GetAttendanceSheetAsync(Guid slotId, DateOnly date, CancellationToken ct = default)
+        => GetAsync<Ct.AttendanceSheet>($"api/attendances/slots/{slotId}/{date:yyyy-MM-dd}", ct);
+
+    /// <summary>Enregistre l'appel et renvoie la feuille à jour.</summary>
+    public Task<Ct.AttendanceSheet> RecordAttendanceAsync(Guid slotId, DateOnly date, List<Ct.AttendanceEntry> entries, CancellationToken ct = default)
+        => SendAsync<Ct.AttendanceSheet>(HttpMethod.Put, $"api/attendances/slots/{slotId}/{date:yyyy-MM-dd}", entries, ct);
+
+    public Task<Ct.AttendanceStats> GetAttendanceStatsAsync(DateOnly from, DateOnly to, CancellationToken ct = default)
+        => GetAsync<Ct.AttendanceStats>($"api/attendances/stats?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}", ct);
+
     public Task<PagedResponse<Ct.Project>> GetProjectsAsync(string? query, int page, int pageSize, CancellationToken ct = default)
         => GetPagedAsync<Ct.Project>("api/projects", query, page, pageSize, ct);
 

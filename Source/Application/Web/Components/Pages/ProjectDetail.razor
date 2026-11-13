@@ -7,7 +7,7 @@
 
 <PageTitle>@(project?.Name ?? "Projet")</PageTitle>
 
-<p><a href="/projects">← Retour aux projets</a></p>
+<p><a href="/projects"><Icon Name="arrow-left" /> Retour aux projets</a></p>
 
 @if (error is not null)
 {
@@ -20,8 +20,8 @@ else if (project is not null)
     @if (canEdit)
     {
         <p class="actions">
-            <a class="button" href="/projects/@Id/edit">Modifier le projet</a>
-            <a class="button" href="/projects/@Id/slots/new">Nouveau créneau</a>
+            <a class="button" href="/projects/@Id/edit"><Icon Name="pen" /> Modifier le projet</a>
+            <a class="button" href="/projects/@Id/slots/new"><Icon Name="plus" /> Nouveau créneau</a>
         </p>
     }
 
@@ -54,7 +54,7 @@ else if (project is not null)
                 @foreach (var slot in slots.OrderBy(s => s.DayOfWeek).ThenBy(s => s.StartTime))
                 {
                     <tr>
-                        <td>@Format.Day(slot.DayOfWeek)</td>
+                        <td>@Format.SlotDay(slot)</td>
                         <td>@Format.Time(slot.StartTime) – @Format.Time(slot.EndTime)</td>
                         <td>@(slot.SpaceId is { } space && spaces.TryGetValue(space, out var name) ? name : "—")</td>
                         <td>@Format.Places(slot.Capacity, AvailabilityOf(slot.Id))</td>
@@ -74,7 +74,7 @@ else if (project is not null)
                         }
                         @if (canEdit)
                         {
-                            <td><a href="/project-slots/@slot.Id/edit">Modifier</a></td>
+                            <td><RowActions EditUrl="@($"/project-slots/{slot.Id}/edit")" DeleteRoute="@ApiRoutes.ProjectSlots" Id="slot.Id" Confirm="Supprimer ce créneau, avec ses inscriptions et animateurs ?" /></td>
                         }
                     </tr>
                 }

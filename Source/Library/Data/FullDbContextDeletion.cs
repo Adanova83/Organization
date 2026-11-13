@@ -54,23 +54,25 @@ public partial class FullDbContext
         Cascade<ActivitySessionSlot>((db, id) => db.ActivitySessionSlotSubscriptions.Where(e => e.SessionSlotId == id)),
         Cascade<ActivitySessionSlot>((db, id) => db.ActivitySessionSlotAnimations.Where(e => e.SessionSlotId == id)),
         Cascade<Event>((db, id) => db.EventSubscriptions.Where(e => e.EventId == id)),
-        Cascade<Event>((db, id) => db.EventAnimations.Where(e => e.EventId == id)),
         Cascade<Project>((db, id) => db.ProjectSlots.Where(e => e.ProjectId == id)),
         Cascade<ProjectSlot>((db, id) => db.ProjectSlotSubscriptions.Where(e => e.ProjectSlotId == id)),
         Cascade<ProjectSlot>((db, id) => db.ProjectSlotAnimations.Where(e => e.ProjectSlotId == id)),
         Cascade<Note>((db, id) => db.NoteLinks.Where(e => e.NoteId == id)),
         // Badge : ses attributions ; l'historique des passages (AccessEvent) est conservé.
         Cascade<Badge>((db, id) => db.BadgeAssignations.Where(e => e.BadgeId == id)),
+        // Contact d'une famille : ses rattachements aux membres.
+        Cascade<Contact>((db, id) => db.MemberContacts.Where(e => e.ContactId == id)),
 
-        // Membre : sa participation et ses données personnelles ; ses cotisations sont conservées (historique comptable).
+        // Membre : sa participation, ses données personnelles et ses contacts ; ses cotisations sont conservées (historique comptable).
+        // Les présences (feuilles d'émargement) sont conservées dans tous les cas, comme les cotisations.
         Cascade<Member>((db, id) => db.ActivitySessionSlotSubscriptions.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.EventSubscriptions.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.ProjectSlotSubscriptions.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.ActivitySessionSlotAnimations.Where(e => e.MemberId == id)),
-        Cascade<Member>((db, id) => db.EventAnimations.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.ProjectSlotAnimations.Where(e => e.MemberId == id)),
         Cascade<Member>((db, id) => db.Notes.Where(e => e.MemberId == id)),
-        Cascade<Member>((db, id) => db.BadgeAssignations.Where(e => e.MemberId == id))
+        Cascade<Member>((db, id) => db.BadgeAssignations.Where(e => e.MemberId == id)),
+        Cascade<Member>((db, id) => db.MemberContacts.Where(e => e.MemberId == id))
     ];
 
     /// <summary>
